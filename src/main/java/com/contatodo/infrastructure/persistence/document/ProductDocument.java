@@ -3,7 +3,6 @@ package com.contatodo.infrastructure.persistence.document;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -18,9 +17,12 @@ public class ProductDocument {
     private String description;
     private Integer stock;
     private String code;
-    private BigDecimal realCost;
+    private Double realCost;
+    private Double unitRealCost;
+    private Double unitPublicCost;
     private String urlPhoto;
-    private BigDecimal publicCost;
+    private Boolean isActive;
+    private String userOid;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
 
@@ -64,12 +66,28 @@ public class ProductDocument {
         this.code = code;
     }
 
-    public BigDecimal getRealCost() {
+    public Double getRealCost() {
         return realCost;
     }
 
-    public void setRealCost(BigDecimal realCost) {
+    public void setRealCost(Double realCost) {
         this.realCost = realCost;
+    }
+
+    public Double getUnitRealCost() {
+        return unitRealCost;
+    }
+
+    public void setUnitRealCost(Double unitRealCost) {
+        this.unitRealCost = unitRealCost;
+    }
+
+    public Double getUnitPublicCost() {
+        return unitPublicCost;
+    }
+
+    public void setUnitPublicCost(Double unitPublicCost) {
+        this.unitPublicCost = unitPublicCost;
     }
 
     public String getUrlPhoto() {
@@ -80,12 +98,12 @@ public class ProductDocument {
         this.urlPhoto = urlPhoto;
     }
 
-    public BigDecimal getPublicCost() {
-        return publicCost;
+    public Boolean getIsActive() {
+        return isActive;
     }
 
-    public void setPublicCost(BigDecimal publicCost) {
-        this.publicCost = publicCost;
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
     }
 
     public LocalDateTime getCreatedDate() {
@@ -102,5 +120,13 @@ public class ProductDocument {
 
     public void setUpdatedDate(LocalDateTime updatedDate) {
         this.updatedDate = updatedDate;
+    }
+
+    public String getUserOid() {
+        return userOid;
+    }
+
+    public void setUserOid(String userOid) {
+        this.userOid = userOid;
     }
 }

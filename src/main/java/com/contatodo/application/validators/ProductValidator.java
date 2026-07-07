@@ -38,7 +38,8 @@ public class ProductValidator {
         fieldValidator.validateRequired(request.getDescription(), ProductConstants.PRODUCT_DESCRIPTION_REQUIRED, errors);
         fieldValidator.validateNonNegative(request.getStock(), ProductConstants.PRODUCT_STOCK_REQUIRED, errors);
         fieldValidator.validateNonNegative(request.getRealCost(), ProductConstants.PRODUCT_REAL_COST_REQUIRED, errors);
-        fieldValidator.validateNonNegative(request.getPublicCost(), ProductConstants.PRODUCT_PUBLIC_COST_REQUIRED, errors);
+        fieldValidator.validateNonNegative(request.getUnitRealCost(), ProductConstants.PRODUCT_REAL_COST_REQUIRED, errors);
+        fieldValidator.validateNonNegative(request.getUnitPublicCost(), ProductConstants.PRODUCT_PUBLIC_COST_REQUIRED, errors);
         throwIfHasErrors(errors);
     }
 
@@ -55,8 +56,11 @@ public class ProductValidator {
         if (request.getRealCost() != null) {
             fieldValidator.validateNonNegative(request.getRealCost(), ProductConstants.PRODUCT_COST_INVALID, errors);
         }
-        if (request.getPublicCost() != null) {
-            fieldValidator.validateNonNegative(request.getPublicCost(), ProductConstants.PRODUCT_COST_INVALID, errors);
+        if (request.getUnitRealCost() != null) {
+            fieldValidator.validateNonNegative(request.getUnitRealCost(), ProductConstants.PRODUCT_COST_INVALID, errors);
+        }
+        if (request.getUnitPublicCost() != null) {
+            fieldValidator.validateNonNegative(request.getUnitPublicCost(), ProductConstants.PRODUCT_COST_INVALID, errors);
         }
         throwIfHasErrors(errors);
     }

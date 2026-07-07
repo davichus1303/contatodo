@@ -14,7 +14,11 @@ import java.util.regex.Pattern;
 public class FieldValidator {
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
-            "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+            "^[A-Za-z0-9+_.-]+@[A-Za-z0-9-]+\\.[A-Za-z]{2,}$"
+    );
+
+    private static final Pattern PASSWORD_PATTERN = Pattern.compile(
+            "^(?=.*[A-Z])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{8,}$"
     );
 
     /**
@@ -47,6 +51,22 @@ public class FieldValidator {
         }
         if (!EMAIL_PATTERN.matcher(email).matches()) {
             errors.add(fieldName + ": " + ValidationConstants.FIELD_INVALID_EMAIL);
+        }
+    }
+
+    /**
+     * Validates password format (at least one uppercase, one symbol, minimum 8 characters).
+     *
+     * @param password Password value.
+     * @param fieldName Field name for error messages.
+     * @param errors Error list to append to.
+     */
+    public void validatePassword(String password, String fieldName, List<String> errors) {
+        if (password == null || password.trim().isEmpty()) {
+            return;
+        }
+        if (!PASSWORD_PATTERN.matcher(password).matches()) {
+            errors.add(fieldName + ": " + ValidationConstants.FIELD_INVALID_PASSWORD);
         }
     }
 

@@ -6,9 +6,12 @@ import com.contatodo.application.dto.response.ProductResponse;
 import com.contatodo.application.mapper.ProductMapper;
 import com.contatodo.application.validators.ProductValidator;
 import com.contatodo.domain.entities.Product;
+import com.contatodo.domain.entities.User;
 import com.contatodo.domain.repositories.ProductRepository;
 import com.contatodo.shared.constants.ProductConstants;
 import com.contatodo.shared.exceptions.ProductNotFoundException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -41,6 +44,16 @@ public class ProductService {
     }
 
     /**
+     * Gets the authenticated user's email.
+     *
+     * @return User email.
+     */
+    private String getAuthenticatedUserEmail() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        return authentication.getName();
+    }
+
+    /**
      * Creates a new product with auto-incremented code.
      *
      * @param request Create product request.
@@ -51,6 +64,13 @@ public class ProductService {
 
         String nextCode = generateNextCode();
         Product product = productMapper.toEntity(request, nextCode);
+        
+        String userEmail = getAuthenticatedUserEmail();
+        User user = ((com.contatodo.infrastructure.persistence.adapter.ProductRepositoryAdapter) productRepository)
+                .findUserByEmail(userEmail)
+                .orElseThrow(() -> new ProductNotFoundException(ProductConstants.USER_NOT_FOUND));
+        product.setUserOid(user.getId());
+        
         Product savedProduct = productRepository.save(product);
         return productMapper.toResponse(savedProduct);
     }
@@ -104,6 +124,20 @@ public class ProductService {
         return productMapper.toResponseList(productRepository.findByName(name));
     }
 
+    /**
+     * Retrieves products for the authenticated user with stock greater than 0.
+     *
+     * @return List of product responses.
+     */
+    public List<ProductResponse> getAvailableProductsForUser(String userOid) {
+        return productMapper.toResponseList(productRepository.findByUserOidAndStockGreaterThan(userOid, 0));
+    }
+
+    /**
+     * Generates the next product code.
+     *
+     * @return Next product code.
+     */
     private String generateNextCode() {
         return productRepository.findTopByOrderByCodeDesc()
                 .map(product -> {
@@ -116,4 +150,5 @@ public class ProductService {
                 })
                 .orElse("1");
     }
+
 }

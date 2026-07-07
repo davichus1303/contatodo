@@ -1,6 +1,5 @@
 package com.contatodo.domain.entities;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -13,9 +12,12 @@ public class Product {
     private String description;
     private Integer stock;
     private String code;
-    private BigDecimal realCost;
+    private Double realCost;
+    private Double unitRealCost;
+    private Double unitPublicCost;
     private String urlPhoto;
-    private BigDecimal publicCost;
+    private Boolean isActive;
+    private String userOid;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
 
@@ -65,11 +67,11 @@ public class Product {
         this.code = code;
     }
 
-    public BigDecimal getRealCost() {
+    public Double getRealCost() {
         return realCost;
     }
 
-    public void setRealCost(BigDecimal realCost) {
+    public void setRealCost(Double realCost) {
         this.realCost = realCost;
     }
 
@@ -81,12 +83,28 @@ public class Product {
         this.urlPhoto = urlPhoto;
     }
 
-    public BigDecimal getPublicCost() {
-        return publicCost;
+    public Boolean getIsActive() {
+        return isActive;
     }
 
-    public void setPublicCost(BigDecimal publicCost) {
-        this.publicCost = publicCost;
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
+    }
+
+    public Double getUnitRealCost() {
+        return unitRealCost;
+    }
+
+    public void setUnitRealCost(Double unitRealCost) {
+        this.unitRealCost = unitRealCost;
+    }
+
+    public Double getUnitPublicCost() {
+        return unitPublicCost;
+    }
+
+    public void setUnitPublicCost(Double unitPublicCost) {
+        this.unitPublicCost = unitPublicCost;
     }
 
     public LocalDateTime getCreatedDate() {
@@ -103,5 +121,13 @@ public class Product {
 
     public void setUpdatedDate(LocalDateTime updatedDate) {
         this.updatedDate = updatedDate;
+    }
+
+    public String getUserOid() {
+        return userOid;
+    }
+
+    public void setUserOid(String userOid) {
+        this.userOid = userOid;
     }
 }

@@ -40,6 +40,7 @@ public class UserValidator {
         fieldValidator.validateRequired(request.getPassword(), UserConstants.USER_PASSWORD_REQUIRED, errors);
         fieldValidator.validateRequired(request.getName(), UserConstants.USER_NAME_REQUIRED, errors);
         fieldValidator.validateEmail(request.getEmail(), UserConstants.USER_INVALID_EMAIL, errors);
+        fieldValidator.validatePassword(request.getPassword(), UserConstants.USER_PASSWORD_REQUIRED, errors);
         throwIfHasErrors(errors);
     }
 

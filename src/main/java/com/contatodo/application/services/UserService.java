@@ -133,10 +133,20 @@ public class UserService {
      * @return User response.
      */
     public UserResponse getUserByEmail(String email) {
-        User user = userRepository.findByEmail(email)
-                .filter(existingUser -> !existingUser.isDelete())
+        User user = userRepository.findActiveUserByEmail(email, false)
                 .orElseThrow(() -> new UserNotFoundException(UserConstants.USER_NOT_FOUND));
         return userMapper.toResponse(user);
+    }
+
+    /**
+     * Retrieves a user entity by email.
+     *
+     * @param email User email.
+     * @return User entity.
+     */
+    public User getUserEntityByEmail(String email) {
+        return userRepository.findActiveUserByEmail(email, false)
+                .orElseThrow(() -> new UserNotFoundException(UserConstants.USER_NOT_FOUND));
     }
 
     /**

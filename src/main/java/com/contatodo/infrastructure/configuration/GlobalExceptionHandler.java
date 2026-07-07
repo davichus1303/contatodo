@@ -3,8 +3,10 @@ package com.contatodo.infrastructure.configuration;
 import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.ResponseConstants;
 import com.contatodo.shared.exceptions.AuthenticationException;
+import com.contatodo.shared.exceptions.InsufficientStockException;
 import com.contatodo.shared.exceptions.InvalidRequestException;
 import com.contatodo.shared.exceptions.ProductNotFoundException;
+import com.contatodo.shared.exceptions.SaleWithoutProfitException;
 import com.contatodo.shared.exceptions.UserAlreadyExistsException;
 import com.contatodo.shared.exceptions.UserNotFoundException;
 import com.contatodo.shared.response.ErrorResponse;
@@ -97,6 +99,38 @@ public class GlobalExceptionHandler {
                 java.util.List.of()
         );
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+    }
+
+    /**
+     * Handles insufficient stock exceptions.
+     *
+     * @param exception Insufficient stock exception.
+     * @return Error response.
+     */
+    @ExceptionHandler(InsufficientStockException.class)
+    public ResponseEntity<ErrorResponse> handleInsufficientStockException(InsufficientStockException exception) {
+        ErrorResponse response = ErrorResponse.of(
+                HttpStatus.BAD_REQUEST.value(),
+                exception.getMessage(),
+                java.util.List.of()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+    }
+
+    /**
+     * Handles sale without profit exceptions.
+     *
+     * @param exception Sale without profit exception.
+     * @return Error response.
+     */
+    @ExceptionHandler(SaleWithoutProfitException.class)
+    public ResponseEntity<ErrorResponse> handleSaleWithoutProfitException(SaleWithoutProfitException exception) {
+        ErrorResponse response = ErrorResponse.of(
+                HttpStatus.BAD_REQUEST.value(),
+                exception.getMessage(),
+                java.util.List.of()
+        );
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     /**

@@ -48,4 +48,13 @@ public interface UserRepository {
      * @return True if user exists.
      */
     boolean existsByEmail(String email);
+
+    /**
+     * Finds an active user by email.
+     *
+     * @param email User email.
+     * @param isDelete Whether the user is deleted.
+     * @return Optional user.
+     */
+    Optional<User> findActiveUserByEmail(String email, boolean isDelete);
 }

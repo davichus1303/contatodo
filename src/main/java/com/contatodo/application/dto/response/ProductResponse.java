@@ -1,6 +1,5 @@
 package com.contatodo.application.dto.response;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -13,9 +12,11 @@ public class ProductResponse {
     private String description;
     private Integer stock;
     private String code;
-    private BigDecimal realCost;
+    private Double realCost;
+    private Double unitRealCost;
+    private Double unitPublicCost;
     private String urlPhoto;
-    private BigDecimal publicCost;
+    private Boolean isActive;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
 
@@ -59,11 +60,11 @@ public class ProductResponse {
         this.code = code;
     }
 
-    public BigDecimal getRealCost() {
+    public Double getRealCost() {
         return realCost;
     }
 
-    public void setRealCost(BigDecimal realCost) {
+    public void setRealCost(Double realCost) {
         this.realCost = realCost;
     }
 
@@ -75,12 +76,28 @@ public class ProductResponse {
         this.urlPhoto = urlPhoto;
     }
 
-    public BigDecimal getPublicCost() {
-        return publicCost;
+    public Double getUnitRealCost() {
+        return unitRealCost;
     }
 
-    public void setPublicCost(BigDecimal publicCost) {
-        this.publicCost = publicCost;
+    public void setUnitRealCost(Double unitRealCost) {
+        this.unitRealCost = unitRealCost;
+    }
+
+    public Double getUnitPublicCost() {
+        return unitPublicCost;
+    }
+
+    public void setUnitPublicCost(Double unitPublicCost) {
+        this.unitPublicCost = unitPublicCost;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
     }
 
     public LocalDateTime getCreatedDate() {

@@ -15,6 +15,7 @@ public final class ProductConstants {
     public static final String PRODUCT_PUBLIC_COST_REQUIRED = "Product public cost is required.";
     public static final String PRODUCT_STOCK_INVALID = "Product stock must be zero or greater.";
     public static final String PRODUCT_COST_INVALID = "Product cost must be zero or greater.";
+    public static final String USER_NOT_FOUND = "User not found.";
 
     private ProductConstants() {
     }

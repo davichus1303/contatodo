@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -96,6 +97,17 @@ public class ProductController {
     @GetMapping("/name/{name}")
     public ResponseEntity<ApiResponse<List<ProductResponse>>> getProductsByName(@PathVariable String name) {
         List<ProductResponse> products = productService.getProductsByName(name);
+        return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, products));
+    }
+
+    /**
+     * Retrieves available products for the authenticated user (stock > 0).
+     *
+     * @return List of products.
+     */
+    @GetMapping("/available")
+    public ResponseEntity<ApiResponse<List<ProductResponse>>> getAvailableProductsForUser(@RequestHeader("userOid") String userOid) {
+        List<ProductResponse> products = productService.getAvailableProductsForUser(userOid);
         return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, products));
     }
 }

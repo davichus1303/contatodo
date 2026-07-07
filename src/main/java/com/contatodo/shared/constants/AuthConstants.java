@@ -9,6 +9,7 @@ public final class AuthConstants {
     public static final String TOKEN_INVALID = "Invalid or expired token.";
     public static final String TOKEN_MISSING = "Authorization token is missing.";
     public static final String ACCESS_DENIED = "Access denied.";
+    public static final String USER_NOT_AUTHENTICATED = "User is not authenticated.";
 
     private AuthConstants() {
     }

@@ -1,6 +1,5 @@
 package com.contatodo.application.dto.request;
 
-import java.math.BigDecimal;
 
 /**
  * Request DTO for updating a product.
@@ -10,9 +9,11 @@ public class UpdateProductRequest {
     private String name;
     private String description;
     private Integer stock;
-    private BigDecimal realCost;
+    private Double realCost;
+    private Double unitRealCost;
+    private Double unitPublicCost;
     private String urlPhoto;
-    private BigDecimal publicCost;
+    private Boolean isActive;
 
     public String getName() {
         return name;
@@ -38,11 +39,11 @@ public class UpdateProductRequest {
         this.stock = stock;
     }
 
-    public BigDecimal getRealCost() {
+    public Double getRealCost() {
         return realCost;
     }
 
-    public void setRealCost(BigDecimal realCost) {
+    public void setRealCost(Double realCost) {
         this.realCost = realCost;
     }
 
@@ -54,11 +55,27 @@ public class UpdateProductRequest {
         this.urlPhoto = urlPhoto;
     }
 
-    public BigDecimal getPublicCost() {
-        return publicCost;
+    public Double getUnitRealCost() {
+        return unitRealCost;
     }
 
-    public void setPublicCost(BigDecimal publicCost) {
-        this.publicCost = publicCost;
+    public void setUnitRealCost(Double unitRealCost) {
+        this.unitRealCost = unitRealCost;
+    }
+
+    public Double getUnitPublicCost() {
+        return unitPublicCost;
+    }
+
+    public void setUnitPublicCost(Double unitPublicCost) {
+        this.unitPublicCost = unitPublicCost;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
     }
 }

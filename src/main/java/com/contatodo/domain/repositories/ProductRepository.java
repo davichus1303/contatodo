@@ -55,4 +55,12 @@ public interface ProductRepository {
      * @return Optional product with highest code.
      */
     Optional<Product> findTopByOrderByCodeDesc();
+
+    /**
+     * Finds products by user OID with stock greater than 0.
+     *
+     * @param userOid User OID.
+     * @return List of products.
+     */
+    List<Product> findByUserOidAndStockGreaterThan(String userOid, Integer stock);
 }

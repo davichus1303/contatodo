@@ -71,4 +71,13 @@ public class UserRepositoryAdapter implements UserRepository {
     public boolean existsByEmail(String email) {
         return userMongoRepository.existsByEmail(email);
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Optional<User> findActiveUserByEmail(String email, boolean isDelete) {
+        return userMongoRepository.findByEmailAndIsDelete(email, isDelete)
+                .map(persistenceMapper::toUserEntity);
+    }
 }

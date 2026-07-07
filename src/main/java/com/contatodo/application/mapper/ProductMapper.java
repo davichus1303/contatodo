@@ -29,8 +29,10 @@ public class ProductMapper {
         product.setStock(request.getStock());
         product.setCode(code);
         product.setRealCost(request.getRealCost());
+        product.setUnitRealCost(request.getUnitRealCost());
+        product.setUnitPublicCost(request.getUnitPublicCost());
         product.setUrlPhoto(request.getUrlPhoto());
-        product.setPublicCost(request.getPublicCost());
+        product.setIsActive(request.getIsActive());
         product.setCreatedDate(LocalDateTime.now());
         product.setUpdatedDate(LocalDateTime.now());
         return product;
@@ -55,11 +57,17 @@ public class ProductMapper {
         if (request.getRealCost() != null) {
             product.setRealCost(request.getRealCost());
         }
+        if (request.getUnitRealCost() != null) {
+            product.setUnitRealCost(request.getUnitRealCost());
+        }
+        if (request.getUnitPublicCost() != null) {
+            product.setUnitPublicCost(request.getUnitPublicCost());
+        }
         if (request.getUrlPhoto() != null) {
             product.setUrlPhoto(request.getUrlPhoto());
         }
-        if (request.getPublicCost() != null) {
-            product.setPublicCost(request.getPublicCost());
+        if (request.getIsActive() != null) {
+            product.setIsActive(request.getIsActive());
         }
         product.setUpdatedDate(LocalDateTime.now());
     }
@@ -78,8 +86,10 @@ public class ProductMapper {
         response.setStock(product.getStock());
         response.setCode(product.getCode());
         response.setRealCost(product.getRealCost());
+        response.setUnitRealCost(product.getUnitRealCost());
+        response.setUnitPublicCost(product.getUnitPublicCost());
         response.setUrlPhoto(product.getUrlPhoto());
-        response.setPublicCost(product.getPublicCost());
+        response.setIsActive(product.getIsActive());
         response.setCreatedDate(product.getCreatedDate());
         response.setUpdatedDate(product.getUpdatedDate());
         return response;
