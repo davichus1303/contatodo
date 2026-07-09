@@ -32,7 +32,7 @@ public class ProductMapper {
         product.setUnitRealCost(request.getUnitRealCost());
         product.setUnitPublicCost(request.getUnitPublicCost());
         product.setUrlPhoto(request.getUrlPhoto());
-        product.setIsActive(request.getIsActive());
+        product.setIsActive(request.getIsActive() != null ? request.getIsActive() : true);
         product.setCreatedDate(LocalDateTime.now());
         product.setUpdatedDate(LocalDateTime.now());
         return product;
