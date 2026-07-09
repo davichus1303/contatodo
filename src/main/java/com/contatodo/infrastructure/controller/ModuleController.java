@@ -35,7 +35,7 @@ public class ModuleController {
 
     /**
      * Creates a new module.
-     *
+     * 
      * @param request Create module request.
      * @return Created module response.
      */
