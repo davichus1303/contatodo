@@ -47,7 +47,6 @@ public class ModuleController {
 
     /**
      * Retrieves modules accessible to the authenticated user.
-     *
      * @return List of modules.
      */
     @GetMapping
