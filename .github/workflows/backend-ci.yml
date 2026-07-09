@@ -26,30 +26,27 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: 'maven'
-          cache-dependency-path: contatodo/pom.xml
+          cache-dependency-path: pom.xml
 
       - name: Build with Maven
         run: mvn clean compile
-        working-directory: contatodo
 
       - name: Run tests
         run: mvn test
-        working-directory: contatodo
         continue-on-error: true
 
       - name: Package application
         run: mvn package -DskipTests
-        working-directory: contatodo
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: backend-jar
-          path: contatodo/target/*.jar
+          path: target/*.jar
           retention-days: 7
 
       - name: Build Docker image (verification)
-        run: docker build -t contatodo-backend:test contatodo/
+        run: docker build -t contatodo-backend:test .
 
       - name: Verify Docker image
         run: |
