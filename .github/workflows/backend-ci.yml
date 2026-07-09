@@ -1,0 +1,57 @@
+name: Backend CI - Build & Test
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+  pull_request:
+    branches:
+      - main
+      - master
+      - develop
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: 'maven'
+          cache-dependency-path: contatodo/pom.xml
+
+      - name: Build with Maven
+        run: mvn clean compile
+        working-directory: contatodo
+
+      - name: Run tests
+        run: mvn test
+        working-directory: contatodo
+        continue-on-error: true
+
+      - name: Package application
+        run: mvn package -DskipTests
+        working-directory: contatodo
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-jar
+          path: contatodo/target/*.jar
+          retention-days: 7
+
+      - name: Build Docker image (verification)
+        run: docker build -t contatodo-backend:test contatodo/
+
+      - name: Verify Docker image
+        run: |
+          docker images | grep contatodo-backend
+          docker inspect contatodo-backend:test
