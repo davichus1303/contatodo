@@ -1,15 +1,16 @@
 name: Backend Pipeline
 
-"on":
+on:
   push:
     branches:
-      - main
       - master
+      - main
       - develop
+
   pull_request:
     branches:
-      - main
       - master
+      - main
       - develop
 
 env:
@@ -17,92 +18,89 @@ env:
   IMAGE_NAME: ${{ github.repository }}/contatodo
 
 jobs:
+
   ci:
     name: CI - Build & Test
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: 'maven'
-          cache-dependency-path: pom.xml
+          java-version: "17"
+          distribution: temurin
+          cache: maven
 
-      - name: Build with Maven
+      - name: Build
         run: mvn clean compile
 
-      - name: Run tests
+      - name: Test
         run: mvn test
 
-      - name: Package application
+      - name: Package
         run: mvn package -DskipTests
 
-      - name: Upload build artifacts
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: backend-jar
           path: target/*.jar
-          retention-days: 7
 
-      - name: Build Docker image verification
+      - name: Verify Docker Build
         run: docker build -t contatodo-backend:test .
-
-      - name: Verify Docker image
-        run: |
-          docker images | grep contatodo-backend
-          docker inspect contatodo-backend:test
 
   cd:
     name: CD - Build & Push Docker
     needs: ci
-    if: ${{ github.event_name == 'push' && (github.ref_name == 'main' || github.ref_name == 'master') }}
+
+    if: github.event_name == 'push' && (github.ref_name == 'master' || github.ref_name == 'main')
+
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       packages: write
+
     outputs:
       image-ref: ${{ steps.image.outputs.image_ref }}
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v3
 
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
+      - uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Resolve Docker image tags
-        id: image
+      - id: image
+        name: Resolve Image Tags
         shell: bash
         run: |
-          branch="${GITHUB_REF_NAME}"
-          short_sha="${GITHUB_SHA::7}"
-          image="${REGISTRY}/${IMAGE_NAME}"
-          image_ref="${image}:${branch}-${short_sha}"
+          BRANCH="${GITHUB_REF_NAME}"
+          SHORT_SHA="${GITHUB_SHA::7}"
+
+          IMAGE="${REGISTRY}/${IMAGE_NAME}"
+          IMAGE_REF="${IMAGE}:${BRANCH}-${SHORT_SHA}"
 
           {
             echo "tags<<EOF"
-            echo "${image}:${branch}"
-            echo "${image_ref}"
-            if [ "$branch" = "master" ] || [ "$branch" = "main" ]; then
-              echo "${image}:latest"
+            echo "${IMAGE}:${BRANCH}"
+            echo "${IMAGE_REF}"
+
+            if [[ "$BRANCH" == "master" || "$BRANCH" == "main" ]]; then
+              echo "${IMAGE}:latest"
             fi
-            echo "EOF"
-            echo "image_ref=${image_ref}"
+
+            echo EOF
+            echo "image_ref=${IMAGE_REF}"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Build and push Docker image
+      - name: Build & Push
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -112,114 +110,78 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy:
-    name: Deploy - EC2
+
+    name: Deploy EC2
+
     needs: cd
-    if: ${{ github.event_name == 'push' && github.ref_name == 'master' }}
+
+    if: github.event_name == 'push' && github.ref_name == 'master'
+
     runs-on: ubuntu-latest
-    environment:
-      name: master
+
+    environment: master
 
     env:
-      EC2_APP_DIR: ${{ vars.EC2_APP_DIR || '/opt/contatodo' }}
-      SSH_HOST: ${{ vars.SSH_HOST || secrets.SSH_HOST }}
-      SSH_USER: ${{ vars.SSH_USER || secrets.SSH_USER }}
-      SSH_PORT: ${{ vars.SSH_PORT || secrets.SSH_PORT }}
+      EC2_APP_DIR: /opt/contatodo
+      SSH_HOST: ${{ secrets.SSH_HOST }}
+      SSH_USER: ${{ secrets.SSH_USER }}
+      SSH_PORT: ${{ secrets.SSH_PORT }}
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
 
-      - name: Generate backend env file
+      - uses: actions/checkout@v4
+
+      - name: Generate .env
         shell: bash
         env:
           DEPLOY_IMAGE: ${{ needs.cd.outputs.image-ref }}
-          APP_NAME: ${{ secrets.APP_NAME || vars.APP_NAME }}
-          SERVER_PORT: ${{ secrets.SERVER_PORT || vars.SERVER_PORT }}
-          MONGO_DATABASE: ${{ secrets.MONGO_DATABASE || vars.MONGO_DATABASE }}
+          APP_NAME: ${{ secrets.APP_NAME }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT }}
+          MONGO_DATABASE: ${{ secrets.MONGO_DATABASE }}
           MONGO_URI: ${{ secrets.MONGO_URI }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          JWT_EXPIRATION: ${{ secrets.JWT_EXPIRATION || vars.JWT_EXPIRATION }}
-          BCRYPT_STRENGTH: ${{ secrets.BCRYPT_STRENGTH || vars.BCRYPT_STRENGTH }}
+          JWT_EXPIRATION: ${{ secrets.JWT_EXPIRATION }}
+          BCRYPT_STRENGTH: ${{ secrets.BCRYPT_STRENGTH }}
         run: |
-          required_vars=(
-            DEPLOY_IMAGE
-            APP_NAME
-            SERVER_PORT
-            MONGO_DATABASE
-            MONGO_URI
-            JWT_SECRET
-            JWT_EXPIRATION
-            BCRYPT_STRENGTH
-          )
-
-          for var_name in "${required_vars[@]}"; do
-            if [ -z "${!var_name}" ]; then
-              echo "::error::${var_name} is required as a GitHub repository secret/variable or environment secret"
-              exit 1
-            fi
-          done
 
           mkdir -p .deploy-out
-          {
-            printf 'CONTATODO_IMAGE=%s\n' "$DEPLOY_IMAGE"
-            printf 'APP_NAME=%s\n' "$APP_NAME"
-            printf 'SERVER_PORT=%s\n' "$SERVER_PORT"
-            printf 'MONGO_DATABASE=%s\n' "$MONGO_DATABASE"
-            printf 'MONGO_URI=%s\n' "$MONGO_URI"
-            printf 'JWT_SECRET=%s\n' "$JWT_SECRET"
-            printf 'JWT_EXPIRATION=%s\n' "$JWT_EXPIRATION"
-            printf 'BCRYPT_STRENGTH=%s\n' "$BCRYPT_STRENGTH"
-          } > .deploy-out/contatodo.env
-          chmod 755 .deploy-out
-          chmod 644 .deploy-out/contatodo.env
 
-      - name: Validate SSH deployment settings
-        shell: bash
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        run: |
-          required_ssh_settings=(
-            SSH_HOST
-            SSH_USER
-            SSH_PORT
-            SSH_PRIVATE_KEY
-          )
+          cat > .deploy-out/contatodo.env <<EOF
+          CONTATODO_IMAGE=${DEPLOY_IMAGE}
+          APP_NAME=${APP_NAME}
+          SERVER_PORT=${SERVER_PORT}
+          MONGO_DATABASE=${MONGO_DATABASE}
+          MONGO_URI=${MONGO_URI}
+          JWT_SECRET=${JWT_SECRET}
+          JWT_EXPIRATION=${JWT_EXPIRATION}
+          BCRYPT_STRENGTH=${BCRYPT_STRENGTH}
+          EOF
 
-          for setting_name in "${required_ssh_settings[@]}"; do
-            if [ -z "${!setting_name}" ]; then
-              echo "::error::${setting_name} is required in the GitHub environment named master"
-              exit 1
-            fi
-          done
-
-          printf '%b\n' "$SSH_PRIVATE_KEY" > .deploy-out/ssh_key
-          chmod 600 .deploy-out/ssh_key
-
-          if ! ssh-keygen -y -f .deploy-out/ssh_key > /dev/null; then
-            echo "::error::SSH_PRIVATE_KEY is not a valid private key. Paste the full private key, not the .pub file, path, or key name."
-            exit 1
-          fi
-
-      - name: Upload deployment bundle to EC2
+      - name: Upload files
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ env.SSH_HOST }}
           username: ${{ env.SSH_USER }}
-          key_path: .deploy-out/ssh_key
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ env.SSH_PORT }}
           source: ".deploy-out/contatodo.env,deploy/docker-compose.ec2.yml,deploy/deploy-ec2.sh"
           target: "/tmp/contatodo-deploy-${{ github.run_id }}"
           overwrite: true
 
-      - name: Deploy backend on EC2
+      - name: Deploy
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ env.SSH_HOST }}
           username: ${{ env.SSH_USER }}
-          key_path: .deploy-out/ssh_key
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ env.SSH_PORT }}
           script: |
             set -eu
-            bundle_dir="/tmp/contatodo-deploy-${{ github.run_id }}"
-            chmod +x "$bundle_dir/deploy/deploy-ec2.sh"
-            "$bundle_dir/deploy/deploy-ec2.sh" "$bundle_dir" "${{ env.EC2_APP_DIR }}"
+
+            bundle="/tmp/contatodo-deploy-${{ github.run_id }}"
+
+            chmod +x "$bundle/deploy/deploy-ec2.sh"
+
+            "$bundle/deploy/deploy-ec2.sh" \
+              "$bundle" \
+              "${{ env.EC2_APP_DIR }}"
