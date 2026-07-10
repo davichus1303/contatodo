@@ -80,7 +80,7 @@ The EC2 deployment files live in `deploy/`:
 - `deploy/deploy-ec2.sh`: remote script used by GitHub Actions.
 - `.github/workflows/deploy.yml`: generates the `.env`, sends it to EC2 over SSH, and restarts the container.
 
-Required GitHub environment variables in the `master` environment:
+Required GitHub repository secrets or repository variables:
 
 - `APP_NAME`
 - `SERVER_PORT`

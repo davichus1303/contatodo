@@ -36,13 +36,13 @@ jobs:
         shell: bash
         env:
           DEPLOY_IMAGE: ${{ steps.image.outputs.image_ref }}
-          APP_NAME: ${{ vars.APP_NAME }}
-          SERVER_PORT: ${{ vars.SERVER_PORT }}
-          MONGO_DATABASE: ${{ vars.MONGO_DATABASE }}
+          APP_NAME: ${{ secrets.APP_NAME || vars.APP_NAME }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT || vars.SERVER_PORT }}
+          MONGO_DATABASE: ${{ secrets.MONGO_DATABASE || vars.MONGO_DATABASE }}
           MONGO_URI: ${{ secrets.MONGO_URI }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          JWT_EXPIRATION: ${{ vars.JWT_EXPIRATION }}
-          BCRYPT_STRENGTH: ${{ vars.BCRYPT_STRENGTH }}
+          JWT_EXPIRATION: ${{ secrets.JWT_EXPIRATION || vars.JWT_EXPIRATION }}
+          BCRYPT_STRENGTH: ${{ secrets.BCRYPT_STRENGTH || vars.BCRYPT_STRENGTH }}
         run: |
           required_vars=(
             DEPLOY_IMAGE
@@ -57,7 +57,7 @@ jobs:
 
           for var_name in "${required_vars[@]}"; do
             if [ -z "${!var_name}" ]; then
-              echo "::error::${var_name} is required in the GitHub environment named master"
+              echo "::error::${var_name} is required as a GitHub repository secret/variable or environment secret"
               exit 1
             fi
           done
