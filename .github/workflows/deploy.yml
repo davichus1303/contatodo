@@ -12,11 +12,15 @@ jobs:
   deploy:
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'master' }}
     runs-on: ubuntu-latest
-    environment: master
+    environment:
+      name: master
 
     env:
       REGISTRY_IMAGE: ghcr.io/davichus1303/contatodo/contatodo
       EC2_APP_DIR: ${{ vars.EC2_APP_DIR }}
+      SSH_HOST: ${{ vars.SSH_HOST || secrets.SSH_HOST }}
+      SSH_USER: ${{ vars.SSH_USER || secrets.SSH_USER }}
+      SSH_PORT: ${{ vars.SSH_PORT || secrets.SSH_PORT }}
 
     steps:
       - name: Checkout code
@@ -36,13 +40,13 @@ jobs:
         shell: bash
         env:
           DEPLOY_IMAGE: ${{ steps.image.outputs.image_ref }}
-          APP_NAME: ${{ vars.APP_NAME }}
-          SERVER_PORT: ${{ vars.SERVER_PORT }}
-          MONGO_DATABASE: ${{ vars.MONGO_DATABASE }}
+          APP_NAME: ${{ secrets.APP_NAME || vars.APP_NAME }}
+          SERVER_PORT: ${{ secrets.SERVER_PORT || vars.SERVER_PORT }}
+          MONGO_DATABASE: ${{ secrets.MONGO_DATABASE || vars.MONGO_DATABASE }}
           MONGO_URI: ${{ secrets.MONGO_URI }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          JWT_EXPIRATION: ${{ vars.JWT_EXPIRATION }}
-          BCRYPT_STRENGTH: ${{ vars.BCRYPT_STRENGTH }}
+          JWT_EXPIRATION: ${{ secrets.JWT_EXPIRATION || vars.JWT_EXPIRATION }}
+          BCRYPT_STRENGTH: ${{ secrets.BCRYPT_STRENGTH || vars.BCRYPT_STRENGTH }}
         run: |
           required_vars=(
             DEPLOY_IMAGE
@@ -57,13 +61,12 @@ jobs:
 
           for var_name in "${required_vars[@]}"; do
             if [ -z "${!var_name}" ]; then
-              echo "::error::${var_name} is required in the GitHub environment named master"
+              echo "::error::${var_name} is required as a GitHub repository secret/variable or environment secret"
               exit 1
             fi
           done
 
           mkdir -p .deploy-out
-          umask 077
           {
             printf 'CONTATODO_IMAGE=%s\n' "$DEPLOY_IMAGE"
             printf 'APP_NAME=%s\n' "$APP_NAME"
@@ -74,14 +77,35 @@ jobs:
             printf 'JWT_EXPIRATION=%s\n' "$JWT_EXPIRATION"
             printf 'BCRYPT_STRENGTH=%s\n' "$BCRYPT_STRENGTH"
           } > .deploy-out/contatodo.env
+          chmod 755 .deploy-out
+          chmod 644 .deploy-out/contatodo.env
+
+      - name: Validate SSH deployment settings
+        shell: bash
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        run: |
+          required_ssh_settings=(
+            SSH_HOST
+            SSH_USER
+            SSH_PORT
+            SSH_PRIVATE_KEY
+          )
+
+          for setting_name in "${required_ssh_settings[@]}"; do
+            if [ -z "${!setting_name}" ]; then
+              echo "::error::${setting_name} is required in the GitHub environment named master"
+              exit 1
+            fi
+          done
 
       - name: Upload deployment bundle to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
+          host: ${{ env.SSH_HOST }}
+          username: ${{ env.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT }}
+          port: ${{ env.SSH_PORT }}
           source: ".deploy-out/contatodo.env,deploy/docker-compose.ec2.yml,deploy/deploy-ec2.sh"
           target: "/tmp/contatodo-deploy-${{ github.run_id }}"
           overwrite: true
@@ -89,10 +113,10 @@ jobs:
       - name: Deploy backend on EC2
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
+          host: ${{ env.SSH_HOST }}
+          username: ${{ env.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT }}
+          port: ${{ env.SSH_PORT }}
           script: |
             set -eu
             bundle_dir="/tmp/contatodo-deploy-${{ github.run_id }}"

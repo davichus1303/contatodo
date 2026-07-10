@@ -16,6 +16,6 @@ cd "$APP_DIR"
 
 docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull
 docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --remove-orphans
-docker image prune -f
+docker image prune -af
 
 rm -rf "$BUNDLE_DIR"
