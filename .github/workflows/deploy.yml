@@ -79,10 +79,10 @@ jobs:
       - name: Upload deployment bundle to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
+          host: ${{ vars.SSH_HOST }}
+          username: ${{ vars.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT }}
+          port: ${{ vars.SSH_PORT }}
           source: ".deploy-out/contatodo.env,deploy/docker-compose.ec2.yml,deploy/deploy-ec2.sh"
           target: "/tmp/contatodo-deploy-${{ github.run_id }}"
           overwrite: true
@@ -90,10 +90,10 @@ jobs:
       - name: Deploy backend on EC2
         uses: appleboy/ssh-action@v1.2.0
         with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
+          host: ${{ vars.SSH_HOST }}
+          username: ${{ vars.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: ${{ secrets.SSH_PORT }}
+          port: ${{ vars.SSH_PORT }}
           script: |
             set -eu
             bundle_dir="/tmp/contatodo-deploy-${{ github.run_id }}"

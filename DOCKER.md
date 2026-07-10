@@ -92,9 +92,12 @@ Required GitHub environment secrets in the `master` environment:
 
 - `MONGO_URI`
 - `JWT_SECRET`
+- `SSH_PRIVATE_KEY`
+
+Required GitHub environment variables in the `master` environment:
+
 - `SSH_HOST`
 - `SSH_USER`
-- `SSH_PRIVATE_KEY`
 - `SSH_PORT` (use `22` for a standard EC2 SSH setup)
 
 Optional GitHub environment variable:
