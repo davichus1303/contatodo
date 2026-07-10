@@ -83,7 +83,7 @@ jobs:
       - name: Validate SSH deployment settings
         shell: bash
         env:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_PRIVATE_KEY: ${{ vars.SSH_PRIVATE_KEY }}
         run: |
           required_ssh_settings=(
             SSH_HOST
@@ -104,7 +104,7 @@ jobs:
         with:
           host: ${{ env.SSH_HOST }}
           username: ${{ env.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ vars.SSH_PRIVATE_KEY }}
           port: ${{ env.SSH_PORT }}
           source: ".deploy-out/contatodo.env,deploy/docker-compose.ec2.yml,deploy/deploy-ec2.sh"
           target: "/tmp/contatodo-deploy-${{ github.run_id }}"
@@ -115,7 +115,7 @@ jobs:
         with:
           host: ${{ env.SSH_HOST }}
           username: ${{ env.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key: ${{ vars.SSH_PRIVATE_KEY }}
           port: ${{ env.SSH_PORT }}
           script: |
             set -eu
