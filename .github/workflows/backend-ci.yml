@@ -1,6 +1,6 @@
 name: Backend CI - Build & Test
 
-on:
+"on":
   push:
     branches:
       - main

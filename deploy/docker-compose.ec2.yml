@@ -1,0 +1,14 @@
+services:
+  backend:
+    image: ${CONTATODO_IMAGE:?CONTATODO_IMAGE is required}
+    container_name: contatodo-backend
+    restart: unless-stopped
+    env_file:
+      - ${CONTATODO_ENV_FILE:-.env}
+    ports:
+      - "${SERVER_PORT:-8080}:${SERVER_PORT:-8080}"
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

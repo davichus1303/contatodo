@@ -1,0 +1,100 @@
+name: Backend Deploy to EC2
+
+"on":
+  workflow_run:
+    workflows: ["Backend CD - Build & Push Docker"]
+    types:
+      - completed
+    branches:
+      - master
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'master' }}
+    runs-on: ubuntu-latest
+    environment: master
+
+    env:
+      REGISTRY_IMAGE: ghcr.io/davichus1303/contatodo/contatodo
+      EC2_APP_DIR: ${{ vars.EC2_APP_DIR }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Resolve image reference
+        id: image
+        shell: bash
+        run: |
+          branch="${{ github.event.workflow_run.head_branch }}"
+          sha="${{ github.event.workflow_run.head_sha }}"
+          image_ref="${REGISTRY_IMAGE}:${branch}-${sha::7}"
+
+          echo "image_ref=${image_ref}" >> "$GITHUB_OUTPUT"
+
+      - name: Generate backend env file
+        shell: bash
+        env:
+          DEPLOY_IMAGE: ${{ steps.image.outputs.image_ref }}
+          APP_NAME: ${{ vars.APP_NAME }}
+          SERVER_PORT: ${{ vars.SERVER_PORT }}
+          MONGO_DATABASE: ${{ vars.MONGO_DATABASE }}
+          MONGO_URI: ${{ secrets.MONGO_URI }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          JWT_EXPIRATION: ${{ vars.JWT_EXPIRATION }}
+          BCRYPT_STRENGTH: ${{ vars.BCRYPT_STRENGTH }}
+        run: |
+          required_vars=(
+            DEPLOY_IMAGE
+            APP_NAME
+            SERVER_PORT
+            MONGO_DATABASE
+            MONGO_URI
+            JWT_SECRET
+            JWT_EXPIRATION
+            BCRYPT_STRENGTH
+          )
+
+          for var_name in "${required_vars[@]}"; do
+            if [ -z "${!var_name}" ]; then
+              echo "::error::${var_name} is required in the GitHub environment named master"
+              exit 1
+            fi
+          done
+
+          mkdir -p .deploy-out
+          umask 077
+          {
+            printf 'CONTATODO_IMAGE=%s\n' "$DEPLOY_IMAGE"
+            printf 'APP_NAME=%s\n' "$APP_NAME"
+            printf 'SERVER_PORT=%s\n' "$SERVER_PORT"
+            printf 'MONGO_DATABASE=%s\n' "$MONGO_DATABASE"
+            printf 'MONGO_URI=%s\n' "$MONGO_URI"
+            printf 'JWT_SECRET=%s\n' "$JWT_SECRET"
+            printf 'JWT_EXPIRATION=%s\n' "$JWT_EXPIRATION"
+            printf 'BCRYPT_STRENGTH=%s\n' "$BCRYPT_STRENGTH"
+          } > .deploy-out/contatodo.env
+
+      - name: Upload deployment bundle to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          source: ".deploy-out/contatodo.env,deploy/docker-compose.ec2.yml,deploy/deploy-ec2.sh"
+          target: "/tmp/contatodo-deploy-${{ github.run_id }}"
+          overwrite: true
+
+      - name: Deploy backend on EC2
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            set -eu
+            bundle_dir="/tmp/contatodo-deploy-${{ github.run_id }}"
+            chmod +x "$bundle_dir/deploy/deploy-ec2.sh"
+            "$bundle_dir/deploy/deploy-ec2.sh" "$bundle_dir" "${{ env.EC2_APP_DIR }}"
