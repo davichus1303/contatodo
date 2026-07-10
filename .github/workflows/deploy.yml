@@ -63,7 +63,6 @@ jobs:
           done
 
           mkdir -p .deploy-out
-          umask 077
           {
             printf 'CONTATODO_IMAGE=%s\n' "$DEPLOY_IMAGE"
             printf 'APP_NAME=%s\n' "$APP_NAME"
@@ -74,6 +73,8 @@ jobs:
             printf 'JWT_EXPIRATION=%s\n' "$JWT_EXPIRATION"
             printf 'BCRYPT_STRENGTH=%s\n' "$BCRYPT_STRENGTH"
           } > .deploy-out/contatodo.env
+          chmod 755 .deploy-out
+          chmod 644 .deploy-out/contatodo.env
 
       - name: Upload deployment bundle to EC2
         uses: appleboy/scp-action@v0.1.7
