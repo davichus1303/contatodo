@@ -33,7 +33,6 @@ jobs:
 
       - name: Run tests
         run: mvn test
-        continue-on-error: true
 
       - name: Package application
         run: mvn package -DskipTests
