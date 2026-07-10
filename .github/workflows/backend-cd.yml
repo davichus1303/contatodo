@@ -1,6 +1,6 @@
 name: Backend CD - Build & Push Docker
 
-on:
+"on":
   push:
     branches:
       - main
