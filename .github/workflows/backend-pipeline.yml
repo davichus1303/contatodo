@@ -120,7 +120,7 @@ jobs:
       name: master
 
     env:
-      EC2_APP_DIR: ${{ vars.EC2_APP_DIR }}
+      EC2_APP_DIR: ${{ vars.EC2_APP_DIR || '/opt/contatodo' }}
       SSH_HOST: ${{ vars.SSH_HOST || secrets.SSH_HOST }}
       SSH_USER: ${{ vars.SSH_USER || secrets.SSH_USER }}
       SSH_PORT: ${{ vars.SSH_PORT || secrets.SSH_PORT }}
@@ -192,12 +192,20 @@ jobs:
             fi
           done
 
+          printf '%b\n' "$SSH_PRIVATE_KEY" > .deploy-out/ssh_key
+          chmod 600 .deploy-out/ssh_key
+
+          if ! ssh-keygen -y -f .deploy-out/ssh_key > /dev/null; then
+            echo "::error::SSH_PRIVATE_KEY is not a valid private key. Paste the full private key, not the .pub file, path, or key name."
+            exit 1
+          fi
+
       - name: Upload deployment bundle to EC2
         uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ env.SSH_HOST }}
           username: ${{ env.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key_path: .deploy-out/ssh_key
           port: ${{ env.SSH_PORT }}
           source: ".deploy-out/contatodo.env,deploy/docker-compose.ec2.yml,deploy/deploy-ec2.sh"
           target: "/tmp/contatodo-deploy-${{ github.run_id }}"
@@ -208,7 +216,7 @@ jobs:
         with:
           host: ${{ env.SSH_HOST }}
           username: ${{ env.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          key_path: .deploy-out/ssh_key
           port: ${{ env.SSH_PORT }}
           script: |
             set -eu
