@@ -14,6 +14,9 @@ chmod 600 "$ENV_FILE"
 
 cd "$APP_DIR"
 
+# Create network if it doesn't exist
+docker network create contatodo-network 2>/dev/null || true
+
 docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" pull
 docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" up -d --remove-orphans
 docker image prune -af

@@ -54,7 +54,6 @@ docker run -d \
   -e JWT_SECRET=your-secret-key \
   -e JWT_EXPIRATION=86400000 \
   -e BCRYPT_STRENGTH=12 \
-  ghcr.io/davichus1303/contatodo/contatodo:master-2f9cac3
 ```
 
 ## Environment Variables
@@ -63,7 +62,7 @@ The application uses the following environment variables:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `CONTATODO_IMAGE` | Docker image used by the EC2 compose file | `ghcr.io/davichus1303/contatodo/contatodo:master-2f9cac3` |
+| `CONTATODO_IMAGE` | Docker image used by the EC2 compose file  |
 | `APP_NAME` | Application name | `Contatodo` |
 | `SERVER_PORT` | Server port | `8080` |
 | `MONGO_URI` | MongoDB connection URI | `mongodb://localhost:27017/` |
