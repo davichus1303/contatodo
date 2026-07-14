@@ -7,8 +7,14 @@ services:
       - ${CONTATODO_ENV_FILE:-.env}
     ports:
       - "${SERVER_PORT:-8080}:${SERVER_PORT:-8080}"
+    networks:
+      - contatodo-network
     logging:
       driver: json-file
       options:
         max-size: "10m"
         max-file: "3"
+
+networks:
+  contatodo-network:
+    external: true
