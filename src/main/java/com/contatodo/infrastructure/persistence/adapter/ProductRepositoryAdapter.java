@@ -102,4 +102,12 @@ public class ProductRepositoryAdapter implements ProductRepository {
     public Optional<User> findUserByEmail(String email) {
         return userMongoRepository.findByEmail(email).map(persistenceMapper::toUserEntity);
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Optional<Product> findByNameAndUserOid(String name, String userOid) {
+        return productMongoRepository.findByNameAndUserOidAndIsActiveTrue(name, userOid).map(persistenceMapper::toProductEntity);
+    }
 }

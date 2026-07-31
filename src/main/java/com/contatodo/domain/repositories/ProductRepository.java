@@ -63,4 +63,13 @@ public interface ProductRepository {
      * @return List of products.
      */
     List<Product> findByUserOidAndStockGreaterThan(String userOid, Integer stock);
+
+    /**
+     * Finds a product by name and user OID.
+     *
+     * @param name Product name.
+     * @param userOid User OID.
+     * @return Optional product.
+     */
+    Optional<Product> findByNameAndUserOid(String name, String userOid);
 }
