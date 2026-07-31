@@ -42,4 +42,13 @@ public interface ProductMongoRepository extends MongoRepository<ProductDocument,
      * @return List of product documents.
      */
     List<ProductDocument> findByUserOidAndStockGreaterThan(String userOid, Integer stock);
+
+    /**
+     * Finds a product by name and user OID.
+     *
+     * @param name Product name.
+     * @param userOid User OID.
+     * @return Optional product document.
+     */
+    Optional<ProductDocument> findByNameAndUserOidAndIsActiveTrue(String name, String userOid);
 }
