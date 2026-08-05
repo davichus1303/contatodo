@@ -1,12 +1,20 @@
 package com.contatodo.infrastructure.mapper;
 
+import com.contatodo.domain.entities.Acquisition;
+import com.contatodo.domain.entities.AcquisitionType;
+import com.contatodo.domain.entities.Expense;
 import com.contatodo.domain.entities.Module;
 import com.contatodo.domain.entities.ModulePermission;
 import com.contatodo.domain.entities.Product;
+import com.contatodo.domain.entities.ProductCostHistory;
 import com.contatodo.domain.entities.Sale;
 import com.contatodo.domain.entities.User;
+import com.contatodo.infrastructure.persistence.document.AcquisitionDocument;
+import com.contatodo.infrastructure.persistence.document.AcquisitionTypeDocument;
+import com.contatodo.infrastructure.persistence.document.ExpenseDocument;
 import com.contatodo.infrastructure.persistence.document.ModuleDocument;
 import com.contatodo.infrastructure.persistence.document.ModulePermissionDocument;
+import com.contatodo.infrastructure.persistence.document.ProductCostHistoryDocument;
 import com.contatodo.infrastructure.persistence.document.ProductDocument;
 import com.contatodo.infrastructure.persistence.document.SaleDocument;
 import com.contatodo.infrastructure.persistence.document.UserDocument;
@@ -279,5 +287,233 @@ public class PersistenceMapper {
         permission.setUpdate(document.getUpdate());
         permission.setEdit(document.getEdit());
         return permission;
+    }
+
+    /**
+     * Maps an acquisition type entity to an acquisition type document.
+     *
+     * @param acquisitionType Acquisition type entity.
+     * @return Acquisition type document.
+     */
+    public AcquisitionTypeDocument toAcquisitionTypeDocument(AcquisitionType acquisitionType) {
+        AcquisitionTypeDocument document = new AcquisitionTypeDocument();
+        document.setId(acquisitionType.getId());
+        document.setName(acquisitionType.getName());
+        document.setDescription(acquisitionType.getDescription());
+        document.setUserOid(acquisitionType.getUserOid());
+        document.setIsActive(acquisitionType.getIsActive());
+        document.setIsDeleted(acquisitionType.getIsDeleted());
+        document.setAffectsInventory(acquisitionType.getAffectsInventory());
+        document.setCreatedDate(acquisitionType.getCreatedDate());
+        document.setUpdatedDate(acquisitionType.getUpdatedDate());
+        return document;
+    }
+
+    /**
+     * Maps an acquisition type document to an acquisition type entity.
+     *
+     * @param document Acquisition type document.
+     * @return Acquisition type entity.
+     */
+    public AcquisitionType toAcquisitionTypeEntity(AcquisitionTypeDocument document) {
+        AcquisitionType acquisitionType = new AcquisitionType();
+        acquisitionType.setId(document.getId());
+        acquisitionType.setName(document.getName());
+        acquisitionType.setDescription(document.getDescription());
+        acquisitionType.setUserOid(document.getUserOid());
+        acquisitionType.setIsActive(document.getIsActive());
+        acquisitionType.setIsDeleted(document.getIsDeleted());
+        acquisitionType.setAffectsInventory(document.getAffectsInventory());
+        acquisitionType.setCreatedDate(document.getCreatedDate());
+        acquisitionType.setUpdatedDate(document.getUpdatedDate());
+        return acquisitionType;
+    }
+
+    /**
+     * Maps a list of acquisition type documents to acquisition type entities.
+     *
+     * @param documents Acquisition type documents.
+     * @return Acquisition type entities.
+     */
+    public List<AcquisitionType> toAcquisitionTypeEntityList(List<AcquisitionTypeDocument> documents) {
+        return documents.stream().map(this::toAcquisitionTypeEntity).toList();
+    }
+
+    /**
+     * Maps an acquisition entity to an acquisition document.
+     *
+     * @param acquisition Acquisition entity.
+     * @return Acquisition document.
+     */
+    public AcquisitionDocument toAcquisitionDocument(Acquisition acquisition) {
+        AcquisitionDocument document = new AcquisitionDocument();
+        document.setId(acquisition.getId());
+        document.setAcquisitionTypeOid(acquisition.getAcquisitionTypeOid());
+        document.setProductOid(acquisition.getProductOid());
+        document.setProductName(acquisition.getProductName());
+        document.setQuantity(acquisition.getQuantity());
+        document.setRealCost(acquisition.getRealCost());
+        document.setUnitRealCost(acquisition.getUnitRealCost());
+        document.setUnitPublicCost(acquisition.getUnitPublicCost());
+        document.setSupplierOid(acquisition.getSupplierOid());
+        document.setSupplierName(acquisition.getSupplierName());
+        document.setInvoiceNumber(acquisition.getInvoiceNumber());
+        document.setAcquisitionDate(acquisition.getAcquisitionDate());
+        document.setObservations(acquisition.getObservations());
+        document.setUserOid(acquisition.getUserOid());
+        document.setIsDeleted(acquisition.getIsDeleted());
+        document.setCreatedDate(acquisition.getCreatedDate());
+        document.setUpdatedDate(acquisition.getUpdatedDate());
+        return document;
+    }
+
+    /**
+     * Maps an acquisition document to an acquisition entity.
+     *
+     * @param document Acquisition document.
+     * @return Acquisition entity.
+     */
+    public Acquisition toAcquisitionEntity(AcquisitionDocument document) {
+        Acquisition acquisition = new Acquisition();
+        acquisition.setId(document.getId());
+        acquisition.setAcquisitionTypeOid(document.getAcquisitionTypeOid());
+        acquisition.setProductOid(document.getProductOid());
+        acquisition.setProductName(document.getProductName());
+        acquisition.setQuantity(document.getQuantity());
+        acquisition.setRealCost(document.getRealCost());
+        acquisition.setUnitRealCost(document.getUnitRealCost());
+        acquisition.setUnitPublicCost(document.getUnitPublicCost());
+        acquisition.setSupplierOid(document.getSupplierOid());
+        acquisition.setSupplierName(document.getSupplierName());
+        acquisition.setInvoiceNumber(document.getInvoiceNumber());
+        acquisition.setAcquisitionDate(document.getAcquisitionDate());
+        acquisition.setObservations(document.getObservations());
+        acquisition.setUserOid(document.getUserOid());
+        acquisition.setIsDeleted(document.getIsDeleted());
+        acquisition.setCreatedDate(document.getCreatedDate());
+        acquisition.setUpdatedDate(document.getUpdatedDate());
+        return acquisition;
+    }
+
+    /**
+     * Maps a list of acquisition documents to acquisition entities.
+     *
+     * @param documents Acquisition documents.
+     * @return Acquisition entities.
+     */
+    public List<Acquisition> toAcquisitionEntityList(List<AcquisitionDocument> documents) {
+        return documents.stream().map(this::toAcquisitionEntity).toList();
+    }
+
+    /**
+     * Maps a product cost history entity to a product cost history document.
+     *
+     * @param productCostHistory Product cost history entity.
+     * @return Product cost history document.
+     */
+    public ProductCostHistoryDocument toProductCostHistoryDocument(ProductCostHistory productCostHistory) {
+        ProductCostHistoryDocument document = new ProductCostHistoryDocument();
+        document.setId(productCostHistory.getId());
+        document.setProductOid(productCostHistory.getProductOid());
+        document.setAcquisitionOid(productCostHistory.getAcquisitionOid());
+        document.setQuantity(productCostHistory.getQuantity());
+        document.setRemainingQuantity(productCostHistory.getRemainingQuantity());
+        document.setRealCost(productCostHistory.getRealCost());
+        document.setUnitRealCost(productCostHistory.getUnitRealCost());
+        document.setUnitPublicCostAtPurchase(productCostHistory.getUnitPublicCostAtPurchase());
+        document.setAcquisitionDate(productCostHistory.getAcquisitionDate());
+        document.setUserOid(productCostHistory.getUserOid());
+        document.setCreatedDate(productCostHistory.getCreatedDate());
+        return document;
+    }
+
+    /**
+     * Maps a product cost history document to a product cost history entity.
+     *
+     * @param document Product cost history document.
+     * @return Product cost history entity.
+     */
+    public ProductCostHistory toProductCostHistoryEntity(ProductCostHistoryDocument document) {
+        ProductCostHistory productCostHistory = new ProductCostHistory();
+        productCostHistory.setId(document.getId());
+        productCostHistory.setProductOid(document.getProductOid());
+        productCostHistory.setAcquisitionOid(document.getAcquisitionOid());
+        productCostHistory.setQuantity(document.getQuantity());
+        productCostHistory.setRemainingQuantity(document.getRemainingQuantity());
+        productCostHistory.setRealCost(document.getRealCost());
+        productCostHistory.setUnitRealCost(document.getUnitRealCost());
+        productCostHistory.setUnitPublicCostAtPurchase(document.getUnitPublicCostAtPurchase());
+        productCostHistory.setAcquisitionDate(document.getAcquisitionDate());
+        productCostHistory.setUserOid(document.getUserOid());
+        productCostHistory.setCreatedDate(document.getCreatedDate());
+        return productCostHistory;
+    }
+
+    /**
+     * Maps a list of product cost history documents to product cost history entities.
+     *
+     * @param documents Product cost history documents.
+     * @return Product cost history entities.
+     */
+    public List<ProductCostHistory> toProductCostHistoryEntityList(List<ProductCostHistoryDocument> documents) {
+        return documents.stream().map(this::toProductCostHistoryEntity).toList();
+    }
+
+    /**
+     * Maps an expense entity to an expense document.
+     *
+     * @param expense Expense entity.
+     * @return Expense document.
+     */
+    public ExpenseDocument toExpenseDocument(Expense expense) {
+        ExpenseDocument document = new ExpenseDocument();
+        document.setId(expense.getId());
+        document.setAcquisitionOid(expense.getAcquisitionOid());
+        document.setAcquisitionTypeOid(expense.getAcquisitionTypeOid());
+        document.setName(expense.getName());
+        document.setQuantity(expense.getQuantity());
+        document.setAmount(expense.getAmount());
+        document.setCurrency(expense.getCurrency());
+        document.setExpenseDate(expense.getExpenseDate());
+        document.setUserOid(expense.getUserOid());
+        document.setIsActive(expense.getIsActive());
+        document.setIsDeleted(expense.getIsDeleted());
+        document.setCreatedDate(expense.getCreatedDate());
+        document.setUpdatedDate(expense.getUpdatedDate());
+        return document;
+    }
+
+    /**
+     * Maps an expense document to an expense entity.
+     *
+     * @param document Expense document.
+     * @return Expense entity.
+     */
+    public Expense toExpenseEntity(ExpenseDocument document) {
+        Expense expense = new Expense();
+        expense.setId(document.getId());
+        expense.setAcquisitionOid(document.getAcquisitionOid());
+        expense.setAcquisitionTypeOid(document.getAcquisitionTypeOid());
+        expense.setName(document.getName());
+        expense.setQuantity(document.getQuantity());
+        expense.setAmount(document.getAmount());
+        expense.setCurrency(document.getCurrency());
+        expense.setExpenseDate(document.getExpenseDate());
+        expense.setUserOid(document.getUserOid());
+        expense.setIsActive(document.getIsActive());
+        expense.setIsDeleted(document.getIsDeleted());
+        expense.setCreatedDate(document.getCreatedDate());
+        expense.setUpdatedDate(document.getUpdatedDate());
+        return expense;
+    }
+
+    /**
+     * Maps a list of expense documents to expense entities.
+     *
+     * @param documents Expense documents.
+     * @return Expense entities.
+     */
+    public List<Expense> toExpenseEntityList(List<ExpenseDocument> documents) {
+        return documents.stream().map(this::toExpenseEntity).toList();
     }
 }
