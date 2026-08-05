@@ -2,6 +2,7 @@ package com.contatodo.infrastructure.mapper;
 
 import com.contatodo.domain.entities.Acquisition;
 import com.contatodo.domain.entities.AcquisitionType;
+import com.contatodo.domain.entities.Expense;
 import com.contatodo.domain.entities.Module;
 import com.contatodo.domain.entities.ModulePermission;
 import com.contatodo.domain.entities.Product;
@@ -10,6 +11,7 @@ import com.contatodo.domain.entities.Sale;
 import com.contatodo.domain.entities.User;
 import com.contatodo.infrastructure.persistence.document.AcquisitionDocument;
 import com.contatodo.infrastructure.persistence.document.AcquisitionTypeDocument;
+import com.contatodo.infrastructure.persistence.document.ExpenseDocument;
 import com.contatodo.infrastructure.persistence.document.ModuleDocument;
 import com.contatodo.infrastructure.persistence.document.ModulePermissionDocument;
 import com.contatodo.infrastructure.persistence.document.ProductCostHistoryDocument;
@@ -301,6 +303,7 @@ public class PersistenceMapper {
         document.setUserOid(acquisitionType.getUserOid());
         document.setIsActive(acquisitionType.getIsActive());
         document.setIsDeleted(acquisitionType.getIsDeleted());
+        document.setAffectsInventory(acquisitionType.getAffectsInventory());
         document.setCreatedDate(acquisitionType.getCreatedDate());
         document.setUpdatedDate(acquisitionType.getUpdatedDate());
         return document;
@@ -320,6 +323,7 @@ public class PersistenceMapper {
         acquisitionType.setUserOid(document.getUserOid());
         acquisitionType.setIsActive(document.getIsActive());
         acquisitionType.setIsDeleted(document.getIsDeleted());
+        acquisitionType.setAffectsInventory(document.getAffectsInventory());
         acquisitionType.setCreatedDate(document.getCreatedDate());
         acquisitionType.setUpdatedDate(document.getUpdatedDate());
         return acquisitionType;
@@ -346,6 +350,7 @@ public class PersistenceMapper {
         document.setId(acquisition.getId());
         document.setAcquisitionTypeOid(acquisition.getAcquisitionTypeOid());
         document.setProductOid(acquisition.getProductOid());
+        document.setProductName(acquisition.getProductName());
         document.setQuantity(acquisition.getQuantity());
         document.setRealCost(acquisition.getRealCost());
         document.setUnitRealCost(acquisition.getUnitRealCost());
@@ -373,6 +378,7 @@ public class PersistenceMapper {
         acquisition.setId(document.getId());
         acquisition.setAcquisitionTypeOid(document.getAcquisitionTypeOid());
         acquisition.setProductOid(document.getProductOid());
+        acquisition.setProductName(document.getProductName());
         acquisition.setQuantity(document.getQuantity());
         acquisition.setRealCost(document.getRealCost());
         acquisition.setUnitRealCost(document.getUnitRealCost());
@@ -451,5 +457,63 @@ public class PersistenceMapper {
      */
     public List<ProductCostHistory> toProductCostHistoryEntityList(List<ProductCostHistoryDocument> documents) {
         return documents.stream().map(this::toProductCostHistoryEntity).toList();
+    }
+
+    /**
+     * Maps an expense entity to an expense document.
+     *
+     * @param expense Expense entity.
+     * @return Expense document.
+     */
+    public ExpenseDocument toExpenseDocument(Expense expense) {
+        ExpenseDocument document = new ExpenseDocument();
+        document.setId(expense.getId());
+        document.setAcquisitionOid(expense.getAcquisitionOid());
+        document.setAcquisitionTypeOid(expense.getAcquisitionTypeOid());
+        document.setName(expense.getName());
+        document.setQuantity(expense.getQuantity());
+        document.setAmount(expense.getAmount());
+        document.setCurrency(expense.getCurrency());
+        document.setExpenseDate(expense.getExpenseDate());
+        document.setUserOid(expense.getUserOid());
+        document.setIsActive(expense.getIsActive());
+        document.setIsDeleted(expense.getIsDeleted());
+        document.setCreatedDate(expense.getCreatedDate());
+        document.setUpdatedDate(expense.getUpdatedDate());
+        return document;
+    }
+
+    /**
+     * Maps an expense document to an expense entity.
+     *
+     * @param document Expense document.
+     * @return Expense entity.
+     */
+    public Expense toExpenseEntity(ExpenseDocument document) {
+        Expense expense = new Expense();
+        expense.setId(document.getId());
+        expense.setAcquisitionOid(document.getAcquisitionOid());
+        expense.setAcquisitionTypeOid(document.getAcquisitionTypeOid());
+        expense.setName(document.getName());
+        expense.setQuantity(document.getQuantity());
+        expense.setAmount(document.getAmount());
+        expense.setCurrency(document.getCurrency());
+        expense.setExpenseDate(document.getExpenseDate());
+        expense.setUserOid(document.getUserOid());
+        expense.setIsActive(document.getIsActive());
+        expense.setIsDeleted(document.getIsDeleted());
+        expense.setCreatedDate(document.getCreatedDate());
+        expense.setUpdatedDate(document.getUpdatedDate());
+        return expense;
+    }
+
+    /**
+     * Maps a list of expense documents to expense entities.
+     *
+     * @param documents Expense documents.
+     * @return Expense entities.
+     */
+    public List<Expense> toExpenseEntityList(List<ExpenseDocument> documents) {
+        return documents.stream().map(this::toExpenseEntity).toList();
     }
 }

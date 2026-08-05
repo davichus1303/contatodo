@@ -122,6 +122,14 @@ public class SaleService {
         return saleMapper.toResponseList(sales);
     }
 
+    /**
+     * Validates that the product has sufficient stock to fulfill the requested quantity.
+     * Checks for null or exhausted stock, and verifies available stock meets the required quantity.
+     * 
+     * @param product The product to check stock for
+     * @param quantity The quantity of the product requested for the sale
+     * @throws InsufficientStockException if product stock is null, exhausted, or insufficient for the requested quantity
+     */
     private void validateStock(Product product, Integer quantity) {
         if (product.getStock() == null || product.getStock() <= 0) {
             throw new InsufficientStockException(SaleConstants.PRODUCT_OUT_OF_STOCK);
@@ -131,22 +139,51 @@ public class SaleService {
         }
     }
 
+    /**
+     * Calculates the total cost of the sale.
+     * If the product has a unit real cost, it is used; otherwise, the real cost is used.
+     * 
+     * @param product The product to calculate the total cost for
+     * @param quantity The quantity of the product requested for the sale
+     * @return The total cost of the sale
+     */
     private Double calculateTotalCost(Product product, Integer quantity) {
         Double unitCost = product.getUnitRealCost() != null ? product.getUnitRealCost() : product.getRealCost();
         return unitCost * quantity;
     }
 
+    /**
+     * Calculates the original total price of the sale.
+     * If the product has a unit public cost, it is used; otherwise, the real cost is used.
+     * 
+     * @param product The product to calculate the original total price for
+     * @param quantity The quantity of the product requested for the sale
+     * @return The original total price of the sale
+     */
     private Double calculateOriginalTotalPrice(Product product, Integer quantity) {
         Double unitPrice = product.getUnitPublicCost() != null ? product.getUnitPublicCost() : product.getRealCost();
         return unitPrice * quantity;
     }
 
+    /**
+     * Validates that the total sale price includes a profit.
+     * If the total sale price is less than or equal to the total cost, throws a SaleWithoutProfitException.
+     * 
+     * @param totalCost The total cost of the sale
+     * @param totalSalePrice The total sale price of the sale
+     * @throws SaleWithoutProfitException if the total sale price is less than or equal to the total cost
+     */
     private void validateProfit(Double totalCost, Double totalSalePrice) {
         if (totalSalePrice <= totalCost) {
             throw new SaleWithoutProfitException(SaleConstants.SALE_WITHOUT_PROFIT);
         }
     }
 
+    /**
+     * Generates a daily sale number for the authenticated user.
+     * 
+     * @return The next available sale number for the user
+     */
     private Long generateDailySaleNumber() {
         String userOid = SecurityUtils.getCurrentUserOid(userService);
         
@@ -162,6 +199,12 @@ public class SaleService {
                 .orElse(1L);
     }
 
+    /**
+     * Decreases the stock of the product by the requested quantity.
+     * 
+     * @param product The product to decrease stock for
+     * @param quantity The quantity of the product requested for the sale
+     */
     private void decreaseProductStock(Product product, Integer quantity) {
         product.setStock(product.getStock() - quantity);
         product.setUpdatedDate(LocalDateTime.now());

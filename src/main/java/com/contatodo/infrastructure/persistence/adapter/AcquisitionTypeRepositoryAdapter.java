@@ -68,4 +68,14 @@ public class AcquisitionTypeRepositoryAdapter implements AcquisitionTypeReposito
     public Optional<AcquisitionType> findByName(String name) {
         return acquisitionTypeMongoRepository.findByName(name).map(persistenceMapper::toAcquisitionTypeEntity);
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<AcquisitionType> findAllNotDeleted() {
+        return persistenceMapper.toAcquisitionTypeEntityList(
+                acquisitionTypeMongoRepository.findByIsDeletedFalseOrderByNameAsc()
+        );
+    }
 }

@@ -1,6 +1,7 @@
 package com.contatodo.application.mapper;
 
 import com.contatodo.application.dto.request.CreateAcquisitionTypeRequest;
+import com.contatodo.application.dto.request.UpdateAcquisitionTypeRequest;
 import com.contatodo.application.dto.response.AcquisitionTypeResponse;
 import com.contatodo.domain.entities.AcquisitionType;
 import org.springframework.stereotype.Component;
@@ -25,6 +26,7 @@ public class AcquisitionTypeMapper {
         acquisitionType.setName(request.getName());
         acquisitionType.setDescription(request.getDescription());
         acquisitionType.setUserOid(request.getUserOid());
+        acquisitionType.setAffectsInventory(request.getAffectsInventory() != null ? request.getAffectsInventory() : false);
         acquisitionType.setIsActive(true);
         acquisitionType.setIsDeleted(false);
         acquisitionType.setCreatedDate(LocalDateTime.now());
@@ -46,6 +48,7 @@ public class AcquisitionTypeMapper {
         response.setUserOid(acquisitionType.getUserOid());
         response.setIsActive(acquisitionType.getIsActive());
         response.setIsDeleted(acquisitionType.getIsDeleted());
+        response.setAffectsInventory(acquisitionType.getAffectsInventory());
         response.setCreatedDate(acquisitionType.getCreatedDate());
         response.setUpdatedDate(acquisitionType.getUpdatedDate());
         return response;
@@ -59,5 +62,28 @@ public class AcquisitionTypeMapper {
      */
     public List<AcquisitionTypeResponse> toResponseList(List<AcquisitionType> acquisitionTypes) {
         return acquisitionTypes.stream().map(this::toResponse).toList();
+    }
+
+    /**
+     * Updates an existing acquisition type entity from an update request.
+     * Only updates editable fields (name, description, isActive, and affectsInventory).
+     *
+     * @param acquisitionType Existing acquisition type entity.
+     * @param request Update acquisition type request.
+     */
+    public void updateEntityFromRequest(AcquisitionType acquisitionType, UpdateAcquisitionTypeRequest request) {
+        if (request.getName() != null) {
+            acquisitionType.setName(request.getName());
+        }
+        if (request.getDescription() != null) {
+            acquisitionType.setDescription(request.getDescription());
+        }
+        if (request.getIsActive() != null) {
+            acquisitionType.setIsActive(request.getIsActive());
+        }
+        if (request.getAffectsInventory() != null) {
+            acquisitionType.setAffectsInventory(request.getAffectsInventory());
+        }
+        acquisitionType.setUpdatedDate(LocalDateTime.now());
     }
 }

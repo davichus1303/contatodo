@@ -1,6 +1,7 @@
 package com.contatodo.application.services;
 
 import com.contatodo.application.dto.request.CreateAcquisitionRequest;
+import com.contatodo.application.dto.request.CreateExpenseRequest;
 import com.contatodo.application.dto.response.AcquisitionResponse;
 import com.contatodo.application.mapper.AcquisitionMapper;
 import com.contatodo.application.mapper.ProductMapper;
@@ -13,12 +14,12 @@ import com.contatodo.domain.repositories.AcquisitionRepository;
 import com.contatodo.domain.repositories.AcquisitionTypeRepository;
 import com.contatodo.domain.repositories.ProductCostHistoryRepository;
 import com.contatodo.domain.repositories.ProductRepository;
-import com.contatodo.shared.exceptions.ProductNotFoundException;
 import com.contatodo.shared.utils.SecurityUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +38,7 @@ public class AcquisitionService {
     private final AcquisitionMapper acquisitionMapper;
     private final ProductMapper productMapper;
     private final UserService userService;
+    private final ExpenseService expenseService;
 
     /**
      * Creates an acquisition service.
@@ -49,6 +51,7 @@ public class AcquisitionService {
      * @param acquisitionMapper Acquisition mapper.
      * @param productMapper Product mapper.
      * @param userService User service.
+     * @param expenseService Expense service.
      */
     public AcquisitionService(
             AcquisitionRepository acquisitionRepository,
@@ -58,7 +61,8 @@ public class AcquisitionService {
             AcquisitionValidator acquisitionValidator,
             AcquisitionMapper acquisitionMapper,
             ProductMapper productMapper,
-            UserService userService
+            UserService userService,
+            ExpenseService expenseService
     ) {
         this.acquisitionRepository = acquisitionRepository;
         this.productRepository = productRepository;
@@ -68,6 +72,7 @@ public class AcquisitionService {
         this.acquisitionMapper = acquisitionMapper;
         this.productMapper = productMapper;
         this.userService = userService;
+        this.expenseService = expenseService;
     }
 
     /**
@@ -79,8 +84,37 @@ public class AcquisitionService {
      */
     @Transactional
     public AcquisitionResponse registerAcquisition(CreateAcquisitionRequest request) {
-        acquisitionValidator.validateCreateRequest(request);
         String userOid = SecurityUtils.getCurrentUserOid(userService);
+        
+        // Retrieve the acquisition type to evaluate affectsInventory
+        AcquisitionType acquisitionType = acquisitionTypeRepository.findById(request.getAcquisitionTypeOid())
+                .orElseThrow(() -> new IllegalArgumentException("Acquisition type not found"));
+        
+        Boolean affectsInventory = acquisitionType.getAffectsInventory() != null 
+            ? acquisitionType.getAffectsInventory() 
+            : false; // Default to false
+        
+        if (affectsInventory) {
+            // Use standard validation for inventory-affecting acquisitions
+            acquisitionValidator.validateCreateRequest(request);
+            return registerInventoryAffectingAcquisition(request, userOid, acquisitionType);
+        } else {
+            // Use relaxed validation for non-inventory-affecting acquisitions
+            acquisitionValidator.validateNonInventoryAffectingRequest(request);
+            return registerNonInventoryAffectingAcquisition(request, userOid, acquisitionType);
+        }
+    }
+
+    /**
+     * Registers an acquisition that affects inventory (existing flow).
+     * This includes product creation/update, stock management, and cost history.
+     *
+     * @param request Create acquisition request.
+     * @param userOid User OID.
+     * @param acquisitionType Acquisition type entity.
+     * @return Created acquisition response.
+     */
+    private AcquisitionResponse registerInventoryAffectingAcquisition(CreateAcquisitionRequest request, String userOid, AcquisitionType acquisitionType) {
         // Search for product by name and user OID
         Product product = productRepository.findByNameAndUserOid(request.getProductName(), userOid)
             .orElse(null);
@@ -119,11 +153,40 @@ public class AcquisitionService {
         // Create product cost history   
         ProductCostHistory costHistory = buildProductCostHistoryObject(productOid, request, savedAcquisition, averageUnitRealCost);
         productCostHistoryRepository.save(costHistory);
-        // Get acquisition type name for response
-        AcquisitionType acquisitionType = acquisitionTypeRepository.findById(request.getAcquisitionTypeOid())
-                .orElse(new AcquisitionType());
-        String acquisitionTypeName = acquisitionType.getName() != null ? acquisitionType.getName() : "Unknown";
-        return acquisitionMapper.toResponse(savedAcquisition, productName, acquisitionTypeName);
+        
+        return acquisitionMapper.toResponse(savedAcquisition, productName, acquisitionType.getName());
+    }
+
+    /**
+     * Registers an acquisition that does not affect inventory (alternative flow).
+     * This creates an Expense document for the acquisition.
+     *
+     * @param request Create acquisition request.
+     * @param userOid User OID.
+     * @param acquisitionType Acquisition type entity.
+     * @return Created acquisition response.
+     */
+    private AcquisitionResponse registerNonInventoryAffectingAcquisition(CreateAcquisitionRequest request, String userOid, AcquisitionType acquisitionType) {
+        // Create acquisition without product association
+        Acquisition acquisition = acquisitionMapper.toEntity(request, null, userOid, 0.0);
+        Acquisition savedAcquisition = acquisitionRepository.save(acquisition);
+        
+        // Create Expense document
+        CreateExpenseRequest expenseRequest = new CreateExpenseRequest();
+        expenseRequest.setAcquisitionOid(savedAcquisition.getId());
+        expenseRequest.setAcquisitionTypeOid(acquisitionType.getId());
+        expenseRequest.setName(request.getProductName());
+        // Quantity is optional for expenses, set to 1 if not provided
+        expenseRequest.setQuantity(request.getQuantity() != null ? request.getQuantity() : 1);
+        expenseRequest.setAmount(request.getRealCost());
+        expenseRequest.setCurrency("MXN"); // Default currency, could be made configurable
+        expenseRequest.setExpenseDate(savedAcquisition.getAcquisitionDate() != null 
+            ? savedAcquisition.getAcquisitionDate().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+            : LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        
+        expenseService.createExpense(expenseRequest);
+        
+        return acquisitionMapper.toResponse(savedAcquisition, request.getProductName(), acquisitionType.getName());
     }
 
     /**

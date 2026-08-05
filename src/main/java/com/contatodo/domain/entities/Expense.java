@@ -3,24 +3,28 @@ package com.contatodo.domain.entities;
 import java.time.LocalDateTime;
 
 /**
- * Domain entity representing an acquisition type catalog.
+ * Domain entity representing an expense.
  */
-public class AcquisitionType {
+public class Expense {
 
     private String id;
+    private String acquisitionOid;
+    private String acquisitionTypeOid;
     private String name;
-    private String description;
+    private Integer quantity;
+    private Double amount;
+    private String currency;
+    private LocalDateTime expenseDate;
     private String userOid;
     private Boolean isActive;
     private Boolean isDeleted;
-    private Boolean affectsInventory;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
 
     /**
-     * Creates an empty acquisition type.
+     * Creates an empty expense.
      */
-    public AcquisitionType() {
+    public Expense() {
     }
 
     public String getId() {
@@ -31,6 +35,22 @@ public class AcquisitionType {
         this.id = id;
     }
 
+    public String getAcquisitionOid() {
+        return acquisitionOid;
+    }
+
+    public void setAcquisitionOid(String acquisitionOid) {
+        this.acquisitionOid = acquisitionOid;
+    }
+
+    public String getAcquisitionTypeOid() {
+        return acquisitionTypeOid;
+    }
+
+    public void setAcquisitionTypeOid(String acquisitionTypeOid) {
+        this.acquisitionTypeOid = acquisitionTypeOid;
+    }
+
     public String getName() {
         return name;
     }
@@ -39,12 +59,36 @@ public class AcquisitionType {
         this.name = name;
     }
 
-    public String getDescription() {
-        return description;
+    public Integer getQuantity() {
+        return quantity;
     }
 
-    public void setDescription(String description) {
-        this.description = description;
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
+
+    public Double getAmount() {
+        return amount;
+    }
+
+    public void setAmount(Double amount) {
+        this.amount = amount;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String currency) {
+        this.currency = currency;
+    }
+
+    public LocalDateTime getExpenseDate() {
+        return expenseDate;
+    }
+
+    public void setExpenseDate(LocalDateTime expenseDate) {
+        this.expenseDate = expenseDate;
     }
 
     public String getUserOid() {
@@ -69,14 +113,6 @@ public class AcquisitionType {
 
     public void setIsDeleted(Boolean isDeleted) {
         this.isDeleted = isDeleted;
-    }
-
-    public Boolean getAffectsInventory() {
-        return affectsInventory;
-    }
-
-    public void setAffectsInventory(Boolean affectsInventory) {
-        this.affectsInventory = affectsInventory;
     }
 
     public LocalDateTime getCreatedDate() {
