@@ -1,16 +1,16 @@
 package com.contatodo.application.dto.request;
 
 /**
- * Request DTO for creating an acquisition type.
+ * Request DTO for updating an acquisition type.
  */
-public class CreateAcquisitionTypeRequest {
+public class UpdateAcquisitionTypeRequest {
 
     private String name;
     private String description;
-    private String userOid;
+    private Boolean isActive;
     private Boolean affectsInventory;
 
-    public CreateAcquisitionTypeRequest() {
+    public UpdateAcquisitionTypeRequest() {
     }
 
     public String getName() {
@@ -29,12 +29,12 @@ public class CreateAcquisitionTypeRequest {
         this.description = description;
     }
 
-    public String getUserOid() {
-        return userOid;
+    public Boolean getIsActive() {
+        return isActive;
     }
 
-    public void setUserOid(String userOid) {
-        this.userOid = userOid;
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
     }
 
     public Boolean getAffectsInventory() {

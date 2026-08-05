@@ -40,4 +40,11 @@ public interface AcquisitionTypeRepository {
      * @return Optional acquisition type.
      */
     Optional<AcquisitionType> findByName(String name);
+
+    /**
+     * Finds all acquisition types that are not deleted (both active and inactive).
+     *
+     * @return List of non-deleted acquisition types ordered by name.
+     */
+    List<AcquisitionType> findAllNotDeleted();
 }

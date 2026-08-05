@@ -5,7 +5,6 @@ import com.contatodo.application.dto.response.ModuleResponse;
 import com.contatodo.application.mapper.ModuleMapper;
 import com.contatodo.domain.entities.Module;
 import com.contatodo.domain.repositories.ModuleRepository;
-import com.contatodo.shared.constants.ModuleConstants;
 import com.contatodo.shared.utils.SecurityUtils;
 import org.springframework.stereotype.Service;
 

@@ -27,6 +27,7 @@ public class AcquisitionMapper {
         Acquisition acquisition = new Acquisition();
         acquisition.setAcquisitionTypeOid(request.getAcquisitionTypeOid());
         acquisition.setProductOid(productOid);
+        acquisition.setProductName(request.getProductName());
         acquisition.setQuantity(request.getQuantity());
         acquisition.setRealCost(request.getRealCost());
         acquisition.setUnitRealCost(unitRealCost);
@@ -47,14 +48,15 @@ public class AcquisitionMapper {
      * Maps an acquisition entity to a response DTO with enriched information.
      *
      * @param acquisition Acquisition entity.
-     * @param productName Product name.
+     * @param productName Product name (if null, will use acquisition.getProductName()).
      * @param acquisitionType Acquisition type name.
      * @return Acquisition response.
      */
     public AcquisitionResponse toResponse(Acquisition acquisition, String productName, String acquisitionType) {
         AcquisitionResponse response = new AcquisitionResponse();
         response.setId(acquisition.getId());
-        response.setProductName(productName);
+        // Use the provided productName, or fall back to the entity's productName
+        response.setProductName(productName != null ? productName : acquisition.getProductName());
         response.setAcquisitionType(acquisitionType);
         response.setQuantity(acquisition.getQuantity());
         response.setRealCost(acquisition.getRealCost());
@@ -81,11 +83,24 @@ public class AcquisitionMapper {
             java.util.Map<String, String> acquisitionTypes
     ) {
         return acquisitions.stream()
-                .map(acquisition -> toResponse(
-                        acquisition,
-                        productNames.getOrDefault(acquisition.getProductOid(), "Unknown"),
-                        acquisitionTypes.getOrDefault(acquisition.getAcquisitionTypeOid(), "Unknown")
-                ))
+                .map(acquisition -> {
+                    // Use product name from map if productOid exists and is found, otherwise use entity's productName
+                    String productName = null;
+                    if (acquisition.getProductOid() != null && productNames.containsKey(acquisition.getProductOid())) {
+                        productName = productNames.get(acquisition.getProductOid());
+                    } else {
+                        productName = acquisition.getProductName();
+                    }
+                    // Fallback to "Unknown" if both are null
+                    if (productName == null) {
+                        productName = "Unknown";
+                    }
+                    return toResponse(
+                            acquisition,
+                            productName,
+                            acquisitionTypes.getOrDefault(acquisition.getAcquisitionTypeOid(), "Unknown")
+                    );
+                })
                 .toList();
     }
 }

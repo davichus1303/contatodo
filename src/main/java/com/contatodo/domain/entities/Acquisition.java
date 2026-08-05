@@ -10,6 +10,7 @@ public class Acquisition {
     private String id;
     private String acquisitionTypeOid;
     private String productOid;
+    private String productName;
     private Integer quantity;
     private Double realCost;
     private Double unitRealCost;
@@ -52,6 +53,14 @@ public class Acquisition {
 
     public void setProductOid(String productOid) {
         this.productOid = productOid;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
     }
 
     public Integer getQuantity() {

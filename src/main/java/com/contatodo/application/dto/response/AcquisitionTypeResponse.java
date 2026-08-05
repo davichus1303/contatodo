@@ -13,6 +13,7 @@ public class AcquisitionTypeResponse {
     private String userOid;
     private Boolean isActive;
     private Boolean isDeleted;
+    private Boolean affectsInventory;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
 
@@ -65,6 +66,14 @@ public class AcquisitionTypeResponse {
 
     public void setIsDeleted(Boolean isDeleted) {
         this.isDeleted = isDeleted;
+    }
+
+    public Boolean getAffectsInventory() {
+        return affectsInventory;
+    }
+
+    public void setAffectsInventory(Boolean affectsInventory) {
+        this.affectsInventory = affectsInventory;
     }
 
     public LocalDateTime getCreatedDate() {

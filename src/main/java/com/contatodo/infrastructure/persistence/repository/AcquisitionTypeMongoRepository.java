@@ -25,4 +25,11 @@ public interface AcquisitionTypeMongoRepository extends MongoRepository<Acquisit
      * @return Optional acquisition type document.
      */
     Optional<AcquisitionTypeDocument> findByName(String name);
+
+    /**
+     * Finds all acquisition types that are not deleted (both active and inactive).
+     *
+     * @return List of non-deleted acquisition type documents ordered by name.
+     */
+    List<AcquisitionTypeDocument> findByIsDeletedFalseOrderByNameAsc();
 }
