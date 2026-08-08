@@ -3,6 +3,7 @@ package com.contatodo.infrastructure.persistence.repository;
 import com.contatodo.infrastructure.persistence.document.ExpenseDocument;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -25,4 +26,13 @@ public interface ExpenseMongoRepository extends MongoRepository<ExpenseDocument,
      * @return Optional expense document.
      */
     Optional<ExpenseDocument> findById(String id);
+
+    /**
+     * Finds active and non-deleted expenses within a date range.
+     *
+     * @param startDate Start of date range (inclusive).
+     * @param endDate End of date range (inclusive).
+     * @return List of expense documents within the date range.
+     */
+    List<ExpenseDocument> findByIsActiveTrueAndIsDeletedFalseAndExpenseDateBetween(LocalDateTime startDate, LocalDateTime endDate);
 }
