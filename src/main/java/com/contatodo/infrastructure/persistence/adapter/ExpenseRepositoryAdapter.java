@@ -7,6 +7,7 @@ import com.contatodo.infrastructure.persistence.document.ExpenseDocument;
 import com.contatodo.infrastructure.persistence.repository.ExpenseMongoRepository;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -59,5 +60,15 @@ public class ExpenseRepositoryAdapter implements ExpenseRepository {
     @Override
     public Expense findById(String id) {
         return expenseMongoRepository.findById(id).map(persistenceMapper::toExpenseEntity).orElse(null);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<Expense> findActiveAndNotDeletedByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
+        return persistenceMapper.toExpenseEntityList(
+                expenseMongoRepository.findByIsActiveTrueAndIsDeletedFalseAndExpenseDateBetween(startDate, endDate)
+        );
     }
 }

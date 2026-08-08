@@ -2,6 +2,7 @@ package com.contatodo.domain.repositories;
 
 import com.contatodo.domain.entities.Expense;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -31,4 +32,13 @@ public interface ExpenseRepository {
      * @return Expense if found, null otherwise.
      */
     Expense findById(String id);
+
+    /**
+     * Finds all active and non-deleted expenses within a date range.
+     *
+     * @param startDate Start of date range (inclusive).
+     * @param endDate End of date range (inclusive).
+     * @return List of expenses within the date range.
+     */
+    List<Expense> findActiveAndNotDeletedByDateRange(LocalDateTime startDate, LocalDateTime endDate);
 }
