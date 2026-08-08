@@ -1,10 +1,13 @@
 package com.contatodo.infrastructure.controller;
 
 import com.contatodo.application.dto.request.CreateExpenseRequest;
+import com.contatodo.application.dto.request.TotalExpensesRequest;
 import com.contatodo.application.dto.response.ExpenseResponse;
+import com.contatodo.application.dto.response.TotalExpensesResponse;
 import com.contatodo.application.services.ExpenseService;
 import com.contatodo.shared.constants.ResponseConstants;
 import com.contatodo.shared.response.ApiResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -55,5 +58,19 @@ public class ExpenseController {
     public ResponseEntity<ApiResponse<List<ExpenseResponse>>> getExpenses() {
         List<ExpenseResponse> expenses = expenseService.getExpenses();
         return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, expenses));
+    }
+
+    /**
+     * Calculates the total expenses within a specified date range.
+     *
+     * @param request Total expenses request with start and end dates.
+     * @return Total expenses response with the calculated sum.
+     */
+    @PostMapping("/total")
+    public ResponseEntity<ApiResponse<TotalExpensesResponse>> getTotalExpenses(
+            @Valid @RequestBody TotalExpensesRequest request
+    ) {
+        TotalExpensesResponse totalExpenses = expenseService.getTotalExpensesByDateRange(request);
+        return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, totalExpenses));
     }
 }
