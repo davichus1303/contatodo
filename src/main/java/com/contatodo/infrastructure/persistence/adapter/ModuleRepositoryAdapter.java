@@ -55,7 +55,7 @@ public class ModuleRepositoryAdapter implements ModuleRepository {
      * {@inheritDoc}
      */
     @Override
-    public List<Module> findActiveModulesByUserOid(String userOid) {
-        return persistenceMapper.toModuleEntityList(moduleMongoRepository.findActiveModulesByUserOid(userOid));
+    public List<Module> findAllActive() {
+        return persistenceMapper.toModuleEntityList(moduleMongoRepository.findActiveModules());
     }
 }

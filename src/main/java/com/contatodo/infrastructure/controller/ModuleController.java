@@ -46,12 +46,12 @@ public class ModuleController {
     }
 
     /**
-     * Retrieves modules accessible to the authenticated user.
+     * Retrieves all active modules.
      * @return List of modules.
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ModuleResponse>>> getModulesForUser() {
-        List<ModuleResponse> modules = moduleService.getModulesForUser();
+    public ResponseEntity<ApiResponse<List<ModuleResponse>>> getModules() {
+        List<ModuleResponse> modules = moduleService.getModules();
         return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, modules));
     }
 }

@@ -66,6 +66,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/acquisition-types/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/expenses").authenticated()
                         .requestMatchers(HttpMethod.POST, "/expenses").authenticated()
+                        .requestMatchers("/roles/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

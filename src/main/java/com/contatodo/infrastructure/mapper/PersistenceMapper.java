@@ -7,6 +7,8 @@ import com.contatodo.domain.entities.Module;
 import com.contatodo.domain.entities.ModulePermission;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.entities.ProductCostHistory;
+import com.contatodo.domain.entities.Role;
+import com.contatodo.domain.entities.RolePermission;
 import com.contatodo.domain.entities.Sale;
 import com.contatodo.domain.entities.User;
 import com.contatodo.infrastructure.persistence.document.AcquisitionDocument;
@@ -16,6 +18,8 @@ import com.contatodo.infrastructure.persistence.document.ModuleDocument;
 import com.contatodo.infrastructure.persistence.document.ModulePermissionDocument;
 import com.contatodo.infrastructure.persistence.document.ProductCostHistoryDocument;
 import com.contatodo.infrastructure.persistence.document.ProductDocument;
+import com.contatodo.infrastructure.persistence.document.RoleDocument;
+import com.contatodo.infrastructure.persistence.document.RolePermissionDocument;
 import com.contatodo.infrastructure.persistence.document.SaleDocument;
 import com.contatodo.infrastructure.persistence.document.UserDocument;
 import org.springframework.stereotype.Component;
@@ -214,12 +218,6 @@ public class PersistenceMapper {
         document.setLink(module.getLink());
         document.setIsActive(module.getIsActive());
         document.setIsDelete(module.getIsDeleted());
-        
-        List<ModulePermissionDocument> permissionDocuments = module.getPermissions().stream()
-                .map(this::toModulePermissionDocument)
-                .collect(Collectors.toList());
-        document.setPermissions(permissionDocuments);
-        
         document.setCreatedDate(module.getCreatedDate());
         document.setUpdatedDate(module.getUpdatedDate());
         return document;
@@ -238,12 +236,6 @@ public class PersistenceMapper {
         module.setLink(document.getLink());
         module.setIsActive(document.getIsActive());
         module.setIsDeleted(document.getIsDelete());
-        
-        List<ModulePermission> permissions = document.getPermissions().stream()
-                .map(this::toModulePermission)
-                .collect(Collectors.toList());
-        module.setPermissions(permissions);
-        
         module.setCreatedDate(document.getCreatedDate());
         module.setUpdatedDate(document.getUpdatedDate());
         return module;
@@ -257,36 +249,6 @@ public class PersistenceMapper {
      */
     public List<Module> toModuleEntityList(List<ModuleDocument> documents) {
         return documents.stream().map(this::toModuleEntity).toList();
-    }
-
-    /**
-     * Maps a module permission entity to a module permission document.
-     *
-     * @param permission Module permission entity.
-     * @return Module permission document.
-     */
-    private ModulePermissionDocument toModulePermissionDocument(ModulePermission permission) {
-        ModulePermissionDocument document = new ModulePermissionDocument();
-        document.setUserOid(permission.getUserOid());
-        document.setCreate(permission.getCreate());
-        document.setUpdate(permission.getUpdate());
-        document.setEdit(permission.getEdit());
-        return document;
-    }
-
-    /**
-     * Maps a module permission document to a module permission entity.
-     *
-     * @param document Module permission document.
-     * @return Module permission entity.
-     */
-    private ModulePermission toModulePermission(ModulePermissionDocument document) {
-        ModulePermission permission = new ModulePermission();
-        permission.setUserOid(document.getUserOid());
-        permission.setCreate(document.getCreate());
-        permission.setUpdate(document.getUpdate());
-        permission.setEdit(document.getEdit());
-        return permission;
     }
 
     /**
@@ -515,5 +477,104 @@ public class PersistenceMapper {
      */
     public List<Expense> toExpenseEntityList(List<ExpenseDocument> documents) {
         return documents.stream().map(this::toExpenseEntity).toList();
+    }
+
+    /**
+     * Maps a role entity to a role document.
+     *
+     * @param role Role entity.
+     * @return Role document.
+     */
+    public RoleDocument toRoleDocument(Role role) {
+        RoleDocument document = new RoleDocument();
+        document.setId(role.getId());
+        document.setName(role.getName());
+        document.setIsDeleted(role.getIsDeleted());
+        document.setIsActive(role.getIsActive());
+        document.setCreatedDate(role.getCreatedDate());
+        document.setUpdatedDate(role.getUpdatedDate());
+        document.setCreatedBy(role.getCreatedBy());
+        
+        List<RolePermissionDocument> permissionDocuments = role.getPermissions().stream()
+                .map(this::toRolePermissionDocument)
+                .collect(Collectors.toList());
+        document.setPermissions(permissionDocuments);
+        
+        return document;
+    }
+
+    /**
+     * Maps a role document to a role entity.
+     *
+     * @param document Role document.
+     * @return Role entity.
+     */
+    public Role toRoleEntity(RoleDocument document) {
+        Role role = new Role();
+        role.setId(document.getId());
+        role.setName(document.getName());
+        role.setIsDeleted(document.getIsDeleted());
+        role.setIsActive(document.getIsActive());
+        role.setCreatedDate(document.getCreatedDate());
+        role.setUpdatedDate(document.getUpdatedDate());
+        role.setCreatedBy(document.getCreatedBy());
+        
+        List<RolePermission> permissions = document.getPermissions().stream()
+                .map(this::toRolePermission)
+                .collect(Collectors.toList());
+        role.setPermissions(permissions);
+        
+        return role;
+    }
+
+    /**
+     * Maps a list of role documents to role entities.
+     *
+     * @param documents Role documents.
+     * @return Role entities.
+     */
+    public List<Role> toRoleEntityList(List<RoleDocument> documents) {
+        return documents.stream().map(this::toRoleEntity).toList();
+    }
+
+    /**
+     * Maps a role permission entity to a role permission document.
+     *
+     * @param permission Role permission entity.
+     * @return Role permission document.
+     */
+    private RolePermissionDocument toRolePermissionDocument(RolePermission permission) {
+        RolePermissionDocument document = new RolePermissionDocument();
+        document.setModuleOid(permission.getModuleOid());
+        
+        RolePermissionDocument.PermissionDetailsDocument details = 
+            new RolePermissionDocument.PermissionDetailsDocument();
+        details.setCreate(permission.getPermissions().getCreate());
+        details.setUpdate(permission.getPermissions().getUpdate());
+        details.setDelete(permission.getPermissions().getDelete());
+        details.setView(permission.getPermissions().getView());
+        document.setPermissions(details);
+        
+        return document;
+    }
+
+    /**
+     * Maps a role permission document to a role permission entity.
+     *
+     * @param document Role permission document.
+     * @return Role permission entity.
+     */
+    private RolePermission toRolePermission(RolePermissionDocument document) {
+        RolePermission permission = new RolePermission();
+        permission.setModuleOid(document.getModuleOid());
+        
+        RolePermission.PermissionDetails details = new RolePermission.PermissionDetails();
+        details.setCreate(document.getPermissions().getCreate());
+        details.setUpdate(document.getPermissions().getUpdate());
+        details.setDelete(document.getPermissions().getDelete());
+        details.setView(document.getPermissions().getView());
+        permission.setPermissions(details);
+        
+        return permission;
     }
 }

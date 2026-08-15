@@ -4,7 +4,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * MongoDB document representing a module.
@@ -18,7 +17,6 @@ public class ModuleDocument {
     private String link;
     private Boolean isActive;
     private Boolean isDelete;
-    private List<ModulePermissionDocument> permissions;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
 
@@ -36,18 +34,16 @@ public class ModuleDocument {
      * @param link Module link.
      * @param isActive Active status.
      * @param isDelete Deletion status.
-     * @param permissions List of permissions.
      * @param createdDate Creation date.
      * @param updatedDate Last update date.
      */
     public ModuleDocument(String id, String name, String link, Boolean isActive, Boolean isDelete,
-                          List<ModulePermissionDocument> permissions, LocalDateTime createdDate, LocalDateTime updatedDate) {
+                          LocalDateTime createdDate, LocalDateTime updatedDate) {
         this.id = id;
         this.name = name;
         this.link = link;
         this.isActive = isActive;
         this.isDelete = isDelete;
-        this.permissions = permissions;
         this.createdDate = createdDate;
         this.updatedDate = updatedDate;
     }
@@ -90,14 +86,6 @@ public class ModuleDocument {
 
     public void setIsDelete(Boolean isDelete) {
         this.isDelete = isDelete;
-    }
-
-    public List<ModulePermissionDocument> getPermissions() {
-        return permissions;
-    }
-
-    public void setPermissions(List<ModulePermissionDocument> permissions) {
-        this.permissions = permissions;
     }
 
     public LocalDateTime getCreatedDate() {

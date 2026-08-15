@@ -14,11 +14,10 @@ import java.util.List;
 public interface ModuleMongoRepository extends MongoRepository<ModuleDocument, String> {
 
     /**
-     * Finds active, non-deleted modules by user identifier.
+     * Finds all active, non-deleted modules.
      *
-     * @param userOid User identifier.
-     * @return List of module documents accessible to the user.
+     * @return List of active module documents.
      */
-    @Query("{ 'isActive': true, 'isDelete': false, 'permissions.userOid': ?0 }")
-    List<ModuleDocument> findActiveModulesByUserOid(String userOid);
+    @Query("{ 'isActive': true, 'isDelete': false }")
+    List<ModuleDocument> findActiveModules();
 }

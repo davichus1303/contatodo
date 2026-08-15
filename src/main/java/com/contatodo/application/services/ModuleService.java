@@ -52,13 +52,12 @@ public class ModuleService {
     }
 
     /**
-     * Retrieves modules accessible to the authenticated user.
+     * Retrieves all active modules.
      *
      * @return List of module responses.
      */
-    public List<ModuleResponse> getModulesForUser() {
-        String userOid = SecurityUtils.getCurrentUserOid(userService);
-        List<Module> modules = moduleRepository.findActiveModulesByUserOid(userOid);
+    public List<ModuleResponse> getModules() {
+        List<Module> modules = moduleRepository.findAllActive();
         return moduleMapper.toResponseList(modules);
     }
 }

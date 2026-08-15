@@ -1,46 +1,51 @@
 package com.contatodo.domain.entities;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
- * Domain entity representing a module in the application.
+ * Domain entity representing a role in the application.
+ * A role contains permissions over various modules.
  */
-public class Module {
+public class Role {
 
     private String id;
     private String name;
-    private String link;
-    private Boolean isActive;
+    private List<RolePermission> permissions;
     private Boolean isDeleted;
+    private Boolean isActive;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
+    private String createdBy;
 
     /**
-     * Creates an empty module.
+     * Creates an empty role.
      */
-    public Module() {
+    public Role() {
     }
 
     /**
-     * Creates a module with specified values.
+     * Creates a role with specified values.
      *
-     * @param id Module identifier.
-     * @param name Module name.
-     * @param link Module link.
-     * @param isActive Active status.
+     * @param id Role identifier.
+     * @param name Role name.
+     * @param permissions List of role permissions.
      * @param isDeleted Deletion status.
+     * @param isActive Active status.
      * @param createdDate Creation date.
      * @param updatedDate Last update date.
+     * @param createdBy User who created the role.
      */
-    public Module(String id, String name, String link, Boolean isActive, Boolean isDeleted, 
-                  LocalDateTime createdDate, LocalDateTime updatedDate) {
+    public Role(String id, String name, List<RolePermission> permissions, Boolean isDeleted, Boolean isActive,
+                 LocalDateTime createdDate, LocalDateTime updatedDate, String createdBy) {
         this.id = id;
         this.name = name;
-        this.link = link;
-        this.isActive = isActive;
+        this.permissions = permissions;
         this.isDeleted = isDeleted;
+        this.isActive = isActive;
         this.createdDate = createdDate;
         this.updatedDate = updatedDate;
+        this.createdBy = createdBy;
     }
 
     public String getId() {
@@ -59,20 +64,12 @@ public class Module {
         this.name = name;
     }
 
-    public String getLink() {
-        return link;
+    public List<RolePermission> getPermissions() {
+        return permissions;
     }
 
-    public void setLink(String link) {
-        this.link = link;
-    }
-
-    public Boolean getIsActive() {
-        return isActive;
-    }
-
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
+    public void setPermissions(List<RolePermission> permissions) {
+        this.permissions = permissions;
     }
 
     public Boolean getIsDeleted() {
@@ -81,6 +78,14 @@ public class Module {
 
     public void setIsDeleted(Boolean isDeleted) {
         this.isDeleted = isDeleted;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
     }
 
     public LocalDateTime getCreatedDate() {
@@ -97,5 +102,13 @@ public class Module {
 
     public void setUpdatedDate(LocalDateTime updatedDate) {
         this.updatedDate = updatedDate;
+    }
+
+    public String getCreatedBy() {
+        return createdBy;
+    }
+
+    public void setCreatedBy(String createdBy) {
+        this.createdBy = createdBy;
     }
 }
