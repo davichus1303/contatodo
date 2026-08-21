@@ -18,18 +18,18 @@ public class ModuleMapper {
      * Maps a create request to a domain entity.
      *
      * @param request Create module request.
-     * @param userOid Authenticated user identifier.
      * @return Module entity.
      */
-    public Module toEntity(CreateModuleRequest request, String userOid) {
-        Module module = new Module();
-        module.setName(request.getName());
-        module.setLink(request.getLink());
-        module.setIsActive(true);
-        module.setIsDeleted(false);
-        module.setCreatedDate(LocalDateTime.now());
-        module.setUpdatedDate(LocalDateTime.now());
-        return module;
+    public Module toEntity(CreateModuleRequest request) {
+        LocalDateTime now = LocalDateTime.now();
+        return Module.builder()
+                .name(request.getName())
+                .link(request.getLink())
+                .isActive(true)
+                .isDeleted(false)
+                .createdDate(now)
+                .updatedDate(now)
+                .build();
     }
 
     /**

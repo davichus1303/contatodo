@@ -1,0 +1,58 @@
+name: Backend CI
+
+on:
+  push:
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'pom.xml'
+      - '.github/workflows/backend-ci.yml'
+
+jobs:
+  build-and-test:
+    name: Build and test (Java ${{ matrix.java }})
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: ['17', '21']
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: ${{ matrix.java }}
+          cache: maven
+
+      - name: Compile
+        run: ./mvnw -B clean compile
+
+      - name: Run tests
+        run: ./mvnw -B test
+
+      - name: Verify package
+        run: ./mvnw -B verify -DskipTests
+
+      - name: Add test summary to run page
+        if: always()
+        run: |
+          {
+            echo "## Resultados de pruebas (Java ${{ matrix.java }})"
+            echo '```'
+            grep -h "Tests run:" target/surefire-reports/*.txt || echo "(sin reportes generados)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports-java-${{ matrix.java }}
+          path: target/surefire-reports/
+          retention-days: 7

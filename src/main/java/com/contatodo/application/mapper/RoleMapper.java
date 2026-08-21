@@ -1,9 +1,12 @@
 package com.contatodo.application.mapper;
 
 import com.contatodo.application.dto.request.CreateRoleRequest;
+import com.contatodo.application.dto.request.RolePermissionRequest;
 import com.contatodo.application.dto.request.UpdateRoleRequest;
+import com.contatodo.application.dto.response.RolePermissionResponse;
 import com.contatodo.application.dto.response.RoleResponse;
 import com.contatodo.domain.entities.Role;
+import com.contatodo.domain.entities.RolePermission;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -23,15 +26,38 @@ public class RoleMapper {
      * @return Role entity.
      */
     public Role toEntity(CreateRoleRequest request, String userOid) {
-        Role role = new Role();
-        role.setName(request.getName());
-        role.setPermissions(request.getPermissions());
-        role.setIsDeleted(false);
-        role.setIsActive(true);
-        role.setCreatedDate(LocalDateTime.now());
-        role.setUpdatedDate(LocalDateTime.now());
-        role.setCreatedBy(userOid);
-        return role;
+        LocalDateTime now = LocalDateTime.now();
+        return Role.builder()
+                .name(request.getName())
+                .permissions(toPermissionEntities(request.getPermissions()))
+                .isDeleted(false)
+                .isActive(true)
+                .createdDate(now)
+                .updatedDate(now)
+                .createdBy(userOid)
+                .build();
+    }
+
+    /**
+     * Produces an updated copy of an existing role applying request changes.
+     *
+     * @param existing Current persisted role.
+     * @param request Update role request.
+     * @return New immutable role instance with the changes applied.
+     */
+    public Role updateEntity(Role existing, UpdateRoleRequest request) {
+        return Role.builder()
+                .id(existing.getId())
+                .name(request.getName() != null ? request.getName() : existing.getName())
+                .permissions(request.getPermissions() != null
+                        ? toPermissionEntities(request.getPermissions())
+                        : existing.getPermissions())
+                .isDeleted(existing.getIsDeleted())
+                .isActive(existing.getIsActive())
+                .createdDate(existing.getCreatedDate())
+                .updatedDate(LocalDateTime.now())
+                .createdBy(existing.getCreatedBy())
+                .build();
     }
 
     /**
@@ -44,7 +70,7 @@ public class RoleMapper {
         RoleResponse response = new RoleResponse();
         response.setId(role.getId());
         response.setName(role.getName());
-        response.setPermissions(role.getPermissions());
+        response.setPermissions(toPermissionResponses(role.getPermissions()));
         response.setIsDeleted(role.getIsDeleted());
         response.setIsActive(role.getIsActive());
         response.setCreatedDate(role.getCreatedDate());
@@ -64,19 +90,67 @@ public class RoleMapper {
     }
 
     /**
-     * Updates a role entity with data from an update request.
-     * Only updates fields that are not null in the request.
+     * Maps request permissions to domain permission entities.
      *
-     * @param role Role entity to update.
-     * @param request Update role request.
+     * @param permissions Request permissions.
+     * @return Domain permissions.
      */
-    public void updateEntity(Role role, UpdateRoleRequest request) {
-        if (request.getName() != null) {
-            role.setName(request.getName());
+    private List<RolePermission> toPermissionEntities(List<RolePermissionRequest> permissions) {
+        if (permissions == null) {
+            return List.of();
         }
-        if (request.getPermissions() != null) {
-            role.setPermissions(request.getPermissions());
-        }
-        role.setUpdatedDate(LocalDateTime.now());
+        return permissions.stream()
+                .map(RoleMapper::toPermissionEntity)
+                .toList();
+    }
+
+    /**
+     * Maps a single request permission to its domain form.
+     *
+     * @param request Request permission.
+     * @return Domain permission.
+     */
+    private static RolePermission toPermissionEntity(RolePermissionRequest request) {
+        RolePermissionRequest.Permissions flags = request.getPermissions();
+        return RolePermission.builder()
+                .moduleOid(request.getModuleOid())
+                .permissions(RolePermission.PermissionDetails.builder()
+                        .create(flags != null ? flags.getCreate() : null)
+                        .update(flags != null ? flags.getUpdate() : null)
+                        .delete(flags != null ? flags.getDelete() : null)
+                        .view(flags != null ? flags.getView() : null)
+                        .build())
+                .build();
+    }
+
+    /**
+     * Maps domain permissions to response payloads.
+     *
+     * @param permissions Domain permissions.
+     * @return Response permissions.
+     */
+    private List<RolePermissionResponse> toPermissionResponses(List<RolePermission> permissions) {
+        return permissions.stream()
+                .map(RoleMapper::toPermissionResponse)
+                .toList();
+    }
+
+    /**
+     * Maps a single domain permission to its response form.
+     *
+     * @param permission Domain permission.
+     * @return Response permission.
+     */
+    private static RolePermissionResponse toPermissionResponse(RolePermission permission) {
+        RolePermission.PermissionDetails flags = permission.getPermissions();
+        return new RolePermissionResponse(
+                permission.getModuleOid(),
+                new RolePermissionResponse.Permissions(
+                        flags != null ? flags.getCreate() : null,
+                        flags != null ? flags.getUpdate() : null,
+                        flags != null ? flags.getDelete() : null,
+                        flags != null ? flags.getView() : null
+                )
+        );
     }
 }

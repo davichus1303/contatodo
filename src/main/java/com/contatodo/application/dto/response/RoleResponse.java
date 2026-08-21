@@ -1,6 +1,6 @@
 package com.contatodo.application.dto.response;
 
-import com.contatodo.domain.entities.RolePermission;
+import com.contatodo.application.dto.response.RolePermissionResponse;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -12,7 +12,7 @@ public class RoleResponse {
 
     private String id;
     private String name;
-    private List<RolePermission> permissions;
+    private List<RolePermissionResponse> permissions;
     private Boolean isDeleted;
     private Boolean isActive;
     private LocalDateTime createdDate;
@@ -37,7 +37,7 @@ public class RoleResponse {
      * @param updatedDate Last update date.
      * @param createdBy User who created the role.
      */
-    public RoleResponse(String id, String name, List<RolePermission> permissions, Boolean isDeleted, Boolean isActive,
+    public RoleResponse(String id, String name, List<RolePermissionResponse> permissions, Boolean isDeleted, Boolean isActive,
                         LocalDateTime createdDate, LocalDateTime updatedDate, String createdBy) {
         this.id = id;
         this.name = name;
@@ -65,11 +65,11 @@ public class RoleResponse {
         this.name = name;
     }
 
-    public List<RolePermission> getPermissions() {
+    public List<RolePermissionResponse> getPermissions() {
         return permissions;
     }
 
-    public void setPermissions(List<RolePermission> permissions) {
+    public void setPermissions(List<RolePermissionResponse> permissions) {
         this.permissions = permissions;
     }
 

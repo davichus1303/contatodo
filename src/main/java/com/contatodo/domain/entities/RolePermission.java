@@ -1,106 +1,224 @@
 package com.contatodo.domain.entities;
 
+import java.util.List;
+
 /**
  * Domain entity representing a role's permissions over a specific module.
+ *
+ * <p>Immutable value object; construction is only possible through
+ * {@link Builder#build()}.</p>
  */
-public class RolePermission {
+public final class RolePermission {
 
-    private String moduleOid;
-    private PermissionDetails permissions;
-
-    /**
-     * Creates an empty role permission.
-     */
-    public RolePermission() {
-    }
+    private final String moduleOid;
+    private final PermissionDetails permissions;
 
     /**
-     * Creates a role permission with specified values.
+     * Creates a role permission from its builder.
      *
-     * @param moduleOid Module identifier.
-     * @param permissions Permission details.
+     * @param builder Source builder with all values set.
      */
-    public RolePermission(String moduleOid, PermissionDetails permissions) {
-        this.moduleOid = moduleOid;
-        this.permissions = permissions;
+    private RolePermission(Builder builder) {
+        this.moduleOid = builder.moduleOid;
+        this.permissions = builder.permissions;
     }
 
+    /**
+     * Creates a new empty builder.
+     *
+     * @return Role permission builder.
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+
+    /**
+     * Gets the target module identifier.
+     *
+     * @return Module identifier.
+     */
     public String getModuleOid() {
         return moduleOid;
     }
 
-    public void setModuleOid(String moduleOid) {
-        this.moduleOid = moduleOid;
-    }
-
+    /**
+     * Gets the permission details for the module.
+     *
+     * @return Permission details.
+     */
     public PermissionDetails getPermissions() {
         return permissions;
     }
 
-    public void setPermissions(PermissionDetails permissions) {
-        this.permissions = permissions;
+    /**
+     * Fluent builder for {@link RolePermission}.
+     */
+    public static class Builder {
+
+        private String moduleOid;
+        private PermissionDetails permissions;
+
+        /**
+         * Sets the target module identifier.
+         *
+         * @param moduleOid Module identifier.
+         * @return This builder.
+         */
+        public Builder moduleOid(String moduleOid) {
+            this.moduleOid = moduleOid;
+            return this;
+        }
+
+        /**
+         * Sets the permission details.
+         *
+         * @param permissions Permission details.
+         * @return This builder.
+         */
+        public Builder permissions(PermissionDetails permissions) {
+            this.permissions = permissions;
+            return this;
+        }
+
+        /**
+         * Builds the role permission.
+         *
+         * @return Immutable role permission.
+         */
+        public RolePermission build() {
+            return new RolePermission(this);
+        }
     }
 
     /**
-     * Inner class representing permission details for a module.
+     * Immutable details of the permissions granted over a module.
      */
-    public static class PermissionDetails {
-        private Boolean create;
-        private Boolean update;
-        private Boolean delete;
-        private Boolean view;
+    public static final class PermissionDetails {
+
+        private final Boolean create;
+        private final Boolean update;
+        private final Boolean delete;
+        private final Boolean view;
 
         /**
-         * Creates empty permission details.
-         */
-        public PermissionDetails() {
-        }
-
-        /**
-         * Creates permission details with specified values.
+         * Creates permission details.
          *
-         * @param create Create permission.
-         * @param update Update permission.
-         * @param delete Delete permission.
-         * @param view View permission.
+         * @param builder Source builder with all values set.
          */
-        public PermissionDetails(Boolean create, Boolean update, Boolean delete, Boolean view) {
-            this.create = create;
-            this.update = update;
-            this.delete = delete;
-            this.view = view;
+        private PermissionDetails(Builder builder) {
+            this.create = builder.create;
+            this.update = builder.update;
+            this.delete = builder.delete;
+            this.view = builder.view;
         }
 
+        /**
+         * Creates a new empty builder.
+         *
+         * @return Permission details builder.
+         */
+        public static Builder builder() {
+            return new Builder();
+        }
+
+        /**
+         * Gets the create flag.
+         *
+         * @return Create flag.
+         */
         public Boolean getCreate() {
             return create;
         }
 
-        public void setCreate(Boolean create) {
-            this.create = create;
-        }
-
+        /**
+         * Gets the update flag.
+         *
+         * @return Update flag.
+         */
         public Boolean getUpdate() {
             return update;
         }
 
-        public void setUpdate(Boolean update) {
-            this.update = update;
-        }
-
+        /**
+         * Gets the delete flag.
+         *
+         * @return Delete flag.
+         */
         public Boolean getDelete() {
             return delete;
         }
 
-        public void setDelete(Boolean delete) {
-            this.delete = delete;
-        }
-
+        /**
+         * Gets the view flag.
+         *
+         * @return View flag.
+         */
         public Boolean getView() {
             return view;
         }
 
-        public void setView(Boolean view) {
-            this.view = view;
+        /**
+         * Fluent builder for {@link PermissionDetails}.
+         */
+        public static class Builder {
+
+            private Boolean create;
+            private Boolean update;
+            private Boolean delete;
+            private Boolean view;
+
+            /**
+             * Sets the create flag.
+             *
+             * @param create Create flag.
+             * @return This builder.
+             */
+            public Builder create(Boolean create) {
+                this.create = create;
+                return this;
+            }
+
+            /**
+             * Sets the update flag.
+             *
+             * @param update Update flag.
+             * @return This builder.
+             */
+            public Builder update(Boolean update) {
+                this.update = update;
+                return this;
+            }
+
+            /**
+             * Sets the delete flag.
+             *
+             * @param delete Delete flag.
+             * @return This builder.
+             */
+            public Builder delete(Boolean delete) {
+                this.delete = delete;
+                return this;
+            }
+
+            /**
+             * Sets the view flag.
+             *
+             * @param view View flag.
+             * @return This builder.
+             */
+            public Builder view(Boolean view) {
+                this.view = view;
+                return this;
+            }
+
+            /**
+             * Builds the permission details.
+             *
+             * @return Immutable permission details.
+             */
+            public PermissionDetails build() {
+                return new PermissionDetails(this);
+            }
         }
     }
 }

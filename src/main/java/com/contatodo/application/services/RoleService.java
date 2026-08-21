@@ -7,7 +7,7 @@ import com.contatodo.application.mapper.RoleMapper;
 import com.contatodo.domain.entities.Role;
 import com.contatodo.domain.repositories.RoleRepository;
 import com.contatodo.shared.exceptions.InvalidRequestException;
-import com.contatodo.shared.utils.SecurityUtils;
+import com.contatodo.application.port.AuthenticatedUserProvider;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,23 +21,23 @@ public class RoleService {
 
     private final RoleRepository roleRepository;
     private final RoleMapper roleMapper;
-    private final UserService userService;
+    private final AuthenticatedUserProvider authenticatedUserProvider;
 
     /**
      * Creates a role service.
      *
      * @param roleRepository Role repository port.
      * @param roleMapper Role mapper.
-     * @param userService User service.
+     * @param authenticatedUserProvider Authenticated user provider.
      */
     public RoleService(
             RoleRepository roleRepository,
             RoleMapper roleMapper,
-            UserService userService
+            AuthenticatedUserProvider authenticatedUserProvider
     ) {
         this.roleRepository = roleRepository;
         this.roleMapper = roleMapper;
-        this.userService = userService;
+        this.authenticatedUserProvider = authenticatedUserProvider;
     }
 
     /**
@@ -47,7 +47,7 @@ public class RoleService {
      * @return Created role response.
      */
     public RoleResponse createRole(CreateRoleRequest request) {
-        String userOid = SecurityUtils.getCurrentUserOid(userService);
+        String userOid = authenticatedUserProvider.getCurrentUserOid();
         
         Role role = roleMapper.toEntity(request, userOid);
         Role savedRole = roleRepository.save(role);
@@ -83,8 +83,7 @@ public class RoleService {
             throw new InvalidRequestException("Cannot update a deleted role", List.of("Cannot update a deleted role"));
         }
 
-        roleMapper.updateEntity(role, request);
-        Role updatedRole = roleRepository.save(role);
+        Role updatedRole = roleRepository.save(roleMapper.updateEntity(role, request));
         return roleMapper.toResponse(updatedRole);
     }
 
@@ -106,9 +105,6 @@ public class RoleService {
         }
 
         // Perform logical deletion
-        role.setIsDeleted(true);
-        role.setUpdatedDate(java.time.LocalDateTime.now());
-        
-        roleRepository.save(role);
+        roleRepository.save(role.markDeleted());
     }
 }

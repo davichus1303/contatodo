@@ -1,6 +1,6 @@
 package com.contatodo.application.dto.request;
 
-import com.contatodo.domain.entities.RolePermission;
+import com.contatodo.application.dto.request.RolePermissionRequest;
 
 import java.util.List;
 
@@ -11,7 +11,7 @@ public class UpdateRoleRequest {
 
     private String name;
 
-    private List<RolePermission> permissions;
+    private List<RolePermissionRequest> permissions;
 
     /**
      * Creates an empty update role request.
@@ -25,7 +25,7 @@ public class UpdateRoleRequest {
      * @param name Role name.
      * @param permissions List of role permissions.
      */
-    public UpdateRoleRequest(String name, List<RolePermission> permissions) {
+    public UpdateRoleRequest(String name, List<RolePermissionRequest> permissions) {
         this.name = name;
         this.permissions = permissions;
     }
@@ -38,11 +38,11 @@ public class UpdateRoleRequest {
         this.name = name;
     }
 
-    public List<RolePermission> getPermissions() {
+    public List<RolePermissionRequest> getPermissions() {
         return permissions;
     }
 
-    public void setPermissions(List<RolePermission> permissions) {
+    public void setPermissions(List<RolePermissionRequest> permissions) {
         this.permissions = permissions;
     }
 }

@@ -20,6 +20,8 @@ public final class ExpenseConstants {
      */
     public static final String DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
 
+    public static final String DEFAULT_CURRENCY = "MXN";
+
     private ExpenseConstants() {
     }
 }

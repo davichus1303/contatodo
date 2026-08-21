@@ -18,21 +18,26 @@ public class ExpenseMapper {
      * Maps a create request to a domain entity.
      *
      * @param request Create expense request.
+     * @param userOid Authenticated user identifier.
+     * @param expenseDate Resolved expense date.
      * @return Expense entity.
      */
-    public Expense toEntity(CreateExpenseRequest request) {
-        Expense expense = new Expense();
-        expense.setAcquisitionOid(request.getAcquisitionOid());
-        expense.setAcquisitionTypeOid(request.getAcquisitionTypeOid());
-        expense.setName(request.getName());
-        expense.setQuantity(request.getQuantity());
-        expense.setAmount(request.getAmount());
-        expense.setCurrency(request.getCurrency());
-        expense.setIsActive(true);
-        expense.setIsDeleted(false);
-        expense.setCreatedDate(LocalDateTime.now());
-        expense.setUpdatedDate(LocalDateTime.now());
-        return expense;
+    public Expense toEntity(CreateExpenseRequest request, String userOid, LocalDateTime expenseDate) {
+        LocalDateTime now = LocalDateTime.now();
+        return Expense.builder()
+                .acquisitionOid(request.getAcquisitionOid())
+                .acquisitionTypeOid(request.getAcquisitionTypeOid())
+                .name(request.getName())
+                .quantity(request.getQuantity())
+                .amount(request.getAmount())
+                .currency(request.getCurrency())
+                .expenseDate(expenseDate)
+                .userOid(userOid)
+                .isActive(true)
+                .isDeleted(false)
+                .createdDate(now)
+                .updatedDate(now)
+                .build();
     }
 
     /**

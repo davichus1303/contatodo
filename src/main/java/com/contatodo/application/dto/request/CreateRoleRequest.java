@@ -1,6 +1,5 @@
 package com.contatodo.application.dto.request;
 
-import com.contatodo.domain.entities.RolePermission;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
@@ -17,7 +16,7 @@ public class CreateRoleRequest {
 
     @NotEmpty(message = "Permissions are required")
     @Valid
-    private List<RolePermission> permissions;
+    private List<RolePermissionRequest> permissions;
 
     /**
      * Creates an empty create role request.
@@ -31,7 +30,7 @@ public class CreateRoleRequest {
      * @param name Role name.
      * @param permissions List of role permissions.
      */
-    public CreateRoleRequest(String name, List<RolePermission> permissions) {
+    public CreateRoleRequest(String name, List<RolePermissionRequest> permissions) {
         this.name = name;
         this.permissions = permissions;
     }
@@ -44,11 +43,11 @@ public class CreateRoleRequest {
         this.name = name;
     }
 
-    public List<RolePermission> getPermissions() {
+    public List<RolePermissionRequest> getPermissions() {
         return permissions;
     }
 
-    public void setPermissions(List<RolePermission> permissions) {
+    public void setPermissions(List<RolePermissionRequest> permissions) {
         this.permissions = permissions;
     }
 }

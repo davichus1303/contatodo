@@ -1,5 +1,6 @@
 package com.contatodo.infrastructure.security;
 
+import com.contatodo.application.port.TokenProvider;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
@@ -12,9 +13,12 @@ import java.util.Date;
 
 /**
  * Service for JWT token generation and validation.
+ *
+ * <p>Infrastructure adapter implementing the application {@link TokenProvider}
+ * port.</p>
  */
 @Service
-public class JwtService {
+public class JwtService implements TokenProvider {
 
     private final SecretKey secretKey;
     private final long expiration;
@@ -34,11 +38,9 @@ public class JwtService {
     }
 
     /**
-     * Generates a JWT token for the given subject.
-     *
-     * @param subject Token subject (email).
-     * @return JWT token.
+     * {@inheritDoc}
      */
+    @Override
     public String generateToken(String subject) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expiration);

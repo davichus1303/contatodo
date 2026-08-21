@@ -22,3 +22,7 @@ Thumbs.db
 *.jar
 *.war
 *.ear
+
+# Secretos y llaves
+*.pem
+api-key-amazonaws/
