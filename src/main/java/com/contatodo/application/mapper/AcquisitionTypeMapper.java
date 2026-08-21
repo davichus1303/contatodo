@@ -19,19 +19,21 @@ public class AcquisitionTypeMapper {
      * Maps a create request to a domain entity.
      *
      * @param request Create acquisition type request.
+     * @param userOid Authenticated owner identifier.
      * @return Acquisition type entity.
      */
-    public AcquisitionType toEntity(CreateAcquisitionTypeRequest request) {
-        AcquisitionType acquisitionType = new AcquisitionType();
-        acquisitionType.setName(request.getName());
-        acquisitionType.setDescription(request.getDescription());
-        acquisitionType.setUserOid(request.getUserOid());
-        acquisitionType.setAffectsInventory(request.getAffectsInventory() != null ? request.getAffectsInventory() : false);
-        acquisitionType.setIsActive(true);
-        acquisitionType.setIsDeleted(false);
-        acquisitionType.setCreatedDate(LocalDateTime.now());
-        acquisitionType.setUpdatedDate(LocalDateTime.now());
-        return acquisitionType;
+    public AcquisitionType toEntity(CreateAcquisitionTypeRequest request, String userOid) {
+        LocalDateTime now = LocalDateTime.now();
+        return AcquisitionType.builder()
+                .name(request.getName())
+                .description(request.getDescription())
+                .userOid(userOid)
+                .affectsInventory(request.getAffectsInventory() != null ? request.getAffectsInventory() : false)
+                .isActive(true)
+                .isDeleted(false)
+                .createdDate(now)
+                .updatedDate(now)
+                .build();
     }
 
     /**
@@ -71,19 +73,18 @@ public class AcquisitionTypeMapper {
      * @param acquisitionType Existing acquisition type entity.
      * @param request Update acquisition type request.
      */
-    public void updateEntityFromRequest(AcquisitionType acquisitionType, UpdateAcquisitionTypeRequest request) {
-        if (request.getName() != null) {
-            acquisitionType.setName(request.getName());
-        }
-        if (request.getDescription() != null) {
-            acquisitionType.setDescription(request.getDescription());
-        }
-        if (request.getIsActive() != null) {
-            acquisitionType.setIsActive(request.getIsActive());
-        }
-        if (request.getAffectsInventory() != null) {
-            acquisitionType.setAffectsInventory(request.getAffectsInventory());
-        }
-        acquisitionType.setUpdatedDate(LocalDateTime.now());
+    public AcquisitionType updateEntityFromRequest(AcquisitionType existing, UpdateAcquisitionTypeRequest request) {
+        LocalDateTime now = LocalDateTime.now();
+        return AcquisitionType.builder()
+                .id(existing.getId())
+                .name(request.getName() != null ? request.getName() : existing.getName())
+                .description(request.getDescription() != null ? request.getDescription() : existing.getDescription())
+                .userOid(existing.getUserOid())
+                .isActive(request.getIsActive() != null ? request.getIsActive() : existing.getIsActive())
+                .isDeleted(existing.getIsDeleted())
+                .affectsInventory(request.getAffectsInventory() != null ? request.getAffectsInventory() : existing.getAffectsInventory())
+                .createdDate(existing.getCreatedDate())
+                .updatedDate(now)
+                .build();
     }
 }

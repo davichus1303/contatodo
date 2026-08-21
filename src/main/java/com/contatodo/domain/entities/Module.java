@@ -1,113 +1,181 @@
 package com.contatodo.domain.entities;
 
+import com.contatodo.domain.exception.InvalidEntityStateException;
+import com.contatodo.shared.constants.ValidationConstants;
+
 import java.time.LocalDateTime;
-import java.util.List;
 
 /**
- * Domain entity representing a module in the application.
+ * Domain entity representing an application module.
+ *
+ * <p>Immutable; construction is only possible through {@link Builder#build()}.</p>
  */
-public class Module {
+public final class Module {
 
-    private String id;
-    private String name;
-    private String link;
-    private Boolean isActive;
-    private Boolean isDeleted;
-    private List<ModulePermission> permissions;
-    private LocalDateTime createdDate;
-    private LocalDateTime updatedDate;
+    private final String id;
+    private final String name;
+    private final String link;
+    private final Boolean isActive;
+    private final Boolean isDeleted;
+    private final LocalDateTime createdDate;
+    private final LocalDateTime updatedDate;
 
     /**
-     * Creates an empty module.
+     * Creates a module from its builder.
+     *
+     * @param builder Source builder with all values set.
      */
-    public Module() {
+    private Module(Builder builder) {
+        this.id = builder.id;
+        this.name = builder.name;
+        this.link = builder.link;
+        this.isActive = builder.isActive;
+        this.isDeleted = builder.isDeleted;
+        this.createdDate = builder.createdDate;
+        this.updatedDate = builder.updatedDate;
     }
 
     /**
-     * Creates a module with specified values.
+     * Creates a new empty builder.
      *
-     * @param id Module identifier.
-     * @param name Module name.
-     * @param link Module link.
-     * @param isActive Active status.
-     * @param isDeleted Deletion status.
-     * @param permissions List of permissions.
-     * @param createdDate Creation date.
-     * @param updatedDate Last update date.
+     * @return Module builder.
      */
-    public Module(String id, String name, String link, Boolean isActive, Boolean isDeleted, 
-                  List<ModulePermission> permissions, LocalDateTime createdDate, LocalDateTime updatedDate) {
-        this.id = id;
-        this.name = name;
-        this.link = link;
-        this.isActive = isActive;
-        this.isDeleted = isDeleted;
-        this.permissions = permissions;
-        this.createdDate = createdDate;
-        this.updatedDate = updatedDate;
+    public static Module.Builder builder() {
+        return new Module.Builder();
     }
 
     public String getId() {
         return id;
     }
 
-    public void setId(String id) {
-        this.id = id;
-    }
-
     public String getName() {
         return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
     }
 
     public String getLink() {
         return link;
     }
 
-    public void setLink(String link) {
-        this.link = link;
-    }
-
     public Boolean getIsActive() {
         return isActive;
-    }
-
-    public void setIsActive(Boolean isActive) {
-        this.isActive = isActive;
     }
 
     public Boolean getIsDeleted() {
         return isDeleted;
     }
 
-    public void setIsDeleted(Boolean isDeleted) {
-        this.isDeleted = isDeleted;
-    }
-
-    public List<ModulePermission> getPermissions() {
-        return permissions;
-    }
-
-    public void setPermissions(List<ModulePermission> permissions) {
-        this.permissions = permissions;
-    }
-
     public LocalDateTime getCreatedDate() {
         return createdDate;
-    }
-
-    public void setCreatedDate(LocalDateTime createdDate) {
-        this.createdDate = createdDate;
     }
 
     public LocalDateTime getUpdatedDate() {
         return updatedDate;
     }
 
-    public void setUpdatedDate(LocalDateTime updatedDate) {
-        this.updatedDate = updatedDate;
+    /**
+     * Fluent builder for {@link Module} with invariant validation.
+     */
+    public static class Builder {
+
+        private String id;
+        private String name;
+        private String link;
+        private Boolean isActive;
+        private Boolean isDeleted;
+        private LocalDateTime createdDate;
+        private LocalDateTime updatedDate;
+
+        /**
+         * Sets the identifier.
+         *
+         * @param id Identifier.
+         * @return This builder.
+         */
+        public Builder id(String id) {
+            this.id = id;
+            return this;
+        }
+
+        /**
+         * Sets the module name.
+         *
+         * @param name Name.
+         * @return This builder.
+         */
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+
+        /**
+         * Sets the module link.
+         *
+         * @param link Link.
+         * @return This builder.
+         */
+        public Builder link(String link) {
+            this.link = link;
+            return this;
+        }
+
+        /**
+         * Sets the active flag.
+         *
+         * @param isActive Active flag.
+         * @return This builder.
+         */
+        public Builder isActive(Boolean isActive) {
+            this.isActive = isActive;
+            return this;
+        }
+
+        /**
+         * Sets the logical delete flag.
+         *
+         * @param isDeleted Delete flag.
+         * @return This builder.
+         */
+        public Builder isDeleted(Boolean isDeleted) {
+            this.isDeleted = isDeleted;
+            return this;
+        }
+
+        /**
+         * Sets the creation date.
+         *
+         * @param createdDate Creation date.
+         * @return This builder.
+         */
+        public Builder createdDate(LocalDateTime createdDate) {
+            this.createdDate = createdDate;
+            return this;
+        }
+
+        /**
+         * Sets the last update date.
+         *
+         * @param updatedDate Update date.
+         * @return This builder.
+         */
+        public Builder updatedDate(LocalDateTime updatedDate) {
+            this.updatedDate = updatedDate;
+            return this;
+        }
+
+        /**
+         * Builds the module validating its invariants.
+         *
+         * @return Immutable module.
+         * @throws InvalidEntityStateException if the name or link is missing.
+         */
+        public Module build() {
+            if (name == null || name.trim().isEmpty()) {
+                throw new InvalidEntityStateException(ValidationConstants.FIELD_REQUIRED);
+            }
+            if (link == null || link.trim().isEmpty()) {
+                throw new InvalidEntityStateException(ValidationConstants.FIELD_REQUIRED);
+            }
+            return new Module(this);
+        }
     }
 }

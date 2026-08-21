@@ -10,8 +10,9 @@ import com.contatodo.domain.entities.Expense;
 import com.contatodo.domain.repositories.ExpenseRepository;
 import com.contatodo.shared.constants.ExpenseConstants;
 import com.contatodo.shared.constants.ValidationConstants;
+import com.contatodo.domain.model.Money;
 import com.contatodo.shared.exceptions.InvalidDateRangeException;
-import com.contatodo.shared.utils.SecurityUtils;
+import com.contatodo.application.port.AuthenticatedUserProvider;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -27,7 +28,7 @@ public class ExpenseService {
     private final ExpenseRepository expenseRepository;
     private final ExpenseValidator expenseValidator;
     private final ExpenseMapper expenseMapper;
-    private final UserService userService;
+    private final AuthenticatedUserProvider authenticatedUserProvider;
 
     /**
      * Creates an expense service.
@@ -35,18 +36,18 @@ public class ExpenseService {
      * @param expenseRepository Expense repository port.
      * @param expenseValidator Expense validator.
      * @param expenseMapper Expense mapper.
-     * @param userService User service for security context.
+     * @param authenticatedUserProvider Authenticated user provider.
      */
     public ExpenseService(
             ExpenseRepository expenseRepository,
             ExpenseValidator expenseValidator,
             ExpenseMapper expenseMapper,
-            UserService userService
+            AuthenticatedUserProvider authenticatedUserProvider
     ) {
         this.expenseRepository = expenseRepository;
         this.expenseValidator = expenseValidator;
         this.expenseMapper = expenseMapper;
-        this.userService = userService;
+        this.authenticatedUserProvider = authenticatedUserProvider;
     }
 
     /**
@@ -58,21 +59,24 @@ public class ExpenseService {
     public ExpenseResponse createExpense(CreateExpenseRequest request) {
         expenseValidator.validateCreateRequest(request);
 
-        String userOid = SecurityUtils.getCurrentUserOid(userService);
+        String userOid = authenticatedUserProvider.getCurrentUserOid();
+        LocalDateTime expenseDate = resolveExpenseDate(request.getExpenseDate());
 
-        Expense expense = expenseMapper.toEntity(request);
-        expense.setUserOid(userOid);
-
-        // Parse expenseDate if provided
-        if (request.getExpenseDate() != null && !request.getExpenseDate().isEmpty()) {
-            DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-            expense.setExpenseDate(LocalDateTime.parse(request.getExpenseDate(), formatter));
-        } else {
-            expense.setExpenseDate(LocalDateTime.now());
-        }
-
-        Expense savedExpense = expenseRepository.save(expense);
+        Expense savedExpense = expenseRepository.save(expenseMapper.toEntity(request, userOid, expenseDate));
         return expenseMapper.toResponse(savedExpense);
+    }
+
+    /**
+     * Resolves the effective expense date, defaulting to now when absent.
+     *
+     * @param rawExpenseDate Raw ISO-8601 date text; may be null or empty.
+     * @return Parsed expense date or the current timestamp.
+     */
+    private LocalDateTime resolveExpenseDate(String rawExpenseDate) {
+        if (rawExpenseDate == null || rawExpenseDate.isEmpty()) {
+            return LocalDateTime.now();
+        }
+        return LocalDateTime.parse(rawExpenseDate, DateTimeFormatter.ISO_LOCAL_DATE_TIME);
     }
 
     /**
@@ -114,11 +118,10 @@ public class ExpenseService {
         // Get expenses within date range
         List<Expense> expenses = expenseRepository.findActiveAndNotDeletedByDateRange(startDate, endDate);
 
-        // Calculate total
-        double total = expenses.stream()
-            .mapToDouble(expense -> expense.getAmount() != null ? expense.getAmount() : 0.0)
-            .sum();
+        Money total = expenses.stream()
+            .map(expense -> Money.of(expense.getAmount()))
+            .reduce(Money.zero(), Money::add);
 
-        return new TotalExpensesResponse(total);
+        return new TotalExpensesResponse(total.toDouble());
     }
 }

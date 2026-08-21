@@ -1,0 +1,38 @@
+package com.contatodo.adapters.outbound.persistence.repository;
+
+import com.contatodo.adapters.outbound.persistence.document.ExpenseDocument;
+import org.springframework.data.mongodb.repository.MongoRepository;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Spring Data MongoDB repository for expenses.
+ */
+public interface ExpenseMongoRepository extends MongoRepository<ExpenseDocument, String> {
+
+    /**
+     * Finds active and non-deleted expenses ordered by created date descending.
+     *
+     * @return List of expense documents.
+     */
+    List<ExpenseDocument> findByIsActiveTrueAndIsDeletedFalseOrderByCreatedDateDesc();
+
+    /**
+     * Finds an expense by ID.
+     *
+     * @param id Expense ID.
+     * @return Optional expense document.
+     */
+    Optional<ExpenseDocument> findById(String id);
+
+    /**
+     * Finds active and non-deleted expenses within a date range.
+     *
+     * @param startDate Start of date range (inclusive).
+     * @param endDate End of date range (inclusive).
+     * @return List of expense documents within the date range.
+     */
+    List<ExpenseDocument> findByIsActiveTrueAndIsDeletedFalseAndExpenseDateBetween(LocalDateTime startDate, LocalDateTime endDate);
+}

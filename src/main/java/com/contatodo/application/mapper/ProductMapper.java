@@ -20,22 +20,25 @@ public class ProductMapper {
      *
      * @param request Create product request.
      * @param code Generated product code.
+     * @param userOid Owning user identifier.
      * @return Product entity.
      */
-    public Product toEntity(CreateProductRequest request, String code) {
-        Product product = new Product();
-        product.setName(request.getName());
-        product.setDescription(request.getDescription());
-        product.setStock(request.getStock());
-        product.setCode(code);
-        product.setRealCost(request.getRealCost());
-        product.setUnitRealCost(request.getUnitRealCost());
-        product.setUnitPublicCost(request.getUnitPublicCost());
-        product.setUrlPhoto(request.getUrlPhoto());
-        product.setIsActive(request.getIsActive() != null ? request.getIsActive() : true);
-        product.setCreatedDate(LocalDateTime.now());
-        product.setUpdatedDate(LocalDateTime.now());
-        return product;
+    public Product toEntity(CreateProductRequest request, String code, String userOid) {
+        LocalDateTime now = LocalDateTime.now();
+        return Product.builder()
+                .name(request.getName())
+                .description(request.getDescription())
+                .stock(request.getStock())
+                .code(code)
+                .realCost(request.getRealCost())
+                .unitRealCost(request.getUnitRealCost())
+                .unitPublicCost(request.getUnitPublicCost())
+                .urlPhoto(request.getUrlPhoto())
+                .isActive(request.getIsActive() != null ? request.getIsActive() : true)
+                .userOid(userOid)
+                .createdDate(now)
+                .updatedDate(now)
+                .build();
     }
 
     /**
@@ -44,32 +47,23 @@ public class ProductMapper {
      * @param product Existing product.
      * @param request Update product request.
      */
-    public void applyUpdate(Product product, UpdateProductRequest request) {
-        if (request.getName() != null) {
-            product.setName(request.getName());
-        }
-        if (request.getDescription() != null) {
-            product.setDescription(request.getDescription());
-        }
-        if (request.getStock() != null) {
-            product.setStock(request.getStock());
-        }
-        if (request.getRealCost() != null) {
-            product.setRealCost(request.getRealCost());
-        }
-        if (request.getUnitRealCost() != null) {
-            product.setUnitRealCost(request.getUnitRealCost());
-        }
-        if (request.getUnitPublicCost() != null) {
-            product.setUnitPublicCost(request.getUnitPublicCost());
-        }
-        if (request.getUrlPhoto() != null) {
-            product.setUrlPhoto(request.getUrlPhoto());
-        }
-        if (request.getIsActive() != null) {
-            product.setIsActive(request.getIsActive());
-        }
-        product.setUpdatedDate(LocalDateTime.now());
+    public Product applyUpdate(Product existing, UpdateProductRequest request) {
+        LocalDateTime now = LocalDateTime.now();
+        return Product.builder()
+                .id(existing.getId())
+                .name(request.getName() != null ? request.getName() : existing.getName())
+                .description(request.getDescription() != null ? request.getDescription() : existing.getDescription())
+                .stock(request.getStock() != null ? request.getStock() : existing.getStock())
+                .code(existing.getCode())
+                .realCost(request.getRealCost() != null ? request.getRealCost() : existing.getRealCost())
+                .unitRealCost(request.getUnitRealCost() != null ? request.getUnitRealCost() : existing.getUnitRealCost())
+                .unitPublicCost(request.getUnitPublicCost() != null ? request.getUnitPublicCost() : existing.getUnitPublicCost())
+                .urlPhoto(request.getUrlPhoto() != null ? request.getUrlPhoto() : existing.getUrlPhoto())
+                .isActive(request.getIsActive() != null ? request.getIsActive() : existing.getIsActive())
+                .userOid(existing.getUserOid())
+                .createdDate(existing.getCreatedDate())
+                .updatedDate(now)
+                .build();
     }
 
     /**

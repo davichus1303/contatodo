@@ -23,42 +23,40 @@ public class UserMapper {
      * @return User entity.
      */
     public User toEntity(CreateUserRequest request, String hashedPassword) {
-        User user = new User();
-        user.setUserName(request.getUserName());
-        user.setEmail(request.getEmail());
-        user.setPassword(hashedPassword);
-        user.setName(request.getName());
-        user.setActive(true);
-        user.setDelete(false);
-        user.setCreatedDate(LocalDateTime.now());
-        user.setUpdatedDate(LocalDateTime.now());
-        return user;
+        return User.builder()
+                .userName(request.getUserName())
+                .email(request.getEmail())
+                .password(hashedPassword)
+                .name(request.getName())
+                .isActive(true)
+                .isDelete(false)
+                .createdDate(LocalDateTime.now())
+                .updatedDate(LocalDateTime.now())
+                .build();
     }
 
     /**
-     * Applies update request changes to an existing user.
+     * Produces an updated copy of an existing user applying request changes.
      *
-     * @param user Existing user.
+     * @param existing Current persisted user.
      * @param request Update user request.
-     * @param hashedPassword Hashed password when provided.
+     * @param hashedPassword Newly hashed password when provided; null keeps the current one.
+     * @return New immutable user instance with the changes applied.
      */
-    public void applyUpdate(User user, UpdateUserRequest request, String hashedPassword) {
-        if (request.getUserName() != null) {
-            user.setUserName(request.getUserName());
-        }
-        if (request.getEmail() != null) {
-            user.setEmail(request.getEmail());
-        }
-        if (hashedPassword != null) {
-            user.setPassword(hashedPassword);
-        }
-        if (request.getName() != null) {
-            user.setName(request.getName());
-        }
-        if (request.getIsActive() != null) {
-            user.setActive(request.getIsActive());
-        }
-        user.setUpdatedDate(LocalDateTime.now());
+    public User applyUpdate(User existing, UpdateUserRequest request, String hashedPassword) {
+        return User.builder()
+                .id(existing.getId())
+                .userName(request.getUserName() != null ? request.getUserName() : existing.getUserName())
+                .email(request.getEmail() != null ? request.getEmail() : existing.getEmail())
+                .password(hashedPassword != null ? hashedPassword : existing.getPassword())
+                .name(request.getName() != null ? request.getName() : existing.getName())
+                .isActive(request.getIsActive() != null ? request.getIsActive() : existing.isActive())
+                .isDelete(existing.isDelete())
+                .createdDate(existing.getCreatedDate())
+                .updatedDate(LocalDateTime.now())
+                .createdBy(existing.getCreatedBy())
+                .updatedBy(existing.getUpdatedBy())
+                .build();
     }
 
     /**

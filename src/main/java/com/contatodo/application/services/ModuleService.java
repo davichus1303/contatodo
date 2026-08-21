@@ -5,7 +5,6 @@ import com.contatodo.application.dto.response.ModuleResponse;
 import com.contatodo.application.mapper.ModuleMapper;
 import com.contatodo.domain.entities.Module;
 import com.contatodo.domain.repositories.ModuleRepository;
-import com.contatodo.shared.utils.SecurityUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,23 +17,19 @@ public class ModuleService {
 
     private final ModuleRepository moduleRepository;
     private final ModuleMapper moduleMapper;
-    private final UserService userService;
 
     /**
      * Creates a module service.
      *
      * @param moduleRepository Module repository port.
      * @param moduleMapper Module mapper.
-     * @param userService User service.
      */
     public ModuleService(
             ModuleRepository moduleRepository,
-            ModuleMapper moduleMapper,
-            UserService userService
+            ModuleMapper moduleMapper
     ) {
         this.moduleRepository = moduleRepository;
         this.moduleMapper = moduleMapper;
-        this.userService = userService;
     }
 
     /**
@@ -44,21 +39,17 @@ public class ModuleService {
      * @return Created module response.
      */
     public ModuleResponse createModule(CreateModuleRequest request) {
-        String userOid = SecurityUtils.getCurrentUserOid(userService);
-        
-        Module module = moduleMapper.toEntity(request, userOid);
-        Module savedModule = moduleRepository.save(module);
+        Module savedModule = moduleRepository.save(moduleMapper.toEntity(request));
         return moduleMapper.toResponse(savedModule);
     }
 
     /**
-     * Retrieves modules accessible to the authenticated user.
+     * Retrieves all active modules.
      *
      * @return List of module responses.
      */
-    public List<ModuleResponse> getModulesForUser() {
-        String userOid = SecurityUtils.getCurrentUserOid(userService);
-        List<Module> modules = moduleRepository.findActiveModulesByUserOid(userOid);
+    public List<ModuleResponse> getModules() {
+        List<Module> modules = moduleRepository.findAllActive();
         return moduleMapper.toResponseList(modules);
     }
 }
