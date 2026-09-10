@@ -2,15 +2,11 @@ name: Backend CI
 
 on:
   push:
-    paths:
-      - 'src/**'
-      - 'pom.xml'
-      - '.github/workflows/backend-ci.yml'
-  pull_request:
-    paths:
-      - 'src/**'
-      - 'pom.xml'
-      - '.github/workflows/backend-ci.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-and-test:
