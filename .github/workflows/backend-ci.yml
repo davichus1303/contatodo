@@ -14,20 +14,17 @@ env:
 
 jobs:
   build-and-test:
-    name: Build and test (Java ${{ matrix.java }})
+    name: Build and test (Java 21)
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        java: ['17', '21']
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK ${{ matrix.java }}
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: ${{ matrix.java }}
+          java-version: "21"
           cache: maven
 
       - name: Compile
@@ -43,7 +40,7 @@ jobs:
         if: always()
         run: |
           {
-            echo "## Resultados de pruebas (Java ${{ matrix.java }})"
+            echo "## Resultados de pruebas (Java 21)"
             echo '```'
             grep -h "Tests run:" target/surefire-reports/*.txt || echo "(sin reportes generados)"
             echo '```'
@@ -53,7 +50,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: surefire-reports-java-${{ matrix.java }}
+          name: surefire-reports-java21
           path: target/surefire-reports/
           retention-days: 7
 
