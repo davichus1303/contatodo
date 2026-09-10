@@ -60,7 +60,7 @@ public class RoleService {
      * @return List of role responses.
      */
     public List<RoleResponse> getRoles() {
-        List<Role> roles = roleRepository.findAllActive();
+        List<Role> roles = roleRepository.findAllNotDeleted();
         return roleMapper.toResponseList(roles);
     }
 

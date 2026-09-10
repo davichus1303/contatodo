@@ -14,10 +14,10 @@ import java.util.List;
 public interface RoleMongoRepository extends MongoRepository<RoleDocument, String> {
 
     /**
-     * Finds all roles that are not deleted.
+     * Finds all roles that are not logically deleted.
      *
-     * @return List of active role documents.
+     * @return List of non-deleted role documents.
      */
     @Query("{ 'isDeleted': false }")
-    List<RoleDocument> findActiveRoles();
+    List<RoleDocument> findAllNotDeleted();
 }

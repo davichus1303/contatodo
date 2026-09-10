@@ -53,7 +53,7 @@ public class RoleMapper {
                         ? toPermissionEntities(request.getPermissions())
                         : existing.getPermissions())
                 .isDeleted(existing.getIsDeleted())
-                .isActive(existing.getIsActive())
+                .isActive(request.getIsActive() != null ? request.getIsActive() : existing.getIsActive())
                 .createdDate(existing.getCreatedDate())
                 .updatedDate(LocalDateTime.now())
                 .createdBy(existing.getCreatedBy())

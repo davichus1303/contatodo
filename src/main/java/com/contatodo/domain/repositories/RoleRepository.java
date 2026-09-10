@@ -31,5 +31,5 @@ public interface RoleRepository {
      *
      * @return List of active roles.
      */
-    List<Role> findAllActive();
+    List<Role> findAllNotDeleted();
 }
