@@ -55,7 +55,7 @@ public class RoleRepositoryAdapter implements RoleRepository {
      * {@inheritDoc}
      */
     @Override
-    public List<Role> findAllActive() {
-        return persistenceMapper.toEntityList(roleMongoRepository.findActiveRoles());
+    public List<Role> findAllNotDeleted() {
+        return persistenceMapper.toEntityList(roleMongoRepository.findAllNotDeleted());
     }
 }

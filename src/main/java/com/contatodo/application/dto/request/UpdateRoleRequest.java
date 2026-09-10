@@ -13,6 +13,8 @@ public class UpdateRoleRequest {
 
     private List<RolePermissionRequest> permissions;
 
+    private Boolean isActive;
+
     /**
      * Creates an empty update role request.
      */
@@ -24,10 +26,12 @@ public class UpdateRoleRequest {
      *
      * @param name Role name.
      * @param permissions List of role permissions.
+     * @param isActive Role active flag.
      */
-    public UpdateRoleRequest(String name, List<RolePermissionRequest> permissions) {
+    public UpdateRoleRequest(String name, List<RolePermissionRequest> permissions, Boolean isActive) {
         this.name = name;
         this.permissions = permissions;
+        this.isActive = isActive;
     }
 
     public String getName() {
@@ -44,5 +48,13 @@ public class UpdateRoleRequest {
 
     public void setPermissions(List<RolePermissionRequest> permissions) {
         this.permissions = permissions;
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
+    public void setIsActive(Boolean isActive) {
+        this.isActive = isActive;
     }
 }
