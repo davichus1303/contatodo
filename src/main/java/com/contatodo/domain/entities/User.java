@@ -3,6 +3,7 @@ package com.contatodo.domain.entities;
 import com.contatodo.domain.exception.InvalidEntityStateException;
 import com.contatodo.domain.model.Email;
 import com.contatodo.shared.constants.UserConstants;
+import com.contatodo.shared.utils.EntityValidation;
 
 import java.time.LocalDateTime;
 
@@ -278,19 +279,13 @@ public final class User {
          * @throws InvalidEntityStateException if mandatory fields are missing or the email format is invalid.
          */
         public User build() {
-            if (userName == null || userName.trim().isEmpty()) {
-                throw new InvalidEntityStateException(UserConstants.USER_USERNAME_REQUIRED);
-            }
-            if (email == null || email.trim().isEmpty()) {
-                throw new InvalidEntityStateException(UserConstants.USER_EMAIL_REQUIRED);
-            }
+            EntityValidation.requireNotBlank(userName, UserConstants.USER_USERNAME_REQUIRED);
+            EntityValidation.requireNotBlank(email, UserConstants.USER_EMAIL_REQUIRED);
             Email.of(email);
             if (password == null || password.isEmpty()) {
                 throw new InvalidEntityStateException(UserConstants.USER_PASSWORD_REQUIRED);
             }
-            if (name == null || name.trim().isEmpty()) {
-                throw new InvalidEntityStateException(UserConstants.USER_NAME_REQUIRED);
-            }
+            EntityValidation.requireNotBlank(name, UserConstants.USER_NAME_REQUIRED);
             return new User(this);
         }
     }

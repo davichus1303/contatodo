@@ -12,7 +12,7 @@ import java.util.List;
  * Mapper for expense entities and DTOs.
  */
 @Component
-public class ExpenseMapper {
+public class ExpenseMapper implements ResponseMapper<Expense, ExpenseResponse> {
 
     /**
      * Maps a create request to a domain entity.
@@ -62,15 +62,5 @@ public class ExpenseMapper {
         response.setCreatedDate(expense.getCreatedDate());
         response.setUpdatedDate(expense.getUpdatedDate());
         return response;
-    }
-
-    /**
-     * Maps a list of expenses to response DTOs.
-     *
-     * @param expenses Expense entities.
-     * @return Expense responses.
-     */
-    public List<ExpenseResponse> toResponseList(List<Expense> expenses) {
-        return expenses.stream().map(this::toResponse).toList();
     }
 }

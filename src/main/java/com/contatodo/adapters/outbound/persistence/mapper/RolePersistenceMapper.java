@@ -12,7 +12,7 @@ import java.util.List;
  * Mapper between {@link Role} domain entities and MongoDB role documents.
  */
 @Component
-public class RolePersistenceMapper {
+public class RolePersistenceMapper implements PersistenceMapper<RoleDocument, Role> {
 
     /**
      * Maps a role entity to a document.
@@ -59,16 +59,6 @@ public class RolePersistenceMapper {
                 .updatedDate(document.getUpdatedDate())
                 .createdBy(document.getCreatedBy())
                 .build();
-    }
-
-    /**
-     * Maps a list of role documents to entities.
-     *
-     * @param documents Role documents.
-     * @return Role entities.
-     */
-    public List<Role> toEntityList(List<RoleDocument> documents) {
-        return documents.stream().map(this::toEntity).toList();
     }
 
     /**

@@ -3,9 +3,7 @@ package com.contatodo.application.validators;
 import com.contatodo.application.dto.request.CreateUserRequest;
 import com.contatodo.application.dto.request.LoginRequest;
 import com.contatodo.application.dto.request.UpdateUserRequest;
-import com.contatodo.shared.constants.ResponseConstants;
 import com.contatodo.shared.constants.UserConstants;
-import com.contatodo.shared.exceptions.InvalidRequestException;
 import com.contatodo.shared.validators.FieldValidator;
 import org.springframework.stereotype.Component;
 
@@ -41,7 +39,7 @@ public class UserValidator {
         fieldValidator.validateRequired(request.getName(), UserConstants.USER_NAME_REQUIRED, errors);
         fieldValidator.validateEmail(request.getEmail(), UserConstants.USER_INVALID_EMAIL, errors);
         fieldValidator.validatePassword(request.getPassword(), UserConstants.USER_PASSWORD_REQUIRED, errors);
-        throwIfHasErrors(errors);
+        fieldValidator.throwIfHasErrors(errors);
     }
 
     /**
@@ -54,7 +52,7 @@ public class UserValidator {
         if (request.getEmail() != null) {
             fieldValidator.validateEmail(request.getEmail(), UserConstants.USER_INVALID_EMAIL, errors);
         }
-        throwIfHasErrors(errors);
+        fieldValidator.throwIfHasErrors(errors);
     }
 
     /**
@@ -67,12 +65,6 @@ public class UserValidator {
         fieldValidator.validateRequired(request.getEmail(), UserConstants.USER_EMAIL_REQUIRED, errors);
         fieldValidator.validateRequired(request.getPassword(), UserConstants.USER_PASSWORD_REQUIRED, errors);
         fieldValidator.validateEmail(request.getEmail(), UserConstants.USER_INVALID_EMAIL, errors);
-        throwIfHasErrors(errors);
-    }
-
-    private void throwIfHasErrors(List<String> errors) {
-        if (!errors.isEmpty()) {
-            throw new InvalidRequestException(ResponseConstants.VALIDATION_ERROR_MESSAGE, errors);
-        }
+        fieldValidator.throwIfHasErrors(errors);
     }
 }

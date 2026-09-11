@@ -13,7 +13,7 @@ import java.util.List;
  * Mapper for user entities and DTOs.
  */
 @Component
-public class UserMapper {
+public class UserMapper implements ResponseMapper<User, UserResponse> {
 
     /**
      * Maps a create request to a domain entity.
@@ -75,15 +75,5 @@ public class UserMapper {
         response.setCreatedDate(user.getCreatedDate());
         response.setUpdatedDate(user.getUpdatedDate());
         return response;
-    }
-
-    /**
-     * Maps a list of users to response DTOs.
-     *
-     * @param users User entities.
-     * @return User responses.
-     */
-    public List<UserResponse> toResponseList(List<User> users) {
-        return users.stream().map(this::toResponse).toList();
     }
 }

@@ -7,6 +7,7 @@ import com.contatodo.application.services.ProductService;
 import com.contatodo.shared.constants.ProductConstants;
 import com.contatodo.shared.constants.ResponseConstants;
 import com.contatodo.shared.response.ApiResponse;
+import com.contatodo.shared.response.WebResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -46,7 +47,7 @@ public class ProductController {
     @PostMapping
     public ResponseEntity<ApiResponse<ProductResponse>> createProduct(@RequestBody CreateProductRequest request) {
         ProductResponse product = productService.createProduct(request);
-        return ResponseEntity.ok(ApiResponse.success(ProductConstants.PRODUCT_CREATED, product));
+        return WebResponses.ok(ProductConstants.PRODUCT_CREATED, product);
     }
 
     /**
@@ -62,7 +63,7 @@ public class ProductController {
             @RequestBody UpdateProductRequest request
     ) {
         ProductResponse product = productService.updateProduct(id, request);
-        return ResponseEntity.ok(ApiResponse.success(ProductConstants.PRODUCT_UPDATED, product));
+        return WebResponses.ok(ProductConstants.PRODUCT_UPDATED, product);
     }
 
     /**
@@ -73,7 +74,7 @@ public class ProductController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<ProductResponse>>> getAllProducts() {
         List<ProductResponse> products = productService.getAllProducts();
-        return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, products));
+        return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, products);
     }
 
     /**
@@ -85,7 +86,7 @@ public class ProductController {
     @GetMapping("/code/{code}")
     public ResponseEntity<ApiResponse<ProductResponse>> getProductByCode(@PathVariable String code) {
         ProductResponse product = productService.getProductByCode(code);
-        return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, product));
+        return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, product);
     }
 
     /**
@@ -97,7 +98,7 @@ public class ProductController {
     @GetMapping("/name/{name}")
     public ResponseEntity<ApiResponse<List<ProductResponse>>> getProductsByName(@PathVariable String name) {
         List<ProductResponse> products = productService.getProductsByName(name);
-        return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, products));
+        return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, products);
     }
 
     /**
@@ -108,6 +109,6 @@ public class ProductController {
     @GetMapping("/available")
     public ResponseEntity<ApiResponse<List<ProductResponse>>> getAvailableProductsForUser(@RequestHeader("userOid") String userOid) {
         List<ProductResponse> products = productService.getAvailableProductsForUser(userOid);
-        return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, products));
+        return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, products);
     }
 }

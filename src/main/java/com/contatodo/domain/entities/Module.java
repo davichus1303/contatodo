@@ -1,7 +1,7 @@
 package com.contatodo.domain.entities;
 
-import com.contatodo.domain.exception.InvalidEntityStateException;
 import com.contatodo.shared.constants.ValidationConstants;
+import com.contatodo.shared.utils.EntityValidation;
 
 import java.time.LocalDateTime;
 
@@ -166,15 +166,11 @@ public final class Module {
          * Builds the module validating its invariants.
          *
          * @return Immutable module.
-         * @throws InvalidEntityStateException if the name or link is missing.
+         * @throws com.contatodo.domain.exception.InvalidEntityStateException if the name or link is missing.
          */
         public Module build() {
-            if (name == null || name.trim().isEmpty()) {
-                throw new InvalidEntityStateException(ValidationConstants.FIELD_REQUIRED);
-            }
-            if (link == null || link.trim().isEmpty()) {
-                throw new InvalidEntityStateException(ValidationConstants.FIELD_REQUIRED);
-            }
+            EntityValidation.requireNotBlank(name, ValidationConstants.FIELD_REQUIRED);
+            EntityValidation.requireNotBlank(link, ValidationConstants.FIELD_REQUIRED);
             return new Module(this);
         }
     }

@@ -10,7 +10,7 @@ import java.util.List;
  * Mapper between {@link Sale} domain entities and MongoDB sale documents.
  */
 @Component
-public class SalePersistenceMapper {
+public class SalePersistenceMapper implements PersistenceMapper<SaleDocument, Sale> {
 
     /**
      * Maps a sale entity to a sale document.
@@ -60,15 +60,5 @@ public class SalePersistenceMapper {
                 .updatedDate(document.getUpdatedDate())
                 .isDeleted(document.getIsDeleted())
                 .build();
-    }
-
-    /**
-     * Maps a list of sale documents to sale entities.
-     *
-     * @param documents Sale documents.
-     * @return Sale entities.
-     */
-    public List<Sale> toEntityList(List<SaleDocument> documents) {
-        return documents.stream().map(this::toEntity).toList();
     }
 }

@@ -12,7 +12,7 @@ import java.util.List;
  * Mapper for module entities and DTOs.
  */
 @Component
-public class ModuleMapper {
+public class ModuleMapper implements ResponseMapper<Module, ModuleResponse> {
 
     /**
      * Maps a create request to a domain entity.
@@ -44,15 +44,5 @@ public class ModuleMapper {
         response.setName(module.getName());
         response.setLink(module.getLink());
         return response;
-    }
-
-    /**
-     * Maps a list of modules to response DTOs.
-     *
-     * @param modules Module entities.
-     * @return Module responses.
-     */
-    public List<ModuleResponse> toResponseList(List<Module> modules) {
-        return modules.stream().map(this::toResponse).toList();
     }
 }

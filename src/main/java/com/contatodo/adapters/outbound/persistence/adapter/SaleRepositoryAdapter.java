@@ -5,6 +5,7 @@ import com.contatodo.adapters.outbound.persistence.mapper.SalePersistenceMapper;
 import com.contatodo.adapters.outbound.persistence.repository.SaleMongoRepository;
 import com.contatodo.domain.entities.Sale;
 import com.contatodo.domain.repositories.SaleRepository;
+import com.contatodo.shared.utils.DateUtils;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
@@ -49,8 +50,8 @@ public class SaleRepositoryAdapter implements SaleRepository {
      */
     @Override
     public List<Sale> findByUserOidAndSaleDate(String userOid, LocalDate date) {
-        LocalDateTime startOfDay = date.atStartOfDay();
-        LocalDateTime endOfDay = date.atTime(23, 59, 59);
+        LocalDateTime startOfDay = DateUtils.startOfDay(date);
+        LocalDateTime endOfDay = DateUtils.endOfDay(date);
         return persistenceMapper.toEntityList(
                 saleMongoRepository.findByUserOidAndSaleDateBetween(userOid, startOfDay, endOfDay)
         );

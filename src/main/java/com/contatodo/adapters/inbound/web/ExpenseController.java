@@ -7,6 +7,7 @@ import com.contatodo.application.dto.response.TotalExpensesResponse;
 import com.contatodo.application.services.ExpenseService;
 import com.contatodo.shared.constants.ResponseConstants;
 import com.contatodo.shared.response.ApiResponse;
+import com.contatodo.shared.response.WebResponses;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -46,7 +47,7 @@ public class ExpenseController {
             @RequestBody CreateExpenseRequest request
     ) {
         ExpenseResponse expense = expenseService.createExpense(request);
-        return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, expense));
+        return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, expense);
     }
 
     /**
@@ -57,7 +58,7 @@ public class ExpenseController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<ExpenseResponse>>> getExpenses() {
         List<ExpenseResponse> expenses = expenseService.getExpenses();
-        return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, expenses));
+        return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, expenses);
     }
 
     /**
@@ -71,6 +72,6 @@ public class ExpenseController {
             @Valid @RequestBody TotalExpensesRequest request
     ) {
         TotalExpensesResponse totalExpenses = expenseService.getTotalExpensesByDateRange(request);
-        return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, totalExpenses));
+        return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, totalExpenses);
     }
 }

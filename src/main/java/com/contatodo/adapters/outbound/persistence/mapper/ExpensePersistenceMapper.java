@@ -11,7 +11,7 @@ import java.util.List;
  * documents.
  */
 @Component
-public class ExpensePersistenceMapper {
+public class ExpensePersistenceMapper implements PersistenceMapper<ExpenseDocument, Expense> {
 
     /**
      * Maps an expense entity to a document.
@@ -59,15 +59,5 @@ public class ExpensePersistenceMapper {
                 .createdDate(document.getCreatedDate())
                 .updatedDate(document.getUpdatedDate())
                 .build();
-    }
-
-    /**
-     * Maps a list of expense documents to entities.
-     *
-     * @param documents Expense documents.
-     * @return Expense entities.
-     */
-    public List<Expense> toEntityList(List<ExpenseDocument> documents) {
-        return documents.stream().map(this::toEntity).toList();
     }
 }

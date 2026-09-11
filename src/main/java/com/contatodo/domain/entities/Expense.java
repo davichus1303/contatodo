@@ -1,7 +1,7 @@
 package com.contatodo.domain.entities;
 
-import com.contatodo.domain.exception.InvalidEntityStateException;
 import com.contatodo.shared.constants.ValidationConstants;
+import com.contatodo.shared.utils.EntityValidation;
 
 import java.time.LocalDateTime;
 
@@ -274,21 +274,15 @@ public final class Expense {
          * Builds the expense validating its invariants.
          *
          * @return Immutable expense.
-         * @throws InvalidEntityStateException if name, owner or date are missing, or the amount is negative.
+         * @throws com.contatodo.domain.exception.InvalidEntityStateException if name, owner or date are missing, or the amount is negative.
          */
         public Expense build() {
-            if (name == null || name.trim().isEmpty()) {
-                throw new InvalidEntityStateException(ValidationConstants.FIELD_REQUIRED);
-            }
-            if (userOid == null || userOid.trim().isEmpty()) {
-                throw new InvalidEntityStateException(ValidationConstants.FIELD_REQUIRED);
-            }
+            EntityValidation.requireNotBlank(name, ValidationConstants.FIELD_REQUIRED);
+            EntityValidation.requireNotBlank(userOid, ValidationConstants.FIELD_REQUIRED);
             if (expenseDate == null) {
-                throw new InvalidEntityStateException(ValidationConstants.FIELD_REQUIRED);
+                throw new com.contatodo.domain.exception.InvalidEntityStateException(ValidationConstants.FIELD_REQUIRED);
             }
-            if (amount != null && amount < 0) {
-                throw new InvalidEntityStateException(ValidationConstants.FIELD_INVALID_RANGE);
-            }
+            EntityValidation.requireNonNegative(amount, ValidationConstants.FIELD_INVALID_RANGE);
             return new Expense(this);
         }
     }
