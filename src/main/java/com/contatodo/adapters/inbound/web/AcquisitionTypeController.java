@@ -6,6 +6,7 @@ import com.contatodo.application.dto.response.AcquisitionTypeResponse;
 import com.contatodo.application.services.AcquisitionTypeService;
 import com.contatodo.shared.constants.ResponseConstants;
 import com.contatodo.shared.response.ApiResponse;
+import com.contatodo.shared.response.WebResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -47,7 +48,7 @@ public class AcquisitionTypeController {
             @RequestBody CreateAcquisitionTypeRequest request
     ) {
         AcquisitionTypeResponse acquisitionType = acquisitionTypeService.createAcquisitionType(request);
-        return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, acquisitionType));
+        return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, acquisitionType);
     }
 
     /**
@@ -58,7 +59,7 @@ public class AcquisitionTypeController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<AcquisitionTypeResponse>>> getActiveAcquisitionTypes() {
         List<AcquisitionTypeResponse> acquisitionTypes = acquisitionTypeService.getActiveAcquisitionTypes();
-        return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, acquisitionTypes));
+        return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, acquisitionTypes);
     }
 
     /**
@@ -74,7 +75,7 @@ public class AcquisitionTypeController {
             @RequestBody UpdateAcquisitionTypeRequest request
     ) {
         AcquisitionTypeResponse acquisitionType = acquisitionTypeService.updateAcquisitionType(id, request);
-        return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, acquisitionType));
+        return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, acquisitionType);
     }
 
     /**
@@ -88,7 +89,7 @@ public class AcquisitionTypeController {
             @PathVariable String id
     ) {
         AcquisitionTypeResponse acquisitionType = acquisitionTypeService.deleteAcquisitionType(id);
-        return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, acquisitionType));
+        return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, acquisitionType);
     }
 
     /**
@@ -99,6 +100,6 @@ public class AcquisitionTypeController {
     @GetMapping("/admin/all")
     public ResponseEntity<ApiResponse<List<AcquisitionTypeResponse>>> getAllNotDeletedAcquisitionTypes() {
         List<AcquisitionTypeResponse> acquisitionTypes = acquisitionTypeService.getAllNotDeletedAcquisitionTypes();
-        return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, acquisitionTypes));
+        return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, acquisitionTypes);
     }
 }

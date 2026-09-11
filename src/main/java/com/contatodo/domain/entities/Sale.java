@@ -1,9 +1,9 @@
 package com.contatodo.domain.entities;
 
-import com.contatodo.domain.exception.InvalidEntityStateException;
 import com.contatodo.domain.model.Money;
 import com.contatodo.shared.constants.SaleConstants;
 import com.contatodo.shared.exceptions.SaleWithoutProfitException;
+import com.contatodo.shared.utils.EntityValidation;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -349,18 +349,12 @@ public final class Sale {
          * Builds the sale validating its structural invariants.
          *
          * @return Immutable sale.
-         * @throws InvalidEntityStateException if mandatory fields are missing or quantity is not positive.
+         * @throws com.contatodo.domain.exception.InvalidEntityStateException if mandatory fields are missing or quantity is not positive.
          */
         public Sale build() {
-            if (productOid == null || productOid.trim().isEmpty()) {
-                throw new InvalidEntityStateException(SaleConstants.SALE_PRODUCT_OID_REQUIRED);
-            }
-            if (quantity == null || quantity <= 0) {
-                throw new InvalidEntityStateException(SaleConstants.SALE_QUANTITY_REQUIRED);
-            }
-            if (userOid == null || userOid.trim().isEmpty()) {
-                throw new InvalidEntityStateException(SaleConstants.USER_NOT_FOUND);
-            }
+            EntityValidation.requireNotBlank(productOid, SaleConstants.SALE_PRODUCT_OID_REQUIRED);
+            EntityValidation.requirePositive(quantity, SaleConstants.SALE_QUANTITY_REQUIRED);
+            EntityValidation.requireNotBlank(userOid, SaleConstants.USER_NOT_FOUND);
             return new Sale(this);
         }
     }

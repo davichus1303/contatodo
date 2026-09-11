@@ -16,7 +16,7 @@ import java.util.List;
  * Mapper for role entities and DTOs.
  */
 @Component
-public class RoleMapper {
+public class RoleMapper implements ResponseMapper<Role, RoleResponse> {
 
     /**
      * Maps a create request to a domain entity.
@@ -77,16 +77,6 @@ public class RoleMapper {
         response.setUpdatedDate(role.getUpdatedDate());
         response.setCreatedBy(role.getCreatedBy());
         return response;
-    }
-
-    /**
-     * Maps a list of roles to response DTOs.
-     *
-     * @param roles Role entities.
-     * @return Role responses.
-     */
-    public List<RoleResponse> toResponseList(List<Role> roles) {
-        return roles.stream().map(this::toResponse).toList();
     }
 
     /**

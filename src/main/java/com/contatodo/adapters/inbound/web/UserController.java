@@ -10,6 +10,7 @@ import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.ResponseConstants;
 import com.contatodo.shared.constants.UserConstants;
 import com.contatodo.shared.response.ApiResponse;
+import com.contatodo.shared.response.WebResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -49,7 +50,7 @@ public class UserController {
     @PostMapping("/users")
     public ResponseEntity<ApiResponse<UserResponse>> createUser(@RequestBody CreateUserRequest request) {
         UserResponse user = userService.createUser(request);
-        return ResponseEntity.ok(ApiResponse.success(UserConstants.USER_CREATED, user));
+        return WebResponses.ok(UserConstants.USER_CREATED, user);
     }
 
     /**
@@ -65,7 +66,7 @@ public class UserController {
             @RequestBody UpdateUserRequest request
     ) {
         UserResponse user = userService.updateUser(id, request);
-        return ResponseEntity.ok(ApiResponse.success(UserConstants.USER_UPDATED, user));
+        return WebResponses.ok(UserConstants.USER_UPDATED, user);
     }
 
     /**
@@ -77,7 +78,7 @@ public class UserController {
     @DeleteMapping("/users/{id}")
     public ResponseEntity<ApiResponse<List<Object>>> deleteUser(@PathVariable String id) {
         userService.deleteUser(id);
-        return ResponseEntity.ok(ApiResponse.successWithoutData(UserConstants.USER_DELETED));
+        return WebResponses.okNoData(UserConstants.USER_DELETED);
     }
 
     /**
@@ -88,7 +89,7 @@ public class UserController {
     @GetMapping("/users")
     public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {
         List<UserResponse> users = userService.getAllUsers();
-        return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, users));
+        return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, users);
     }
 
     /**
@@ -100,7 +101,7 @@ public class UserController {
     @GetMapping("/users/email/{email}")
     public ResponseEntity<ApiResponse<UserResponse>> getUserByEmail(@PathVariable String email) {
         UserResponse user = userService.getUserByEmail(email);
-        return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, user));
+        return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, user);
     }
 
     /**
@@ -112,6 +113,6 @@ public class UserController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@RequestBody LoginRequest request) {
         LoginResponse loginResponse = userService.login(request);
-        return ResponseEntity.ok(ApiResponse.success(AuthConstants.LOGIN_SUCCESS, loginResponse));
+        return WebResponses.ok(AuthConstants.LOGIN_SUCCESS, loginResponse);
     }
 }

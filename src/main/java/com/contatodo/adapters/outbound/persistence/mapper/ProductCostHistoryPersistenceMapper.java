@@ -11,7 +11,7 @@ import java.util.List;
  * product cost history documents.
  */
 @Component
-public class ProductCostHistoryPersistenceMapper {
+public class ProductCostHistoryPersistenceMapper implements PersistenceMapper<ProductCostHistoryDocument, ProductCostHistory> {
 
     /**
      * Maps a product cost history entity to a document.
@@ -55,15 +55,5 @@ public class ProductCostHistoryPersistenceMapper {
                 .userOid(document.getUserOid())
                 .createdDate(document.getCreatedDate())
                 .build();
-    }
-
-    /**
-     * Maps a list of history documents to entities.
-     *
-     * @param documents History documents.
-     * @return History entities.
-     */
-    public List<ProductCostHistory> toEntityList(List<ProductCostHistoryDocument> documents) {
-        return documents.stream().map(this::toEntity).toList();
     }
 }

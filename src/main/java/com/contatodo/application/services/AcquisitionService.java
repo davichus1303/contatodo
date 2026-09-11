@@ -8,19 +8,24 @@ import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.validators.AcquisitionValidator;
 import com.contatodo.domain.entities.Acquisition;
 import com.contatodo.domain.entities.AcquisitionType;
+import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.repositories.AcquisitionRepository;
 import com.contatodo.domain.repositories.AcquisitionTypeRepository;
 import com.contatodo.domain.repositories.ProductRepository;
 import com.contatodo.shared.constants.AcquisitionTypeConstants;
 import com.contatodo.shared.constants.ExpenseConstants;
 import com.contatodo.shared.exceptions.AcquisitionTypeNotFoundException;
+import com.contatodo.shared.utils.DateUtils;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 
 /**
  * Use case service orchestrating acquisition registration and queries.
@@ -106,12 +111,15 @@ public class AcquisitionService {
 
         List<Acquisition> acquisitions = acquisitionRepository.findByUserOidAndAcquisitionDateBetween(
                 userOid,
-                startDate != null ? startDate : startOfToday(),
-                endDate != null ? endDate : endOfToday()
+                startDate != null ? startDate : DateUtils.startOfDay(LocalDate.now()),
+                endDate != null ? endDate : DateUtils.endOfDay(LocalDate.now())
         );
 
-        Map<String, String> productNames = enrichProductNames(acquisitions);
-        Map<String, String> acquisitionTypes = enrichAcquisitionTypes(acquisitions);
+        Map<String, String> productNames = enrichNames(
+                acquisitions, Acquisition::getProductOid, productRepository::findById, Product::getName);
+        Map<String, String> acquisitionTypes = enrichNames(
+                acquisitions, Acquisition::getAcquisitionTypeOid, acquisitionTypeRepository::findById,
+                AcquisitionType::getName);
 
         return acquisitionMapper.toResponseList(acquisitions, productNames, acquisitionTypes);
     }
@@ -189,39 +197,29 @@ public class AcquisitionService {
     }
 
     /**
-     * Enriches acquisitions with product names resolved once per product.
+     * Resolves a name map for a related entity, looking each OID up at most once.
      *
      * @param acquisitions List of acquisitions.
-     * @return Map of product OIDs to product names.
+     * @param oidExtractor Extracts the related OID from an acquisition.
+     * @param finder Looks up the related entity by OID.
+     * @param nameExtractor Extracts the related entity name.
+     * @param <T> Related entity type.
+     * @return Map of related OIDs to names.
      */
-    private Map<String, String> enrichProductNames(List<Acquisition> acquisitions) {
-        Map<String, String> productNames = new HashMap<>();
+    private <T> Map<String, String> enrichNames(
+            List<Acquisition> acquisitions,
+            Function<Acquisition, String> oidExtractor,
+            Function<String, Optional<T>> finder,
+            Function<T, String> nameExtractor
+    ) {
+        Map<String, String> names = new HashMap<>();
         for (Acquisition acquisition : acquisitions) {
-            String productOid = acquisition.getProductOid();
-            if (productOid != null && !productNames.containsKey(productOid)) {
-                productRepository.findById(productOid)
-                        .ifPresent(product -> productNames.put(product.getId(), product.getName()));
+            String oid = oidExtractor.apply(acquisition);
+            if (oid != null && !names.containsKey(oid)) {
+                finder.apply(oid).ifPresent(entity -> names.put(oid, nameExtractor.apply(entity)));
             }
         }
-        return productNames;
-    }
-
-    /**
-     * Enriches acquisitions with acquisition type names resolved once per type.
-     *
-     * @param acquisitions List of acquisitions.
-     * @return Map of acquisition type OIDs to names.
-     */
-    private Map<String, String> enrichAcquisitionTypes(List<Acquisition> acquisitions) {
-        Map<String, String> acquisitionTypes = new HashMap<>();
-        for (Acquisition acquisition : acquisitions) {
-            String typeOid = acquisition.getAcquisitionTypeOid();
-            if (typeOid != null && !acquisitionTypes.containsKey(typeOid)) {
-                acquisitionTypeRepository.findById(typeOid)
-                        .ifPresent(type -> acquisitionTypes.put(type.getId(), type.getName()));
-            }
-        }
-        return acquisitionTypes;
+        return names;
     }
 
     /**
@@ -233,23 +231,5 @@ public class AcquisitionService {
     private String formatIso(LocalDateTime dateTime) {
         DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
         return (dateTime != null ? dateTime : LocalDateTime.now()).format(formatter);
-    }
-
-    /**
-     * Gets the start of the current day.
-     *
-     * @return Today at midnight.
-     */
-    private LocalDateTime startOfToday() {
-        return LocalDateTime.now().toLocalDate().atStartOfDay();
-    }
-
-    /**
-     * Gets the end of the current day.
-     *
-     * @return Today at one second before midnight.
-     */
-    private LocalDateTime endOfToday() {
-        return LocalDateTime.now().toLocalDate().atTime(23, 59, 59);
     }
 }

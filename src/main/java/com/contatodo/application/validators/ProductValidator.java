@@ -3,8 +3,6 @@ package com.contatodo.application.validators;
 import com.contatodo.application.dto.request.CreateProductRequest;
 import com.contatodo.application.dto.request.UpdateProductRequest;
 import com.contatodo.shared.constants.ProductConstants;
-import com.contatodo.shared.constants.ResponseConstants;
-import com.contatodo.shared.exceptions.InvalidRequestException;
 import com.contatodo.shared.validators.FieldValidator;
 import org.springframework.stereotype.Component;
 
@@ -40,7 +38,7 @@ public class ProductValidator {
         fieldValidator.validateNonNegative(request.getRealCost(), ProductConstants.PRODUCT_REAL_COST_REQUIRED, errors);
         fieldValidator.validateNonNegative(request.getUnitRealCost(), ProductConstants.PRODUCT_REAL_COST_REQUIRED, errors);
         fieldValidator.validateNonNegative(request.getUnitPublicCost(), ProductConstants.PRODUCT_PUBLIC_COST_REQUIRED, errors);
-        throwIfHasErrors(errors);
+        fieldValidator.throwIfHasErrors(errors);
     }
 
     /**
@@ -62,12 +60,6 @@ public class ProductValidator {
         if (request.getUnitPublicCost() != null) {
             fieldValidator.validateNonNegative(request.getUnitPublicCost(), ProductConstants.PRODUCT_COST_INVALID, errors);
         }
-        throwIfHasErrors(errors);
-    }
-
-    private void throwIfHasErrors(List<String> errors) {
-        if (!errors.isEmpty()) {
-            throw new InvalidRequestException(ResponseConstants.VALIDATION_ERROR_MESSAGE, errors);
-        }
+        fieldValidator.throwIfHasErrors(errors);
     }
 }

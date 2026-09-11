@@ -10,7 +10,7 @@ import java.util.List;
  * Mapper between {@link Module} domain entities and MongoDB module documents.
  */
 @Component
-public class ModulePersistenceMapper {
+public class ModulePersistenceMapper implements PersistenceMapper<ModuleDocument, Module> {
 
     /**
      * Maps a module entity to a module document.
@@ -46,15 +46,5 @@ public class ModulePersistenceMapper {
                 .createdDate(document.getCreatedDate())
                 .updatedDate(document.getUpdatedDate())
                 .build();
-    }
-
-    /**
-     * Maps a list of module documents to module entities.
-     *
-     * @param documents Module documents.
-     * @return Module entities.
-     */
-    public List<Module> toEntityList(List<ModuleDocument> documents) {
-        return documents.stream().map(this::toEntity).toList();
     }
 }

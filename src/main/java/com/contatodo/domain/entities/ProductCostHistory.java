@@ -1,7 +1,7 @@
 package com.contatodo.domain.entities;
 
-import com.contatodo.domain.exception.InvalidEntityStateException;
 import com.contatodo.shared.constants.ValidationConstants;
+import com.contatodo.shared.utils.EntityValidation;
 
 import java.time.LocalDateTime;
 
@@ -239,20 +239,16 @@ public final class ProductCostHistory {
          * Builds the history entry validating its invariants.
          *
          * @return Immutable history entry.
-         * @throws InvalidEntityStateException if product, owner or dates are missing, or quantities are invalid.
+         * @throws com.contatodo.domain.exception.InvalidEntityStateException if product, owner or dates are missing, or quantities are invalid.
          */
         public ProductCostHistory build() {
-            if (productOid == null || productOid.trim().isEmpty()) {
-                throw new InvalidEntityStateException(ValidationConstants.FIELD_REQUIRED);
-            }
-            if (userOid == null || userOid.trim().isEmpty()) {
-                throw new InvalidEntityStateException(ValidationConstants.FIELD_REQUIRED);
-            }
+            EntityValidation.requireNotBlank(productOid, ValidationConstants.FIELD_REQUIRED);
+            EntityValidation.requireNotBlank(userOid, ValidationConstants.FIELD_REQUIRED);
             if (acquisitionDate == null || createdDate == null) {
-                throw new InvalidEntityStateException(ValidationConstants.FIELD_REQUIRED);
+                throw new com.contatodo.domain.exception.InvalidEntityStateException(ValidationConstants.FIELD_REQUIRED);
             }
             if (quantity != null && remainingQuantity != null && remainingQuantity > quantity) {
-                throw new InvalidEntityStateException(ValidationConstants.FIELD_INVALID_RANGE);
+                throw new com.contatodo.domain.exception.InvalidEntityStateException(ValidationConstants.FIELD_INVALID_RANGE);
             }
             return new ProductCostHistory(this);
         }

@@ -1,10 +1,10 @@
 package com.contatodo.domain.entities;
 
-import com.contatodo.domain.exception.InvalidEntityStateException;
 import com.contatodo.domain.model.Money;
 import com.contatodo.shared.constants.ProductConstants;
 import com.contatodo.shared.constants.SaleConstants;
 import com.contatodo.shared.exceptions.InsufficientStockException;
+import com.contatodo.shared.utils.EntityValidation;
 
 import java.time.LocalDateTime;
 import java.util.Objects;
@@ -377,31 +377,15 @@ public final class Product {
          * Builds the product validating its invariants.
          *
          * @return Immutable product.
-         * @throws InvalidEntityStateException if mandatory fields are missing or amounts are negative.
+         * @throws com.contatodo.domain.exception.InvalidEntityStateException if mandatory fields are missing or amounts are negative.
          */
         public Product build() {
-            if (name == null || name.trim().isEmpty()) {
-                throw new InvalidEntityStateException(ProductConstants.PRODUCT_NAME_REQUIRED);
-            }
-            if (stock != null && stock < 0) {
-                throw new InvalidEntityStateException(ProductConstants.PRODUCT_STOCK_INVALID);
-            }
-            validateNonNegative(realCost, "total");
-            validateNonNegative(unitRealCost, "unit real");
-            validateNonNegative(unitPublicCost, "public");
+            EntityValidation.requireNotBlank(name, ProductConstants.PRODUCT_NAME_REQUIRED);
+            EntityValidation.requireNonNegative(stock, ProductConstants.PRODUCT_STOCK_INVALID);
+            EntityValidation.requireNonNegative(realCost, ProductConstants.PRODUCT_COST_INVALID + " (total)");
+            EntityValidation.requireNonNegative(unitRealCost, ProductConstants.PRODUCT_COST_INVALID + " (unit real)");
+            EntityValidation.requireNonNegative(unitPublicCost, ProductConstants.PRODUCT_COST_INVALID + " (public)");
             return new Product(this);
-        }
-
-        /**
-         * Validates that an optional amount is not negative.
-         *
-         * @param amount Amount to check.
-         * @param label Label used in the error message.
-         */
-        private void validateNonNegative(Double amount, String label) {
-            if (amount != null && amount < 0) {
-                throw new InvalidEntityStateException(ProductConstants.PRODUCT_COST_INVALID + " (" + label + ")");
-            }
         }
     }
 

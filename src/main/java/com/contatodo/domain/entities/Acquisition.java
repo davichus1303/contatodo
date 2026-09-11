@@ -1,7 +1,7 @@
 package com.contatodo.domain.entities;
 
-import com.contatodo.domain.exception.InvalidEntityStateException;
 import com.contatodo.shared.constants.ValidationConstants;
+import com.contatodo.shared.utils.EntityValidation;
 
 import java.time.LocalDateTime;
 
@@ -346,21 +346,13 @@ public final class Acquisition {
          * Builds the acquisition validating its invariants.
          *
          * @return Immutable acquisition.
-         * @throws InvalidEntityStateException if type, owner, quantity or real cost are missing or invalid.
+         * @throws com.contatodo.domain.exception.InvalidEntityStateException if type, owner, quantity or real cost are missing or invalid.
          */
         public Acquisition build() {
-            if (acquisitionTypeOid == null || acquisitionTypeOid.trim().isEmpty()) {
-                throw new InvalidEntityStateException(ValidationConstants.FIELD_REQUIRED);
-            }
-            if (userOid == null || userOid.trim().isEmpty()) {
-                throw new InvalidEntityStateException(ValidationConstants.FIELD_REQUIRED);
-            }
-            if (quantity == null || quantity <= 0) {
-                throw new InvalidEntityStateException(ValidationConstants.FIELD_INVALID_TYPE);
-            }
-            if (realCost != null && realCost < 0) {
-                throw new InvalidEntityStateException(ValidationConstants.FIELD_INVALID_RANGE);
-            }
+            EntityValidation.requireNotBlank(acquisitionTypeOid, ValidationConstants.FIELD_REQUIRED);
+            EntityValidation.requireNotBlank(userOid, ValidationConstants.FIELD_REQUIRED);
+            EntityValidation.requirePositive(quantity, ValidationConstants.FIELD_INVALID_TYPE);
+            EntityValidation.requireNonNegative(realCost, ValidationConstants.FIELD_INVALID_RANGE);
             return new Acquisition(this);
         }
     }

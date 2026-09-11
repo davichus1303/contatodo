@@ -1,6 +1,8 @@
 package com.contatodo.shared.validators;
 
+import com.contatodo.shared.constants.ResponseConstants;
 import com.contatodo.shared.constants.ValidationConstants;
+import com.contatodo.shared.exceptions.InvalidRequestException;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -113,5 +115,17 @@ public class FieldValidator {
      */
     public List<String> createErrorList() {
         return new ArrayList<>();
+    }
+
+    /**
+     * Throws an invalid request exception when the error list is not empty.
+     *
+     * @param errors Error list collected during validation.
+     * @throws InvalidRequestException when there are validation errors.
+     */
+    public void throwIfHasErrors(List<String> errors) {
+        if (!errors.isEmpty()) {
+            throw new InvalidRequestException(ResponseConstants.VALIDATION_ERROR_MESSAGE, errors);
+        }
     }
 }

@@ -11,7 +11,7 @@ import java.util.List;
  * documents.
  */
 @Component
-public class AcquisitionPersistenceMapper {
+public class AcquisitionPersistenceMapper implements PersistenceMapper<AcquisitionDocument, Acquisition> {
 
     /**
      * Maps an acquisition entity to a document.
@@ -67,15 +67,5 @@ public class AcquisitionPersistenceMapper {
                 .createdDate(document.getCreatedDate())
                 .updatedDate(document.getUpdatedDate())
                 .build();
-    }
-
-    /**
-     * Maps a list of acquisition documents to entities.
-     *
-     * @param documents Acquisition documents.
-     * @return Acquisition entities.
-     */
-    public List<Acquisition> toEntityList(List<AcquisitionDocument> documents) {
-        return documents.stream().map(this::toEntity).toList();
     }
 }

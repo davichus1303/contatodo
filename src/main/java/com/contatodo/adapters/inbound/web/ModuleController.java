@@ -6,6 +6,7 @@ import com.contatodo.application.services.ModuleService;
 import com.contatodo.shared.constants.ModuleConstants;
 import com.contatodo.shared.constants.ResponseConstants;
 import com.contatodo.shared.response.ApiResponse;
+import com.contatodo.shared.response.WebResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,7 +43,7 @@ public class ModuleController {
     @PostMapping
     public ResponseEntity<ApiResponse<ModuleResponse>> createModule(@RequestBody CreateModuleRequest request) {
         ModuleResponse module = moduleService.createModule(request);
-        return ResponseEntity.ok(ApiResponse.success(ModuleConstants.MODULE_CREATED, module));
+        return WebResponses.ok(ModuleConstants.MODULE_CREATED, module);
     }
 
     /**
@@ -52,6 +53,6 @@ public class ModuleController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<ModuleResponse>>> getModules() {
         List<ModuleResponse> modules = moduleService.getModules();
-        return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, modules));
+        return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, modules);
     }
 }

@@ -13,7 +13,7 @@ import java.util.List;
  * Mapper for product entities and DTOs.
  */
 @Component
-public class ProductMapper {
+public class ProductMapper implements ResponseMapper<Product, ProductResponse> {
 
     /**
      * Maps a create request to a domain entity.
@@ -87,15 +87,5 @@ public class ProductMapper {
         response.setCreatedDate(product.getCreatedDate());
         response.setUpdatedDate(product.getUpdatedDate());
         return response;
-    }
-
-    /**
-     * Maps a list of products to response DTOs.
-     *
-     * @param products Product entities.
-     * @return Product responses.
-     */
-    public List<ProductResponse> toResponseList(List<Product> products) {
-        return products.stream().map(this::toResponse).toList();
     }
 }

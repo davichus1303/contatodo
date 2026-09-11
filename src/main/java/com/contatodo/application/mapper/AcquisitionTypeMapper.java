@@ -13,7 +13,7 @@ import java.util.List;
  * Mapper for acquisition type entities and DTOs.
  */
 @Component
-public class AcquisitionTypeMapper {
+public class AcquisitionTypeMapper implements ResponseMapper<AcquisitionType, AcquisitionTypeResponse> {
 
     /**
      * Maps a create request to a domain entity.
@@ -54,16 +54,6 @@ public class AcquisitionTypeMapper {
         response.setCreatedDate(acquisitionType.getCreatedDate());
         response.setUpdatedDate(acquisitionType.getUpdatedDate());
         return response;
-    }
-
-    /**
-     * Maps a list of acquisition types to response DTOs.
-     *
-     * @param acquisitionTypes Acquisition type entities.
-     * @return Acquisition type responses.
-     */
-    public List<AcquisitionTypeResponse> toResponseList(List<AcquisitionType> acquisitionTypes) {
-        return acquisitionTypes.stream().map(this::toResponse).toList();
     }
 
     /**
