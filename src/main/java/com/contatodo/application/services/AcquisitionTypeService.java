@@ -7,9 +7,10 @@ import com.contatodo.application.mapper.AcquisitionTypeMapper;
 import com.contatodo.application.validators.AcquisitionTypeValidator;
 import com.contatodo.domain.entities.AcquisitionType;
 import com.contatodo.domain.repositories.AcquisitionTypeRepository;
-import com.contatodo.shared.utils.SecurityUtils;
+import com.contatodo.application.port.AuthenticatedUserProvider;
 import org.springframework.stereotype.Service;
-import com.contatodo.shared.constants.AqcisitionTypeConstants;
+import com.contatodo.shared.constants.AcquisitionTypeConstants;
+import com.contatodo.shared.exceptions.AcquisitionTypeNotFoundException;
 
 import java.util.List;
 
@@ -22,7 +23,7 @@ public class AcquisitionTypeService {
     private final AcquisitionTypeRepository acquisitionTypeRepository;
     private final AcquisitionTypeValidator acquisitionTypeValidator;
     private final AcquisitionTypeMapper acquisitionTypeMapper;
-    private final UserService userService;
+    private final AuthenticatedUserProvider authenticatedUserProvider;
 
     /**
      * Creates an acquisition type service.
@@ -30,18 +31,18 @@ public class AcquisitionTypeService {
      * @param acquisitionTypeRepository Acquisition type repository port.
      * @param acquisitionTypeValidator Acquisition type validator.
      * @param acquisitionTypeMapper Acquisition type mapper.
-     * @param userService User service for security context.
+     * @param authenticatedUserProvider Authenticated user provider.
      */
     public AcquisitionTypeService(
             AcquisitionTypeRepository acquisitionTypeRepository,
             AcquisitionTypeValidator acquisitionTypeValidator,
             AcquisitionTypeMapper acquisitionTypeMapper,
-            UserService userService
+            AuthenticatedUserProvider authenticatedUserProvider
     ) {
         this.acquisitionTypeRepository = acquisitionTypeRepository;
         this.acquisitionTypeValidator = acquisitionTypeValidator;
         this.acquisitionTypeMapper = acquisitionTypeMapper;
-        this.userService = userService;
+        this.authenticatedUserProvider = authenticatedUserProvider;
     }
 
     /**
@@ -53,10 +54,8 @@ public class AcquisitionTypeService {
     public AcquisitionTypeResponse createAcquisitionType(CreateAcquisitionTypeRequest request) {
         acquisitionTypeValidator.validateCreateRequest(request);
 
-        String userOid = SecurityUtils.getCurrentUserOid(userService);
-        request.setUserOid(userOid);
-
-        AcquisitionType acquisitionType = acquisitionTypeMapper.toEntity(request);
+        String userOid = authenticatedUserProvider.getCurrentUserOid();
+        AcquisitionType acquisitionType = acquisitionTypeMapper.toEntity(request, userOid);
         AcquisitionType savedAcquisitionType = acquisitionTypeRepository.save(acquisitionType);
         return acquisitionTypeMapper.toResponse(savedAcquisitionType);
     }
@@ -83,9 +82,9 @@ public class AcquisitionTypeService {
             .orElse(null);
         
         acquisitionTypeValidator.validateUpdateRequest(request, existingAcquisitionType);
-        
-        acquisitionTypeMapper.updateEntityFromRequest(existingAcquisitionType, request);
-        AcquisitionType updatedAcquisitionType = acquisitionTypeRepository.save(existingAcquisitionType);
+
+        AcquisitionType updatedAcquisitionType =
+                acquisitionTypeRepository.save(acquisitionTypeMapper.updateEntityFromRequest(existingAcquisitionType, request));
         return acquisitionTypeMapper.toResponse(updatedAcquisitionType);
     }
 
@@ -100,18 +99,14 @@ public class AcquisitionTypeService {
             .orElse(null);
 
         if (existingAcquisitionType == null) {
-            throw new IllegalArgumentException(AqcisitionTypeConstants.NOT_FOUND_ERROR);
+            throw new AcquisitionTypeNotFoundException(AcquisitionTypeConstants.NOT_FOUND_ERROR);
         }
 
-        if (existingAcquisitionType.getIsDeleted()) {
-            throw new IllegalArgumentException(AqcisitionTypeConstants.ALREADY_DELETED_ERROR);
+        if (Boolean.TRUE.equals(existingAcquisitionType.getIsDeleted())) {
+            throw new AcquisitionTypeNotFoundException(AcquisitionTypeConstants.ALREADY_DELETED_ERROR);
         }
-        
-        existingAcquisitionType.setIsActive(false);
-        existingAcquisitionType.setIsDeleted(true);
-        existingAcquisitionType.setUpdatedDate(java.time.LocalDateTime.now());
 
-        AcquisitionType deletedAcquisitionType = acquisitionTypeRepository.save(existingAcquisitionType);
+        AcquisitionType deletedAcquisitionType = acquisitionTypeRepository.save(existingAcquisitionType.markDeleted());
         return acquisitionTypeMapper.toResponse(deletedAcquisitionType);
     }
 

@@ -27,10 +27,9 @@ public interface ModuleRepository {
     Optional<Module> findById(String id);
 
     /**
-     * Finds active, non-deleted modules by user identifier.
+     * Finds all active, non-deleted modules.
      *
-     * @param userOid User identifier.
-     * @return List of modules accessible to the user.
+     * @return List of active modules.
      */
-    List<Module> findActiveModulesByUserOid(String userOid);
+    List<Module> findAllActive();
 }

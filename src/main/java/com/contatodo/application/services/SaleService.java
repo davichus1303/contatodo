@@ -3,52 +3,62 @@ package com.contatodo.application.services;
 import com.contatodo.application.dto.request.CreateSaleRequest;
 import com.contatodo.application.dto.response.SaleResponse;
 import com.contatodo.application.mapper.SaleMapper;
+import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.validators.SaleValidator;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.entities.Sale;
 import com.contatodo.domain.entities.User;
+import com.contatodo.domain.model.Money;
+import com.contatodo.domain.repositories.ProductRepository;
 import com.contatodo.domain.repositories.SaleRepository;
+import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.shared.constants.SaleConstants;
-import com.contatodo.shared.exceptions.InsufficientStockException;
 import com.contatodo.shared.exceptions.ProductNotFoundException;
-import com.contatodo.shared.exceptions.SaleWithoutProfitException;
 import com.contatodo.shared.exceptions.UserNotFoundException;
-import com.contatodo.shared.utils.SecurityUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 /**
- * Service containing sale business logic.
+ * Use case service containing sale business logic.
  */
 @Service
 public class SaleService {
 
     private final SaleRepository saleRepository;
+    private final ProductRepository productRepository;
+    private final UserRepository userRepository;
     private final SaleValidator saleValidator;
     private final SaleMapper saleMapper;
-    private final UserService userService;
+    private final AuthenticatedUserProvider authenticatedUserProvider;
 
     /**
      * Creates a sale service.
      *
      * @param saleRepository Sale repository port.
+     * @param productRepository Product repository port.
+     * @param userRepository User repository port.
      * @param saleValidator Sale validator.
      * @param saleMapper Sale mapper.
-     * @param userService User service.
+     * @param authenticatedUserProvider Authenticated user provider.
      */
     public SaleService(
             SaleRepository saleRepository,
+            ProductRepository productRepository,
+            UserRepository userRepository,
             SaleValidator saleValidator,
             SaleMapper saleMapper,
-            UserService userService
+            AuthenticatedUserProvider authenticatedUserProvider
     ) {
         this.saleRepository = saleRepository;
+        this.productRepository = productRepository;
+        this.userRepository = userRepository;
         this.saleValidator = saleValidator;
         this.saleMapper = saleMapper;
-        this.userService = userService;
+        this.authenticatedUserProvider = authenticatedUserProvider;
     }
 
     /**
@@ -60,34 +70,34 @@ public class SaleService {
     public SaleResponse createSale(CreateSaleRequest request) {
         saleValidator.validateCreateRequest(request);
 
-        String userOid = SecurityUtils.getCurrentUserOid(userService);
-        User user = saleRepository.findUserById(userOid)
+        String userOid = authenticatedUserProvider.getCurrentUserOid();
+        User user = userRepository.findById(userOid)
                 .orElseThrow(() -> new UserNotFoundException(SaleConstants.USER_NOT_FOUND));
 
-        Product product = saleRepository.findProductById(request.getProductOid())
+        Product product = productRepository.findById(request.getProductOid())
                 .orElseThrow(() -> new ProductNotFoundException(SaleConstants.PRODUCT_NOT_FOUND));
 
         String productName = product.getName();
-        validateStock(product, request.getQuantity());
+        Product updatedProduct = product.decreaseStock(request.getQuantity());
 
-        Double totalCost = calculateTotalCost(product, request.getQuantity());
-        Double originalTotalPrice = calculateOriginalTotalPrice(product, request.getQuantity());
+        Money totalCost = unitCostOf(product).multiply(request.getQuantity());
+        Money originalTotalPrice = listUnitPriceOf(product).multiply(request.getQuantity());
 
-        validateProfit(totalCost, request.getTotalSalePrice());
+        Long saleNumber = generateDailySaleNumber(userOid);
 
-        Long saleNumber = generateDailySaleNumber();
-
-        decreaseProductStock(product, request.getQuantity());
-        saleRepository.updateProduct(product);
-
-        Sale sale = saleMapper.toEntity(
-                request,
-                user.getId(),
+        Sale sale = Sale.place(
                 saleNumber,
+                request.getProductOid(),
+                productName,
+                user.getId(),
+                request.getQuantity(),
+                request.getTotalSalePrice(),
                 totalCost,
                 originalTotalPrice,
-                productName
+                request.getNotes()
         );
+
+        productRepository.save(updatedProduct);
         Sale savedSale = saleRepository.save(sale);
         return saleMapper.toResponse(savedSale);
     }
@@ -98,7 +108,7 @@ public class SaleService {
      * @return List of sale responses.
      */
     public List<SaleResponse> getTodaySales() {
-        String userOid = SecurityUtils.getCurrentUserOid(userService);
+        String userOid = authenticatedUserProvider.getCurrentUserOid();
 
         LocalDate today = LocalDate.now();
         List<Sale> sales = saleRepository.findByUserOidAndSaleDate(userOid, today);
@@ -113,7 +123,7 @@ public class SaleService {
      * @return List of sale responses.
      */
     public List<SaleResponse> getSalesByDateRange(LocalDate startDate, LocalDate endDate) {
-        String userOid = SecurityUtils.getCurrentUserOid(userService);
+        String userOid = authenticatedUserProvider.getCurrentUserOid();
 
         LocalDateTime startDateTime = startDate.atStartOfDay();
         LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
@@ -123,90 +133,42 @@ public class SaleService {
     }
 
     /**
-     * Validates that the product has sufficient stock to fulfill the requested quantity.
-     * Checks for null or exhausted stock, and verifies available stock meets the required quantity.
-     * 
-     * @param product The product to check stock for
-     * @param quantity The quantity of the product requested for the sale
-     * @throws InsufficientStockException if product stock is null, exhausted, or insufficient for the requested quantity
+     * Resolves the effective real unit cost of a product.
+     *
+     * @param product Source product.
+     * @return Unit cost as money.
      */
-    private void validateStock(Product product, Integer quantity) {
-        if (product.getStock() == null || product.getStock() <= 0) {
-            throw new InsufficientStockException(SaleConstants.PRODUCT_OUT_OF_STOCK);
-        }
-        if (product.getStock() < quantity) {
-            throw new InsufficientStockException(SaleConstants.INSUFFICIENT_STOCK);
-        }
+    private Money unitCostOf(Product product) {
+        Double unitRealCost = product.getUnitRealCost() != null ? product.getUnitRealCost() : product.getRealCost();
+        return Money.of(unitRealCost);
     }
 
     /**
-     * Calculates the total cost of the sale.
-     * If the product has a unit real cost, it is used; otherwise, the real cost is used.
-     * 
-     * @param product The product to calculate the total cost for
-     * @param quantity The quantity of the product requested for the sale
-     * @return The total cost of the sale
+     * Resolves the effective list unit price of a product.
+     *
+     * @param product Source product.
+     * @return Unit price as money.
      */
-    private Double calculateTotalCost(Product product, Integer quantity) {
-        Double unitCost = product.getUnitRealCost() != null ? product.getUnitRealCost() : product.getRealCost();
-        return unitCost * quantity;
+    private Money listUnitPriceOf(Product product) {
+        Double unitPublicCost = product.getUnitPublicCost() != null ? product.getUnitPublicCost() : product.getRealCost();
+        return Money.of(unitPublicCost);
     }
 
     /**
-     * Calculates the original total price of the sale.
-     * If the product has a unit public cost, it is used; otherwise, the real cost is used.
-     * 
-     * @param product The product to calculate the original total price for
-     * @param quantity The quantity of the product requested for the sale
-     * @return The original total price of the sale
+     * Generates a daily sale number for the given user.
+     *
+     * @param userOid Owner of the sales.
+     * @return Next available sale number for today.
      */
-    private Double calculateOriginalTotalPrice(Product product, Integer quantity) {
-        Double unitPrice = product.getUnitPublicCost() != null ? product.getUnitPublicCost() : product.getRealCost();
-        return unitPrice * quantity;
-    }
-
-    /**
-     * Validates that the total sale price includes a profit.
-     * If the total sale price is less than or equal to the total cost, throws a SaleWithoutProfitException.
-     * 
-     * @param totalCost The total cost of the sale
-     * @param totalSalePrice The total sale price of the sale
-     * @throws SaleWithoutProfitException if the total sale price is less than or equal to the total cost
-     */
-    private void validateProfit(Double totalCost, Double totalSalePrice) {
-        if (totalSalePrice <= totalCost) {
-            throw new SaleWithoutProfitException(SaleConstants.SALE_WITHOUT_PROFIT);
-        }
-    }
-
-    /**
-     * Generates a daily sale number for the authenticated user.
-     * 
-     * @return The next available sale number for the user
-     */
-    private Long generateDailySaleNumber() {
-        String userOid = SecurityUtils.getCurrentUserOid(userService);
-        
+    private Long generateDailySaleNumber(String userOid) {
         LocalDate today = LocalDate.now();
         LocalDateTime startOfDay = today.atStartOfDay();
         LocalDateTime endOfDay = today.atTime(23, 59, 59);
-        
-        List<Sale> userSales = saleRepository.findByUserOidAndSaleDateBetween(userOid, startOfDay, endOfDay);
-        return userSales.stream()
-                .map(Sale::getSaleNumber)
-                .max(Long::compareTo)
-                .map(max -> max + 1)
-                .orElse(1L);
-    }
 
-    /**
-     * Decreases the stock of the product by the requested quantity.
-     * 
-     * @param product The product to decrease stock for
-     * @param quantity The quantity of the product requested for the sale
-     */
-    private void decreaseProductStock(Product product, Integer quantity) {
-        product.setStock(product.getStock() - quantity);
-        product.setUpdatedDate(LocalDateTime.now());
+        Optional<Long> highestSaleNumber = saleRepository.findByUserOidAndSaleDateBetween(userOid, startOfDay, endOfDay)
+                .stream()
+                .map(Sale::getSaleNumber)
+                .max(Long::compareTo);
+        return highestSaleNumber.map(number -> number + 1).orElse(1L);
     }
 }

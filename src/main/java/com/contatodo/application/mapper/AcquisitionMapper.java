@@ -24,24 +24,25 @@ public class AcquisitionMapper {
      * @return Acquisition entity.
      */
     public Acquisition toEntity(CreateAcquisitionRequest request, String productOid, String userOid, Double unitRealCost) {
-        Acquisition acquisition = new Acquisition();
-        acquisition.setAcquisitionTypeOid(request.getAcquisitionTypeOid());
-        acquisition.setProductOid(productOid);
-        acquisition.setProductName(request.getProductName());
-        acquisition.setQuantity(request.getQuantity());
-        acquisition.setRealCost(request.getRealCost());
-        acquisition.setUnitRealCost(unitRealCost);
-        acquisition.setUnitPublicCost(request.getUnitPublicCost());
-        acquisition.setSupplierOid(request.getSupplierOid());
-        acquisition.setSupplierName(request.getSupplierName());
-        acquisition.setInvoiceNumber(request.getInvoiceNumber());
-        acquisition.setObservations(request.getObservations());
-        acquisition.setUserOid(userOid);
-        acquisition.setAcquisitionDate(LocalDateTime.now());
-        acquisition.setIsDeleted(false);
-        acquisition.setCreatedDate(LocalDateTime.now());
-        acquisition.setUpdatedDate(LocalDateTime.now());
-        return acquisition;
+        LocalDateTime now = LocalDateTime.now();
+        return Acquisition.builder()
+                .acquisitionTypeOid(request.getAcquisitionTypeOid())
+                .productOid(productOid)
+                .productName(request.getProductName())
+                .quantity(request.getQuantity())
+                .realCost(request.getRealCost())
+                .unitRealCost(unitRealCost)
+                .unitPublicCost(request.getUnitPublicCost())
+                .supplierOid(request.getSupplierOid())
+                .supplierName(request.getSupplierName())
+                .invoiceNumber(request.getInvoiceNumber())
+                .observations(request.getObservations())
+                .userOid(userOid)
+                .acquisitionDate(now)
+                .isDeleted(false)
+                .createdDate(now)
+                .updatedDate(now)
+                .build();
     }
 
     /**

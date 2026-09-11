@@ -6,10 +6,10 @@ import com.contatodo.application.dto.request.UpdateUserRequest;
 import com.contatodo.application.dto.response.LoginResponse;
 import com.contatodo.application.dto.response.UserResponse;
 import com.contatodo.application.mapper.UserMapper;
+import com.contatodo.application.port.TokenProvider;
 import com.contatodo.application.validators.UserValidator;
 import com.contatodo.domain.entities.User;
 import com.contatodo.domain.repositories.UserRepository;
-import com.contatodo.infrastructure.security.JwtService;
 import com.contatodo.shared.constants.UserConstants;
 import com.contatodo.shared.exceptions.AuthenticationException;
 import com.contatodo.shared.exceptions.UserAlreadyExistsException;
@@ -29,7 +29,7 @@ public class UserService {
     private final UserValidator userValidator;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
+    private final TokenProvider tokenProvider;
 
     /**
      * Creates a user service.
@@ -38,20 +38,20 @@ public class UserService {
      * @param userValidator User validator.
      * @param userMapper User mapper.
      * @param passwordEncoder Password encoder.
-     * @param jwtService JWT service.
+     * @param tokenProvider Security token provider.
      */
     public UserService(
             UserRepository userRepository,
             UserValidator userValidator,
             UserMapper userMapper,
             PasswordEncoder passwordEncoder,
-            JwtService jwtService
+            TokenProvider tokenProvider
     ) {
         this.userRepository = userRepository;
         this.userValidator = userValidator;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
-        this.jwtService = jwtService;
+        this.tokenProvider = tokenProvider;
     }
 
     /**
@@ -97,8 +97,7 @@ public class UserService {
                 ? passwordEncoder.encode(request.getPassword())
                 : null;
 
-        userMapper.applyUpdate(user, request, hashedPassword);
-        User updatedUser = userRepository.save(user);
+        User updatedUser = userRepository.save(userMapper.applyUpdate(user, request, hashedPassword));
         return userMapper.toResponse(updatedUser);
     }
 
@@ -112,9 +111,7 @@ public class UserService {
                 .filter(existingUser -> !existingUser.isDelete())
                 .orElseThrow(() -> new UserNotFoundException(UserConstants.USER_NOT_FOUND));
 
-        user.setDelete(true);
-        user.setActive(false);
-        userRepository.save(user);
+        userRepository.save(user.markDeleted());
     }
 
     /**
@@ -139,17 +136,6 @@ public class UserService {
     }
 
     /**
-     * Retrieves a user entity by email.
-     *
-     * @param email User email.
-     * @return User entity.
-     */
-    public User getUserEntityByEmail(String email) {
-        return userRepository.findActiveUserByEmail(email, false)
-                .orElseThrow(() -> new UserNotFoundException(UserConstants.USER_NOT_FOUND));
-    }
-
-    /**
      * Authenticates a user and generates a JWT token.
      *
      * @param request Login request.
@@ -171,7 +157,7 @@ public class UserService {
         }
 
         LoginResponse response = new LoginResponse();
-        response.setToken(jwtService.generateToken(user.getEmail()));
+        response.setToken(tokenProvider.generateToken(user.getEmail()));
         response.setUser(userMapper.toResponse(user));
         return response;
     }

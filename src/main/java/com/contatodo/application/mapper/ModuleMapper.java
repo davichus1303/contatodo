@@ -3,7 +3,6 @@ package com.contatodo.application.mapper;
 import com.contatodo.application.dto.request.CreateModuleRequest;
 import com.contatodo.application.dto.response.ModuleResponse;
 import com.contatodo.domain.entities.Module;
-import com.contatodo.domain.entities.ModulePermission;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -19,23 +18,18 @@ public class ModuleMapper {
      * Maps a create request to a domain entity.
      *
      * @param request Create module request.
-     * @param userOid Authenticated user identifier.
      * @return Module entity.
      */
-    public Module toEntity(CreateModuleRequest request, String userOid) {
-        Module module = new Module();
-        module.setName(request.getName());
-        module.setLink(request.getLink());
-        module.setIsActive(true);
-        module.setIsDeleted(false);
-        
-        // Create permission for the authenticated user with full access
-        ModulePermission permission = new ModulePermission(userOid, true, true, true);
-        module.setPermissions(List.of(permission));
-        
-        module.setCreatedDate(LocalDateTime.now());
-        module.setUpdatedDate(LocalDateTime.now());
-        return module;
+    public Module toEntity(CreateModuleRequest request) {
+        LocalDateTime now = LocalDateTime.now();
+        return Module.builder()
+                .name(request.getName())
+                .link(request.getLink())
+                .isActive(true)
+                .isDeleted(false)
+                .createdDate(now)
+                .updatedDate(now)
+                .build();
     }
 
     /**

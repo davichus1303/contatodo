@@ -4,14 +4,14 @@ import com.contatodo.application.dto.request.CreateProductRequest;
 import com.contatodo.application.dto.request.UpdateProductRequest;
 import com.contatodo.application.dto.response.ProductResponse;
 import com.contatodo.application.mapper.ProductMapper;
+import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.validators.ProductValidator;
 import com.contatodo.domain.entities.Product;
+import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.domain.entities.User;
 import com.contatodo.domain.repositories.ProductRepository;
 import com.contatodo.shared.constants.ProductConstants;
 import com.contatodo.shared.exceptions.ProductNotFoundException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -23,34 +23,32 @@ import java.util.List;
 public class ProductService {
 
     private final ProductRepository productRepository;
+    private final UserRepository userRepository;
     private final ProductValidator productValidator;
     private final ProductMapper productMapper;
+    private final AuthenticatedUserProvider authenticatedUserProvider;
 
     /**
      * Creates a product service.
      *
      * @param productRepository Product repository port.
+     * @param userRepository User repository port.
      * @param productValidator Product validator.
      * @param productMapper Product mapper.
+     * @param authenticatedUserProvider Authenticated user provider.
      */
     public ProductService(
             ProductRepository productRepository,
+            UserRepository userRepository,
             ProductValidator productValidator,
-            ProductMapper productMapper
+            ProductMapper productMapper,
+            AuthenticatedUserProvider authenticatedUserProvider
     ) {
         this.productRepository = productRepository;
+        this.userRepository = userRepository;
         this.productValidator = productValidator;
         this.productMapper = productMapper;
-    }
-
-    /**
-     * Gets the authenticated user's email.
-     *
-     * @return User email.
-     */
-    private String getAuthenticatedUserEmail() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication.getName();
+        this.authenticatedUserProvider = authenticatedUserProvider;
     }
 
     /**
@@ -62,15 +60,14 @@ public class ProductService {
     public ProductResponse createProduct(CreateProductRequest request) {
         productValidator.validateCreateRequest(request);
 
-        String nextCode = generateNextCode();
-        Product product = productMapper.toEntity(request, nextCode);
-        
-        String userEmail = getAuthenticatedUserEmail();
-        User user = ((com.contatodo.infrastructure.persistence.adapter.ProductRepositoryAdapter) productRepository)
-                .findUserByEmail(userEmail)
+        String userEmail = authenticatedUserProvider.getCurrentUserEmail();
+        String userOid = userRepository.findByEmail(userEmail)
+                .map(User::getId)
                 .orElseThrow(() -> new ProductNotFoundException(ProductConstants.USER_NOT_FOUND));
-        product.setUserOid(user.getId());
-        
+
+        String nextCode = generateNextCode();
+        Product product = productMapper.toEntity(request, nextCode, userOid);
+
         Product savedProduct = productRepository.save(product);
         return productMapper.toResponse(savedProduct);
     }
@@ -88,8 +85,7 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ProductNotFoundException(ProductConstants.PRODUCT_NOT_FOUND));
 
-        productMapper.applyUpdate(product, request);
-        Product updatedProduct = productRepository.save(product);
+        Product updatedProduct = productRepository.save(productMapper.applyUpdate(product, request));
         return productMapper.toResponse(updatedProduct);
     }
 
