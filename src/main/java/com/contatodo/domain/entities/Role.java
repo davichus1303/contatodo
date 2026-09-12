@@ -1,7 +1,7 @@
 package com.contatodo.domain.entities;
 
-import com.contatodo.domain.exception.InvalidEntityStateException;
 import com.contatodo.shared.constants.ValidationConstants;
+import com.contatodo.shared.utils.EntityValidation;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -221,12 +221,10 @@ public final class Role {
          * Builds the role validating its invariants.
          *
          * @return Immutable role.
-         * @throws InvalidEntityStateException if the name is missing.
+         * @throws com.contatodo.domain.exception.InvalidEntityStateException if the name is missing.
          */
         public Role build() {
-            if (name == null || name.trim().isEmpty()) {
-                throw new InvalidEntityStateException(ValidationConstants.FIELD_REQUIRED);
-            }
+            EntityValidation.requireNotBlank(name, ValidationConstants.FIELD_REQUIRED);
             return new Role(this);
         }
     }

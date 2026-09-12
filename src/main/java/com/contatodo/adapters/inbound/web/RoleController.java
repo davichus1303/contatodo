@@ -6,6 +6,7 @@ import com.contatodo.application.dto.response.RoleResponse;
 import com.contatodo.application.services.RoleService;
 import com.contatodo.shared.constants.ResponseConstants;
 import com.contatodo.shared.response.ApiResponse;
+import com.contatodo.shared.response.WebResponses;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -39,7 +40,7 @@ public class RoleController {
     @PostMapping
     public ResponseEntity<ApiResponse<List<Object>>> createRole(@Valid @RequestBody CreateRoleRequest request) {
         roleService.createRole(request);
-        return ResponseEntity.ok(ApiResponse.successWithoutData(ResponseConstants.CREATED_MESSAGE));
+        return WebResponses.okNoData(ResponseConstants.CREATED_MESSAGE);
     }
 
     /**
@@ -49,7 +50,7 @@ public class RoleController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<RoleResponse>>> getRoles() {
         List<RoleResponse> roles = roleService.getRoles();
-        return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, roles));
+        return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, roles);
     }
 
     /**
@@ -64,7 +65,7 @@ public class RoleController {
             @PathVariable String id,
             @RequestBody UpdateRoleRequest request) {
         roleService.updateRole(id, request);
-        return ResponseEntity.ok(ApiResponse.successWithoutData(ResponseConstants.UPDATED_MESSAGE));
+        return WebResponses.okNoData(ResponseConstants.UPDATED_MESSAGE);
     }
 
     /**
@@ -76,6 +77,6 @@ public class RoleController {
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<List<Object>>> deleteRole(@PathVariable String id) {
         roleService.deleteRole(id);
-        return ResponseEntity.ok(ApiResponse.successWithoutData(ResponseConstants.DELETED_MESSAGE));
+        return WebResponses.okNoData(ResponseConstants.DELETED_MESSAGE);
     }
 }

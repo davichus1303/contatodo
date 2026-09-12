@@ -5,6 +5,7 @@ import com.contatodo.application.dto.response.AcquisitionResponse;
 import com.contatodo.application.services.AcquisitionService;
 import com.contatodo.shared.constants.ResponseConstants;
 import com.contatodo.shared.response.ApiResponse;
+import com.contatodo.shared.response.WebResponses;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -45,7 +46,7 @@ public class AcquisitionController {
     public ResponseEntity<ApiResponse<AcquisitionResponse>> registerAcquisition(
       @RequestBody CreateAcquisitionRequest request) {
         AcquisitionResponse acquisition = acquisitionService.registerAcquisition(request);
-        return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, acquisition));
+        return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, acquisition);
     }
 
     /**
@@ -63,6 +64,6 @@ public class AcquisitionController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate
     ) {
         List<AcquisitionResponse> acquisitions = acquisitionService.getAcquisitions(startDate, endDate);
-        return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, acquisitions));
+        return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, acquisitions);
     }
 }

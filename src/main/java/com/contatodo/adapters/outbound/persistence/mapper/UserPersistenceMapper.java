@@ -10,7 +10,7 @@ import java.util.List;
  * Mapper between {@link User} domain entities and MongoDB user documents.
  */
 @Component
-public class UserPersistenceMapper {
+public class UserPersistenceMapper implements PersistenceMapper<UserDocument, User> {
 
     /**
      * Maps a user entity to a user document.
@@ -54,15 +54,5 @@ public class UserPersistenceMapper {
                 .createdBy(document.getCreatedBy())
                 .updatedBy(document.getUpdatedBy())
                 .build();
-    }
-
-    /**
-     * Maps a list of user documents to user entities.
-     *
-     * @param documents User documents.
-     * @return User entities.
-     */
-    public List<User> toEntityList(List<UserDocument> documents) {
-        return documents.stream().map(this::toEntity).toList();
     }
 }

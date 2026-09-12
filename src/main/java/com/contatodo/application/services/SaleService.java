@@ -15,6 +15,7 @@ import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.shared.constants.SaleConstants;
 import com.contatodo.shared.exceptions.ProductNotFoundException;
 import com.contatodo.shared.exceptions.UserNotFoundException;
+import com.contatodo.shared.utils.DateUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -125,8 +126,8 @@ public class SaleService {
     public List<SaleResponse> getSalesByDateRange(LocalDate startDate, LocalDate endDate) {
         String userOid = authenticatedUserProvider.getCurrentUserOid();
 
-        LocalDateTime startDateTime = startDate.atStartOfDay();
-        LocalDateTime endDateTime = endDate.atTime(23, 59, 59);
+        LocalDateTime startDateTime = DateUtils.startOfDay(startDate);
+        LocalDateTime endDateTime = DateUtils.endOfDay(endDate);
 
         List<Sale> sales = saleRepository.findByUserOidAndSaleDateBetween(userOid, startDateTime, endDateTime);
         return saleMapper.toResponseList(sales);
@@ -162,8 +163,8 @@ public class SaleService {
      */
     private Long generateDailySaleNumber(String userOid) {
         LocalDate today = LocalDate.now();
-        LocalDateTime startOfDay = today.atStartOfDay();
-        LocalDateTime endOfDay = today.atTime(23, 59, 59);
+        LocalDateTime startOfDay = DateUtils.startOfDay(today);
+        LocalDateTime endOfDay = DateUtils.endOfDay(today);
 
         Optional<Long> highestSaleNumber = saleRepository.findByUserOidAndSaleDateBetween(userOid, startOfDay, endOfDay)
                 .stream()

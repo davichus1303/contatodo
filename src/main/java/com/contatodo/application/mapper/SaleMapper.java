@@ -13,7 +13,7 @@ import java.util.List;
  * this mapper only translates entities to response DTOs.</p>
  */
 @Component
-public class SaleMapper {
+public class SaleMapper implements ResponseMapper<Sale, SaleResponse> {
 
     /**
      * Maps a sale entity to a response DTO.
@@ -37,15 +37,5 @@ public class SaleMapper {
         response.setCreatedDate(sale.getCreatedDate());
         response.setUpdatedDate(sale.getUpdatedDate());
         return response;
-    }
-
-    /**
-     * Maps a list of sales to response DTOs.
-     *
-     * @param sales Sale entities.
-     * @return Sale responses.
-     */
-    public List<SaleResponse> toResponseList(List<Sale> sales) {
-        return sales.stream().map(this::toResponse).toList();
     }
 }

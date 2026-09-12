@@ -11,7 +11,7 @@ import java.util.List;
  * acquisition type documents.
  */
 @Component
-public class AcquisitionTypePersistenceMapper {
+public class AcquisitionTypePersistenceMapper implements PersistenceMapper<AcquisitionTypeDocument, AcquisitionType> {
 
     /**
      * Maps an acquisition type entity to a document.
@@ -51,15 +51,5 @@ public class AcquisitionTypePersistenceMapper {
                 .createdDate(document.getCreatedDate())
                 .updatedDate(document.getUpdatedDate())
                 .build();
-    }
-
-    /**
-     * Maps a list of acquisition type documents to entities.
-     *
-     * @param documents Acquisition type documents.
-     * @return Acquisition type entities.
-     */
-    public List<AcquisitionType> toEntityList(List<AcquisitionTypeDocument> documents) {
-        return documents.stream().map(this::toEntity).toList();
     }
 }

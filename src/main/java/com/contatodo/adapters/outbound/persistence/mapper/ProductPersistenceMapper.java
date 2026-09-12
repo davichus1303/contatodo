@@ -10,7 +10,7 @@ import java.util.List;
  * Mapper between {@link Product} domain entities and MongoDB product documents.
  */
 @Component
-public class ProductPersistenceMapper {
+public class ProductPersistenceMapper implements PersistenceMapper<ProductDocument, Product> {
 
     /**
      * Maps a product entity to a product document.
@@ -58,15 +58,5 @@ public class ProductPersistenceMapper {
                 .createdDate(document.getCreatedDate())
                 .updatedDate(document.getUpdatedDate())
                 .build();
-    }
-
-    /**
-     * Maps a list of product documents to product entities.
-     *
-     * @param documents Product documents.
-     * @return Product entities.
-     */
-    public List<Product> toEntityList(List<ProductDocument> documents) {
-        return documents.stream().map(this::toEntity).toList();
     }
 }

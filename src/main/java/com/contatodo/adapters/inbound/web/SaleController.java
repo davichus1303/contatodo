@@ -6,6 +6,7 @@ import com.contatodo.application.services.SaleService;
 import com.contatodo.shared.constants.ResponseConstants;
 import com.contatodo.shared.constants.SaleConstants;
 import com.contatodo.shared.response.ApiResponse;
+import com.contatodo.shared.response.WebResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -44,7 +45,7 @@ public class SaleController {
     @PostMapping
     public ResponseEntity<ApiResponse<SaleResponse>> createSale(@RequestBody CreateSaleRequest request) {
         SaleResponse sale = saleService.createSale(request);
-        return ResponseEntity.ok(ApiResponse.success(SaleConstants.SALE_CREATED, sale));
+        return WebResponses.ok(SaleConstants.SALE_CREATED, sale);
     }
 
     /**
@@ -55,7 +56,7 @@ public class SaleController {
     @GetMapping
     public ResponseEntity<ApiResponse<List<SaleResponse>>> getTodaySales() {
         List<SaleResponse> sales = saleService.getTodaySales();
-        return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, sales));
+        return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, sales);
     }
 
     /**
@@ -68,6 +69,6 @@ public class SaleController {
     @GetMapping("/date-range")
     public ResponseEntity<ApiResponse<List<SaleResponse>>> getSalesByDateRange(@RequestParam LocalDate startDate, @RequestParam LocalDate endDate) {
         List<SaleResponse> sales = saleService.getSalesByDateRange(startDate, endDate);
-        return ResponseEntity.ok(ApiResponse.success(ResponseConstants.SUCCESS_MESSAGE, sales));
+        return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, sales);
     }
 }

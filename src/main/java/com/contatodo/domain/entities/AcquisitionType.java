@@ -1,7 +1,7 @@
 package com.contatodo.domain.entities;
 
-import com.contatodo.domain.exception.InvalidEntityStateException;
 import com.contatodo.shared.constants.ValidationConstants;
+import com.contatodo.shared.utils.EntityValidation;
 
 import java.time.LocalDateTime;
 
@@ -244,15 +244,11 @@ public final class AcquisitionType {
          * Builds the acquisition type validating its invariants.
          *
          * @return Immutable acquisition type.
-         * @throws InvalidEntityStateException if the name or owner is missing.
+         * @throws com.contatodo.domain.exception.InvalidEntityStateException if the name or owner is missing.
          */
         public AcquisitionType build() {
-            if (name == null || name.trim().isEmpty()) {
-                throw new InvalidEntityStateException(ValidationConstants.FIELD_REQUIRED);
-            }
-            if (userOid == null || userOid.trim().isEmpty()) {
-                throw new InvalidEntityStateException(ValidationConstants.FIELD_REQUIRED);
-            }
+            EntityValidation.requireNotBlank(name, ValidationConstants.FIELD_REQUIRED);
+            EntityValidation.requireNotBlank(userOid, ValidationConstants.FIELD_REQUIRED);
             return new AcquisitionType(this);
         }
     }
