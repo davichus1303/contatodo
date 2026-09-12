@@ -59,8 +59,6 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.POST, "/users").permitAll()
                         .requestMatchers("/login").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/products/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/acquisition-types").permitAll()
                         .requestMatchers(HttpMethod.GET, "/acquisition-types/admin/all").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/acquisition-types/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/acquisition-types/**").authenticated()
