@@ -104,32 +104,28 @@ public class SaleService {
     }
 
     /**
-     * Retrieves today's sales for the authenticated user.
+     * Retrieves today's sales.
      *
      * @return List of sale responses.
      */
     public List<SaleResponse> getTodaySales() {
-        String userOid = authenticatedUserProvider.getCurrentUserOid();
-
         LocalDate today = LocalDate.now();
-        List<Sale> sales = saleRepository.findByUserOidAndSaleDate(userOid, today);
+        List<Sale> sales = saleRepository.findBySaleDate(today);
         return saleMapper.toResponseList(sales);
     }
 
     /**
-     * Retrieves sales for the authenticated user by date range.
+     * Retrieves sales by date range.
      *
      * @param startDate Start date.
      * @param endDate End date.
      * @return List of sale responses.
      */
     public List<SaleResponse> getSalesByDateRange(LocalDate startDate, LocalDate endDate) {
-        String userOid = authenticatedUserProvider.getCurrentUserOid();
-
         LocalDateTime startDateTime = DateUtils.startOfDay(startDate);
         LocalDateTime endDateTime = DateUtils.endOfDay(endDate);
 
-        List<Sale> sales = saleRepository.findByUserOidAndSaleDateBetween(userOid, startDateTime, endDateTime);
+        List<Sale> sales = saleRepository.findBySaleDateBetween(startDateTime, endDateTime);
         return saleMapper.toResponseList(sales);
     }
 

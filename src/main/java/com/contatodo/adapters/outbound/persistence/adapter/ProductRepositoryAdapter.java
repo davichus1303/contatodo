@@ -84,8 +84,8 @@ public class ProductRepositoryAdapter implements ProductRepository {
      * {@inheritDoc}
      */
     @Override
-    public List<Product> findByUserOidAndStockGreaterThan(String userOid, Integer stock) {
-        return persistenceMapper.toEntityList(productMongoRepository.findByUserOidAndStockGreaterThan(userOid, stock));
+    public List<Product> findByStockGreaterThan(Integer stock) {
+        return persistenceMapper.toEntityList(productMongoRepository.findByStockGreaterThan(stock));
     }
 
     /**

@@ -15,6 +15,15 @@ import java.util.List;
 public interface SaleMongoRepository extends MongoRepository<SaleDocument, String> {
 
     /**
+     * Finds sales within a sale date range.
+     *
+     * @param startOfDay Start of the day.
+     * @param endOfDay End of the day.
+     * @return List of sale documents.
+     */
+    List<SaleDocument> findBySaleDateBetween(LocalDateTime startOfDay, LocalDateTime endOfDay);
+
+    /**
      * Finds sales by user identifier and sale date range.
      *
      * @param userOid User identifier.

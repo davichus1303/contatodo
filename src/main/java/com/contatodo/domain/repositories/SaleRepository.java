@@ -20,13 +20,21 @@ public interface SaleRepository {
     Sale save(Sale sale);
 
     /**
-     * Finds sales of a user on a specific date.
+     * Finds sales on a specific date.
      *
-     * @param userOid User identifier.
      * @param date Sale date.
      * @return List of sales.
      */
-    List<Sale> findByUserOidAndSaleDate(String userOid, LocalDate date);
+    List<Sale> findBySaleDate(LocalDate date);
+
+    /**
+     * Finds sales within a date range.
+     *
+     * @param startOfDay Start of the range.
+     * @param endOfDay End of the range.
+     * @return List of sales.
+     */
+    List<Sale> findBySaleDateBetween(LocalDateTime startOfDay, LocalDateTime endOfDay);
 
     /**
      * Finds sales of a user within a date range.
