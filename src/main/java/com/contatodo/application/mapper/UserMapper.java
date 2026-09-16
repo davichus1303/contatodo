@@ -57,7 +57,7 @@ public class UserMapper implements ResponseMapper<User, UserResponse> {
                 .email(request.getEmail() != null ? request.getEmail() : existing.getEmail())
                 .password(hashedPassword != null ? hashedPassword : existing.getPassword())
                 .name(request.getName() != null ? request.getName() : existing.getName())
-                .roleId(existing.getRoleId())
+                .roleId(request.getRoleId() != null ? request.getRoleId() : existing.getRoleId())
                 .createdByUserOid(existing.getCreatedByUserOid())
                 .isActive(request.getIsActive() != null ? request.getIsActive() : existing.isActive())
                 .isDelete(existing.isDelete())

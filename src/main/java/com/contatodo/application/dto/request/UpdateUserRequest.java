@@ -9,6 +9,7 @@ public class UpdateUserRequest {
     private String email;
     private String password;
     private String name;
+    private String roleId;
     private Boolean isActive;
 
     public String getUserName() {
@@ -41,6 +42,14 @@ public class UpdateUserRequest {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getRoleId() {
+        return roleId;
+    }
+
+    public void setRoleId(String roleId) {
+        this.roleId = roleId;
     }
 
     public Boolean getIsActive() {
