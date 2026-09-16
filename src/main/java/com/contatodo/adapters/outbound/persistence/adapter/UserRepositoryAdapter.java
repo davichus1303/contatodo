@@ -61,7 +61,7 @@ public class UserRepositoryAdapter implements UserRepository {
      */
     @Override
     public List<User> findAllActive() {
-        return persistenceMapper.toEntityList(userMongoRepository.findByIsDelete(false));
+        return persistenceMapper.toEntityList(userMongoRepository.findByIsDeleted(false));
     }
 
     /**
@@ -76,8 +76,8 @@ public class UserRepositoryAdapter implements UserRepository {
      * {@inheritDoc}
      */
     @Override
-    public Optional<User> findActiveUserByEmail(String email, boolean isDelete) {
-        return userMongoRepository.findByEmailAndIsDelete(email, isDelete)
+    public Optional<User> findActiveUserByEmail(String email, boolean isDeleted) {
+        return userMongoRepository.findByEmailAndIsDeleted(email, isDeleted)
                 .map(persistenceMapper::toEntity);
     }
 }

@@ -99,7 +99,7 @@ public class AcquisitionService {
     }
 
     /**
-     * Retrieves acquisitions for the authenticated user within a date range.
+     * Retrieves acquisitions within a date range.
      * If no date range is provided, returns today's acquisitions.
      *
      * @param startDate Optional start date.
@@ -107,10 +107,7 @@ public class AcquisitionService {
      * @return List of acquisition responses.
      */
     public List<AcquisitionResponse> getAcquisitions(LocalDateTime startDate, LocalDateTime endDate) {
-        String userOid = authenticatedUserProvider.getCurrentUserOid();
-
-        List<Acquisition> acquisitions = acquisitionRepository.findByUserOidAndAcquisitionDateBetween(
-                userOid,
+        List<Acquisition> acquisitions = acquisitionRepository.findByAcquisitionDateBetween(
                 startDate != null ? startDate : DateUtils.startOfDay(LocalDate.now()),
                 endDate != null ? endDate : DateUtils.endOfDay(LocalDate.now())
         );

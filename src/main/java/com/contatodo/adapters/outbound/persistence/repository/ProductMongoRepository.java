@@ -35,13 +35,12 @@ public interface ProductMongoRepository extends MongoRepository<ProductDocument,
     Optional<ProductDocument> findTopByOrderByCodeDesc();
 
     /**
-     * Finds products by user OID with stock greater than specified value.
+     * Finds products with stock greater than specified value.
      *
-     * @param userOid User OID.
      * @param stock Stock threshold.
      * @return List of product documents.
      */
-    List<ProductDocument> findByUserOidAndStockGreaterThan(String userOid, Integer stock);
+    List<ProductDocument> findByStockGreaterThan(Integer stock);
 
     /**
      * Finds a product by name and user OID.

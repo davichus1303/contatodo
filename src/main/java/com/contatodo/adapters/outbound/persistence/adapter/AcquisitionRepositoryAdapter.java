@@ -47,9 +47,9 @@ public class AcquisitionRepositoryAdapter implements AcquisitionRepository {
      * {@inheritDoc}
      */
     @Override
-    public List<Acquisition> findByUserOidAndAcquisitionDateBetween(String userOid, LocalDateTime startDate, LocalDateTime endDate) {
+    public List<Acquisition> findByAcquisitionDateBetween(LocalDateTime startDate, LocalDateTime endDate) {
         return persistenceMapper.toEntityList(
-                acquisitionMongoRepository.findByUserOidAndAcquisitionDateBetweenAndIsDeletedFalse(userOid, startDate, endDate)
+                acquisitionMongoRepository.findByAcquisitionDateBetweenAndIsDeletedFalse(startDate, endDate)
         );
     }
 

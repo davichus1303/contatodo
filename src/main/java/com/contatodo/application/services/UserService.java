@@ -4,11 +4,14 @@ import com.contatodo.application.dto.request.CreateUserRequest;
 import com.contatodo.application.dto.request.LoginRequest;
 import com.contatodo.application.dto.request.UpdateUserRequest;
 import com.contatodo.application.dto.response.LoginResponse;
+import com.contatodo.application.dto.response.RoleResponse;
 import com.contatodo.application.dto.response.UserResponse;
+import com.contatodo.application.mapper.RoleMapper;
 import com.contatodo.application.mapper.UserMapper;
 import com.contatodo.application.port.TokenProvider;
 import com.contatodo.application.validators.UserValidator;
 import com.contatodo.domain.entities.User;
+import com.contatodo.domain.repositories.RoleRepository;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.shared.constants.UserConstants;
 import com.contatodo.shared.exceptions.AuthenticationException;
@@ -17,7 +20,10 @@ import com.contatodo.shared.exceptions.UserNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Service containing user business logic.
@@ -26,8 +32,10 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
     private final UserValidator userValidator;
     private final UserMapper userMapper;
+    private final RoleMapper roleMapper;
     private final PasswordEncoder passwordEncoder;
     private final TokenProvider tokenProvider;
 
@@ -35,21 +43,27 @@ public class UserService {
      * Creates a user service.
      *
      * @param userRepository User repository port.
+     * @param roleRepository Role repository port.
      * @param userValidator User validator.
      * @param userMapper User mapper.
+     * @param roleMapper Role mapper.
      * @param passwordEncoder Password encoder.
      * @param tokenProvider Security token provider.
      */
     public UserService(
             UserRepository userRepository,
+            RoleRepository roleRepository,
             UserValidator userValidator,
             UserMapper userMapper,
+            RoleMapper roleMapper,
             PasswordEncoder passwordEncoder,
             TokenProvider tokenProvider
     ) {
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
         this.userValidator = userValidator;
         this.userMapper = userMapper;
+        this.roleMapper = roleMapper;
         this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
     }
@@ -57,10 +71,16 @@ public class UserService {
     /**
      * Creates a new user.
      *
+     * <p>When the optional session email is present, the creating user is
+     * resolved from it and recorded as the creator of the new user. When the
+     * session cannot be resolved, the user is created without a role and
+     * inactive so a non-authenticated registration cannot grant access.</p>
+     *
      * @param request Create user request.
+     * @param sessionEmail Email of the user in session, or empty when not authenticated.
      * @return Created user response.
      */
-    public UserResponse createUser(CreateUserRequest request) {
+    public UserResponse createUser(CreateUserRequest request, Optional<String> sessionEmail) {
         userValidator.validateCreateRequest(request);
 
         if (userRepository.existsByEmail(request.getEmail())) {
@@ -68,7 +88,25 @@ public class UserService {
         }
 
         String hashedPassword = passwordEncoder.encode(request.getPassword());
-        User user = userMapper.toEntity(request, hashedPassword);
+
+        String roleId = request.getRoleId();
+        String createdByUserOid = null;
+        boolean isActive = true;
+
+        if (sessionEmail.isPresent()) {
+            Optional<User> sessionUser = userRepository.findActiveUserByEmail(sessionEmail.get(), false);
+            if (sessionUser.isPresent()) {
+                createdByUserOid = sessionUser.get().getId();
+            } else {
+                roleId = null;
+                isActive = false;
+            }
+        } else {
+            roleId = null;
+            isActive = false;
+        }
+
+        User user = userMapper.toEntity(request, hashedPassword, roleId, createdByUserOid, isActive);
         User savedUser = userRepository.save(user);
         return userMapper.toResponse(savedUser);
     }
@@ -115,12 +153,40 @@ public class UserService {
     }
 
     /**
-     * Retrieves all active users.
+     * Retrieves all active users, resolving each related role.
+     *
+     * <p>Each role is looked up at most once. A role that cannot be resolved
+     * (missing identifier, not found or lookup error) is left empty for that
+     * user without failing the whole query.</p>
      *
      * @return List of user responses.
      */
     public List<UserResponse> getAllUsers() {
-        return userMapper.toResponseList(userRepository.findAllActive());
+        List<User> users = userRepository.findAllActive();
+        return userMapper.toResponseList(users, resolveRoles(users));
+    }
+
+    /**
+     * Resolves the roles referenced by the given users, keyed by role identifier.
+     *
+     * @param users Users whose roles must be resolved.
+     * @return Map of role identifiers to resolved role responses.
+     */
+    private Map<String, RoleResponse> resolveRoles(List<User> users) {
+        Map<String, RoleResponse> roles = new HashMap<>();
+        for (User user : users) {
+            String roleId = user.getRoleId();
+            if (roleId == null || roles.containsKey(roleId)) {
+                continue;
+            }
+            try {
+                roleRepository.findById(roleId)
+                        .ifPresent(role -> roles.put(roleId, roleMapper.toResponse(role)));
+            } catch (RuntimeException exception) {
+                // A single broken role must not prevent the remaining users from loading.
+            }
+        }
+        return roles;
     }
 
     /**

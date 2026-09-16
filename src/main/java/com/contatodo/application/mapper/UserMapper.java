@@ -2,12 +2,14 @@ package com.contatodo.application.mapper;
 
 import com.contatodo.application.dto.request.CreateUserRequest;
 import com.contatodo.application.dto.request.UpdateUserRequest;
+import com.contatodo.application.dto.response.RoleResponse;
 import com.contatodo.application.dto.response.UserResponse;
 import com.contatodo.domain.entities.User;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Mapper for user entities and DTOs.
@@ -20,15 +22,20 @@ public class UserMapper implements ResponseMapper<User, UserResponse> {
      *
      * @param request Create user request.
      * @param hashedPassword Hashed password.
+     * @param roleId Role assigned to the new user.
+     * @param createdByUserOid Identifier of the user that creates it.
+     * @param isActive Active flag.
      * @return User entity.
      */
-    public User toEntity(CreateUserRequest request, String hashedPassword) {
+    public User toEntity(CreateUserRequest request, String hashedPassword, String roleId, String createdByUserOid, boolean isActive) {
         return User.builder()
                 .userName(request.getUserName())
                 .email(request.getEmail())
                 .password(hashedPassword)
                 .name(request.getName())
-                .isActive(true)
+                .roleId(roleId)
+                .createdByUserOid(createdByUserOid)
+                .isActive(isActive)
                 .isDelete(false)
                 .createdDate(LocalDateTime.now())
                 .updatedDate(LocalDateTime.now())
@@ -50,6 +57,8 @@ public class UserMapper implements ResponseMapper<User, UserResponse> {
                 .email(request.getEmail() != null ? request.getEmail() : existing.getEmail())
                 .password(hashedPassword != null ? hashedPassword : existing.getPassword())
                 .name(request.getName() != null ? request.getName() : existing.getName())
+                .roleId(request.getRoleId() != null ? request.getRoleId() : existing.getRoleId())
+                .createdByUserOid(existing.getCreatedByUserOid())
                 .isActive(request.getIsActive() != null ? request.getIsActive() : existing.isActive())
                 .isDelete(existing.isDelete())
                 .createdDate(existing.getCreatedDate())
@@ -66,14 +75,43 @@ public class UserMapper implements ResponseMapper<User, UserResponse> {
      * @return User response.
      */
     public UserResponse toResponse(User user) {
+        return toResponse(user, null);
+    }
+
+    /**
+     * Maps a user entity to a response DTO including its resolved role.
+     *
+     * @param user User entity.
+     * @param role Resolved role, or null when the user has no role or it could not be resolved.
+     * @return User response.
+     */
+    public UserResponse toResponse(User user, RoleResponse role) {
         UserResponse response = new UserResponse();
         response.setId(user.getId());
         response.setUserName(user.getUserName());
         response.setEmail(user.getEmail());
         response.setName(user.getName());
+        response.setRole(role);
+        response.setCreatedByUserOid(user.getCreatedByUserOid());
         response.setActive(user.isActive());
         response.setCreatedDate(user.getCreatedDate());
         response.setUpdatedDate(user.getUpdatedDate());
         return response;
+    }
+
+    /**
+     * Maps a list of user entities to response DTOs resolving each role from a map.
+     *
+     * <p>A user whose role is missing from the map is still mapped, leaving its
+     * role empty, so a single unresolved role never drops the user from the list.</p>
+     *
+     * @param users User entities.
+     * @param roles Map of role identifiers to resolved roles.
+     * @return User responses.
+     */
+    public List<UserResponse> toResponseList(List<User> users, Map<String, RoleResponse> roles) {
+        return users.stream()
+                .map(user -> toResponse(user, roles.get(user.getRoleId())))
+                .toList();
     }
 }

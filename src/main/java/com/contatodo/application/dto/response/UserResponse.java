@@ -11,6 +11,8 @@ public class UserResponse {
     private String userName;
     private String email;
     private String name;
+    private RoleResponse role;
+    private String createdByUserOid;
     private boolean isActive;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
@@ -45,6 +47,22 @@ public class UserResponse {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public RoleResponse getRole() {
+        return role;
+    }
+
+    public void setRole(RoleResponse role) {
+        this.role = role;
+    }
+
+    public String getCreatedByUserOid() {
+        return createdByUserOid;
+    }
+
+    public void setCreatedByUserOid(String createdByUserOid) {
+        this.createdByUserOid = createdByUserOid;
     }
 
     public boolean isActive() {

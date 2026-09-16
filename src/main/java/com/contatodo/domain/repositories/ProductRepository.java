@@ -57,12 +57,11 @@ public interface ProductRepository {
     Optional<Product> findTopByOrderByCodeDesc();
 
     /**
-     * Finds products by user OID with stock greater than 0.
+     * Finds products with stock greater than 0.
      *
-     * @param userOid User OID.
      * @return List of products.
      */
-    List<Product> findByUserOidAndStockGreaterThan(String userOid, Integer stock);
+    List<Product> findByStockGreaterThan(Integer stock);
 
     /**
      * Finds a product by name and user OID.
