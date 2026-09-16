@@ -9,6 +9,8 @@ public class CreateUserRequest {
     private String email;
     private String password;
     private String name;
+    private String roleId;
+    private String createdByUserOid;
 
     public String getUserName() {
         return userName;
@@ -40,5 +42,21 @@ public class CreateUserRequest {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getRoleId() {
+        return roleId;
+    }
+
+    public void setRoleId(String roleId) {
+        this.roleId = roleId;
+    }
+
+    public String getCreatedByUserOid() {
+        return createdByUserOid;
+    }
+
+    public void setCreatedByUserOid(String createdByUserOid) {
+        this.createdByUserOid = createdByUserOid;
     }
 }

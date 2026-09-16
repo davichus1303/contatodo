@@ -17,6 +17,8 @@ public class UserDocument {
     private String email;
     private String password;
     private String name;
+    private String roleId;
+    private String createdByUserOid;
     private boolean isActive;
     private boolean isDeleted;
     private LocalDateTime createdDate;
@@ -62,6 +64,22 @@ public class UserDocument {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getRoleId() {
+        return roleId;
+    }
+
+    public void setRoleId(String roleId) {
+        this.roleId = roleId;
+    }
+
+    public String getCreatedByUserOid() {
+        return createdByUserOid;
+    }
+
+    public void setCreatedByUserOid(String createdByUserOid) {
+        this.createdByUserOid = createdByUserOid;
     }
 
     public boolean isActive() {

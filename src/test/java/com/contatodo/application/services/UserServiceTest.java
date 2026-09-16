@@ -3,11 +3,15 @@ package com.contatodo.application.services;
 import com.contatodo.application.dto.request.CreateUserRequest;
 import com.contatodo.application.dto.request.LoginRequest;
 import com.contatodo.application.dto.response.LoginResponse;
+import com.contatodo.application.dto.response.RoleResponse;
 import com.contatodo.application.dto.response.UserResponse;
+import com.contatodo.application.mapper.RoleMapper;
 import com.contatodo.application.mapper.UserMapper;
 import com.contatodo.application.port.TokenProvider;
 import com.contatodo.application.validators.UserValidator;
+import com.contatodo.domain.entities.Role;
 import com.contatodo.domain.entities.User;
+import com.contatodo.domain.repositories.RoleRepository;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.shared.constants.UserConstants;
 import com.contatodo.shared.exceptions.AuthenticationException;
@@ -15,15 +19,21 @@ import com.contatodo.shared.exceptions.UserAlreadyExistsException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,10 +48,16 @@ class UserServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private RoleRepository roleRepository;
+
+    @Mock
     private UserValidator userValidator;
 
     @Mock
     private UserMapper userMapper;
+
+    @Mock
+    private RoleMapper roleMapper;
 
     @Mock
     private PasswordEncoder passwordEncoder;
@@ -53,7 +69,8 @@ class UserServiceTest {
 
     @BeforeEach
     void setUp() {
-        userService = new UserService(userRepository, userValidator, userMapper, passwordEncoder, tokenProvider);
+        userService = new UserService(
+                userRepository, roleRepository, userValidator, userMapper, roleMapper, passwordEncoder, tokenProvider);
     }
 
     private CreateUserRequest createRequest(String email) {
@@ -75,13 +92,31 @@ class UserServiceTest {
                 .build();
     }
 
+    private User activeUserWithRole(String roleId) {
+        return User.builder()
+                .id("user-" + roleId)
+                .userName("david-" + roleId)
+                .email("david-" + roleId + "@example.com")
+                .password("hashed")
+                .name("David " + roleId)
+                .roleId(roleId)
+                .build();
+    }
+
+    private Role role(String id, String name) {
+        return Role.builder()
+                .id(id)
+                .name(name)
+                .build();
+    }
+
     @Test
     void createUserRejectsDuplicateEmail() {
         when(userRepository.existsByEmail("david@example.com")).thenReturn(true);
 
         UserAlreadyExistsException exception = assertThrows(
                 UserAlreadyExistsException.class,
-                () -> userService.createUser(createRequest("david@example.com"))
+                () -> userService.createUser(createRequest("david@example.com"), Optional.empty())
         );
         assertEquals(UserConstants.USER_ALREADY_EXISTS, exception.getMessage());
         verify(userRepository, never()).save(any());
@@ -92,13 +127,79 @@ class UserServiceTest {
         when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
         when(passwordEncoder.encode("secret123")).thenReturn("hashed-value");
         when(userRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(userMapper.toEntity(any(), any())).thenReturn(activeUser());
+        when(userMapper.toEntity(any(), any(), any(), any(), anyBoolean())).thenReturn(activeUser());
         when(userMapper.toResponse(any())).thenReturn(new UserResponse());
 
-        userService.createUser(createRequest("new@example.com"));
+        userService.createUser(createRequest("new@example.com"), Optional.empty());
 
-        verify(userMapper).toEntity(any(), any());
+        verify(userMapper).toEntity(any(), any(), any(), any(), anyBoolean());
         verify(userRepository).save(any());
+    }
+
+    @Test
+    void createUserRecordsSessionUserAsCreatorAndKeepsTheRequestedRoleAndActiveFlag() {
+        CreateUserRequest request = createRequest("new@example.com");
+        request.setRoleId("role-1");
+        when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(userRepository.findActiveUserByEmail("david@example.com", false))
+                .thenReturn(Optional.of(activeUser()));
+        when(passwordEncoder.encode("secret123")).thenReturn("hashed-value");
+        when(userRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userMapper.toEntity(any(), any(), any(), any(), anyBoolean())).thenReturn(activeUser());
+        when(userMapper.toResponse(any())).thenReturn(new UserResponse());
+
+        userService.createUser(request, Optional.of("david@example.com"));
+
+        ArgumentCaptor<String> roleCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> creatorCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<Boolean> activeCaptor = ArgumentCaptor.forClass(Boolean.class);
+        verify(userMapper).toEntity(any(), any(), roleCaptor.capture(), creatorCaptor.capture(), activeCaptor.capture());
+        assertEquals("role-1", roleCaptor.getValue());
+        assertEquals("user-1", creatorCaptor.getValue());
+        assertEquals(Boolean.TRUE, activeCaptor.getValue());
+    }
+
+    @Test
+    void createUserWithoutSessionCreatesTheUserWithoutRoleAndInactive() {
+        CreateUserRequest request = createRequest("new@example.com");
+        request.setRoleId("role-1");
+        when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(passwordEncoder.encode("secret123")).thenReturn("hashed-value");
+        when(userRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userMapper.toEntity(any(), any(), any(), any(), anyBoolean())).thenReturn(activeUser());
+        when(userMapper.toResponse(any())).thenReturn(new UserResponse());
+
+        userService.createUser(request, Optional.empty());
+
+        ArgumentCaptor<String> roleCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> creatorCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<Boolean> activeCaptor = ArgumentCaptor.forClass(Boolean.class);
+        verify(userMapper).toEntity(any(), any(), roleCaptor.capture(), creatorCaptor.capture(), activeCaptor.capture());
+        assertEquals(null, roleCaptor.getValue());
+        assertEquals(null, creatorCaptor.getValue());
+        assertEquals(Boolean.FALSE, activeCaptor.getValue());
+    }
+
+    @Test
+    void createUserWithUnknownSessionEmailCreatesTheUserWithoutRoleAndInactive() {
+        CreateUserRequest request = createRequest("new@example.com");
+        request.setRoleId("role-1");
+        when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(userRepository.findActiveUserByEmail("unknown@example.com", false)).thenReturn(Optional.empty());
+        when(passwordEncoder.encode("secret123")).thenReturn("hashed-value");
+        when(userRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userMapper.toEntity(any(), any(), any(), any(), anyBoolean())).thenReturn(activeUser());
+        when(userMapper.toResponse(any())).thenReturn(new UserResponse());
+
+        userService.createUser(request, Optional.of("unknown@example.com"));
+
+        ArgumentCaptor<String> roleCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> creatorCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<Boolean> activeCaptor = ArgumentCaptor.forClass(Boolean.class);
+        verify(userMapper).toEntity(any(), any(), roleCaptor.capture(), creatorCaptor.capture(), activeCaptor.capture());
+        assertEquals(null, roleCaptor.getValue());
+        assertEquals(null, creatorCaptor.getValue());
+        assertEquals(Boolean.FALSE, activeCaptor.getValue());
     }
 
     @Test
@@ -186,5 +287,45 @@ class UserServiceTest {
                 () -> userService.login(request)
         );
         assertEquals(UserConstants.USER_INACTIVE, exception.getMessage());
+    }
+
+    @Test
+    void getAllUsersResolvesTheRoleOfEachUser() {
+        User user = activeUserWithRole("role-1");
+        RoleResponse roleResponse = new RoleResponse();
+        roleResponse.setId("role-1");
+        roleResponse.setName("Admin");
+
+        when(userRepository.findAllActive()).thenReturn(List.of(user));
+        when(roleRepository.findById("role-1")).thenReturn(Optional.of(role("role-1", "Admin")));
+        when(roleMapper.toResponse(any())).thenReturn(roleResponse);
+        when(userMapper.toResponseList(anyList(), anyMap())).thenAnswer(invocation -> {
+            Map<String, RoleResponse> roles = invocation.getArgument(1);
+            assertEquals(roleResponse, roles.get("role-1"));
+            return List.of(new UserResponse());
+        });
+
+        List<UserResponse> response = userService.getAllUsers();
+
+        assertEquals(1, response.size());
+        verify(roleRepository).findById("role-1");
+    }
+
+    @Test
+    void getAllUsersStillReturnsUsersWhenARoleLookupFails() {
+        User user = activeUserWithRole("role-1");
+
+        when(userRepository.findAllActive()).thenReturn(List.of(user));
+        when(roleRepository.findById("role-1")).thenThrow(new RuntimeException("role lookup failed"));
+        when(userMapper.toResponseList(anyList(), anyMap())).thenAnswer(invocation -> {
+            Map<String, RoleResponse> roles = invocation.getArgument(1);
+            assertEquals(0, roles.size());
+            return List.of(new UserResponse());
+        });
+
+        List<UserResponse> response = userService.getAllUsers();
+
+        assertEquals(1, response.size());
+        verify(roleRepository).findById("role-1");
     }
 }

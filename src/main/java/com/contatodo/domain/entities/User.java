@@ -22,6 +22,8 @@ public final class User {
     private final String email;
     private final String password;
     private final String name;
+    private final String roleId;
+    private final String createdByUserOid;
     private final boolean isActive;
     private final boolean isDelete;
     private final LocalDateTime createdDate;
@@ -40,6 +42,8 @@ public final class User {
         this.email = builder.email;
         this.password = builder.password;
         this.name = builder.name;
+        this.roleId = builder.roleId;
+        this.createdByUserOid = builder.createdByUserOid;
         this.isActive = builder.isActive;
         this.isDelete = builder.isDelete;
         this.createdDate = builder.createdDate;
@@ -75,6 +79,14 @@ public final class User {
 
     public String getName() {
         return name;
+    }
+
+    public String getRoleId() {
+        return roleId;
+    }
+
+    public String getCreatedByUserOid() {
+        return createdByUserOid;
     }
 
     public boolean isActive() {
@@ -126,6 +138,8 @@ public final class User {
                 .email(email)
                 .password(password)
                 .name(name)
+                .roleId(roleId)
+                .createdByUserOid(createdByUserOid)
                 .isActive(isActive)
                 .isDelete(isDelete)
                 .createdDate(createdDate)
@@ -144,6 +158,8 @@ public final class User {
         private String email;
         private String password;
         private String name;
+        private String roleId;
+        private String createdByUserOid;
         private boolean isActive = true;
         private boolean isDelete;
         private LocalDateTime createdDate;
@@ -203,6 +219,28 @@ public final class User {
          */
         public Builder name(String name) {
             this.name = name;
+            return this;
+        }
+
+        /**
+         * Sets the related role identifier.
+         *
+         * @param roleId Role identifier.
+         * @return This builder.
+         */
+        public Builder roleId(String roleId) {
+            this.roleId = roleId;
+            return this;
+        }
+
+        /**
+         * Sets the identifier of the user that created this user.
+         *
+         * @param createdByUserOid Creating user identifier.
+         * @return This builder.
+         */
+        public Builder createdByUserOid(String createdByUserOid) {
+            this.createdByUserOid = createdByUserOid;
             return this;
         }
 
