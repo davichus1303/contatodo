@@ -25,6 +25,8 @@ public class UserPersistenceMapper implements PersistenceMapper<UserDocument, Us
         document.setEmail(user.getEmail());
         document.setPassword(user.getPassword());
         document.setName(user.getName());
+        document.setRoleId(user.getRoleId());
+        document.setCreatedByUserOid(user.getCreatedByUserOid());
         document.setActive(user.isActive());
         document.setIsDeleted(user.isDelete());
         document.setCreatedDate(user.getCreatedDate());
@@ -47,6 +49,8 @@ public class UserPersistenceMapper implements PersistenceMapper<UserDocument, Us
                 .email(document.getEmail())
                 .password(document.getPassword())
                 .name(document.getName())
+                .roleId(document.getRoleId())
+                .createdByUserOid(document.getCreatedByUserOid())
                 .isActive(document.isActive())
                 .isDelete(document.getIsDeleted())
                 .createdDate(document.getCreatedDate())
