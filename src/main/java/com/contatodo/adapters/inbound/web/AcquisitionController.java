@@ -50,7 +50,7 @@ public class AcquisitionController {
     }
 
     /**
-     * Retrieves acquisitions for the authenticated user.
+     * Retrieves acquisitions.
      * By default, returns today's acquisitions.
      * Supports optional date range filtering.
      *

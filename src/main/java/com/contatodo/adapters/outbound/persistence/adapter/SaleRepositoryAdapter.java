@@ -49,11 +49,21 @@ public class SaleRepositoryAdapter implements SaleRepository {
      * {@inheritDoc}
      */
     @Override
-    public List<Sale> findByUserOidAndSaleDate(String userOid, LocalDate date) {
+    public List<Sale> findBySaleDate(LocalDate date) {
         LocalDateTime startOfDay = DateUtils.startOfDay(date);
         LocalDateTime endOfDay = DateUtils.endOfDay(date);
         return persistenceMapper.toEntityList(
-                saleMongoRepository.findByUserOidAndSaleDateBetween(userOid, startOfDay, endOfDay)
+                saleMongoRepository.findBySaleDateBetween(startOfDay, endOfDay)
+        );
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<Sale> findBySaleDateBetween(LocalDateTime startOfDay, LocalDateTime endOfDay) {
+        return persistenceMapper.toEntityList(
+                saleMongoRepository.findBySaleDateBetween(startOfDay, endOfDay)
         );
     }
 

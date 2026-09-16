@@ -49,7 +49,7 @@ public class SaleController {
     }
 
     /**
-     * Retrieves today's sales for the authenticated user.
+     * Retrieves today's sales.
      *
      * @return List of sales.
      */
@@ -60,7 +60,7 @@ public class SaleController {
     }
 
     /**
-     * Retrieves sales for the authenticated user by date.
+     * Retrieves sales by date.
      *
      * @param startDate Start date.
      * @param endDate End date.

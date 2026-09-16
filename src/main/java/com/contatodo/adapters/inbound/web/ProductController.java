@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -102,13 +101,13 @@ public class ProductController {
     }
 
     /**
-     * Retrieves available products for the authenticated user (stock > 0).
+     * Retrieves available products (stock > 0).
      *
      * @return List of products.
      */
     @GetMapping("/available")
-    public ResponseEntity<ApiResponse<List<ProductResponse>>> getAvailableProductsForUser(@RequestHeader("userOid") String userOid) {
-        List<ProductResponse> products = productService.getAvailableProductsForUser(userOid);
+    public ResponseEntity<ApiResponse<List<ProductResponse>>> getAvailableProducts() {
+        List<ProductResponse> products = productService.getAvailableProducts();
         return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, products);
     }
 }

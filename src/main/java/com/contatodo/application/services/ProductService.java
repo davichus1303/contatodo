@@ -121,12 +121,12 @@ public class ProductService {
     }
 
     /**
-     * Retrieves products for the authenticated user with stock greater than 0.
+     * Retrieves available products with stock greater than 0.
      *
      * @return List of product responses.
      */
-    public List<ProductResponse> getAvailableProductsForUser(String userOid) {
-        return productMapper.toResponseList(productRepository.findByUserOidAndStockGreaterThan(userOid, 0));
+    public List<ProductResponse> getAvailableProducts() {
+        return productMapper.toResponseList(productRepository.findByStockGreaterThan(0));
     }
 
     /**

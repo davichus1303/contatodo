@@ -19,14 +19,13 @@ public interface AcquisitionRepository {
     Acquisition save(Acquisition acquisition);
 
     /**
-     * Finds acquisitions by user OID and date range.
+     * Finds acquisitions by date range.
      *
-     * @param userOid User OID.
      * @param startDate Start date.
      * @param endDate End date.
      * @return List of acquisitions.
      */
-    List<Acquisition> findByUserOidAndAcquisitionDateBetween(String userOid, LocalDateTime startDate, LocalDateTime endDate);
+    List<Acquisition> findByAcquisitionDateBetween(LocalDateTime startDate, LocalDateTime endDate);
 
     /**
      * Finds acquisitions by user OID ordered by acquisition date descending.
