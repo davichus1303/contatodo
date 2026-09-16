@@ -22,19 +22,19 @@ public interface UserMongoRepository extends MongoRepository<UserDocument, Strin
     /**
      * Finds all users that are not deleted.
      *
-     * @param isDelete Delete flag.
+     * @param isDeleted Delete flag.
      * @return List of user documents.
      */
-    List<UserDocument> findByIsDelete(boolean isDelete);
+    List<UserDocument> findByIsDeleted(boolean isDeleted);
 
     /**
      * Finds a user by email and delete status.
      *
      * @param email User email.
-     * @param isDelete Delete flag.
+     * @param isDeleted Delete flag.
      * @return Optional user document.
      */
-    Optional<UserDocument> findByEmailAndIsDelete(String email, boolean isDelete);
+    Optional<UserDocument> findByEmailAndIsDeleted(String email, boolean isDeleted);
 
     /**
      * Checks if a user exists by email.

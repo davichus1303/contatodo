@@ -18,7 +18,7 @@ public class UserDocument {
     private String password;
     private String name;
     private boolean isActive;
-    private boolean isDelete;
+    private boolean isDeleted;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
     private String createdBy;
@@ -72,12 +72,12 @@ public class UserDocument {
         isActive = active;
     }
 
-    public boolean isDelete() {
-        return isDelete;
+    public boolean getIsDeleted() {
+        return isDeleted;
     }
 
-    public void setDelete(boolean delete) {
-        isDelete = delete;
+    public void setIsDeleted(boolean isDeleted) {
+        this.isDeleted = isDeleted;
     }
 
     public LocalDateTime getCreatedDate() {
