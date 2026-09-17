@@ -17,6 +17,7 @@ public class UserDocument {
     private String email;
     private String password;
     private String name;
+    private String phoneNumber;
     private String roleId;
     private String createdByUserOid;
     private boolean isActive;
@@ -64,6 +65,14 @@ public class UserDocument {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
     public String getRoleId() {

@@ -33,6 +33,7 @@ public class UserMapper implements ResponseMapper<User, UserResponse> {
                 .email(request.getEmail())
                 .password(hashedPassword)
                 .name(request.getName())
+                .phoneNumber(request.getPhoneNumber())
                 .roleId(roleId)
                 .createdByUserOid(createdByUserOid)
                 .isActive(isActive)
@@ -57,6 +58,7 @@ public class UserMapper implements ResponseMapper<User, UserResponse> {
                 .email(request.getEmail() != null ? request.getEmail() : existing.getEmail())
                 .password(hashedPassword != null ? hashedPassword : existing.getPassword())
                 .name(request.getName() != null ? request.getName() : existing.getName())
+                .phoneNumber(request.getPhoneNumber() != null ? request.getPhoneNumber() : existing.getPhoneNumber())
                 .roleId(request.getRoleId() != null ? request.getRoleId() : existing.getRoleId())
                 .createdByUserOid(existing.getCreatedByUserOid())
                 .isActive(request.getIsActive() != null ? request.getIsActive() : existing.isActive())
@@ -91,6 +93,7 @@ public class UserMapper implements ResponseMapper<User, UserResponse> {
         response.setUserName(user.getUserName());
         response.setEmail(user.getEmail());
         response.setName(user.getName());
+        response.setPhoneNumber(user.getPhoneNumber());
         response.setRole(role);
         response.setCreatedByUserOid(user.getCreatedByUserOid());
         response.setActive(user.isActive());

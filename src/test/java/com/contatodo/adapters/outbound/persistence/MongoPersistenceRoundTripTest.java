@@ -45,6 +45,7 @@ class MongoPersistenceRoundTripTest {
                 .email("roundtrip@example.com")
                 .password("hashed")
                 .name("Round Trip")
+                .phoneNumber("987654321")
                 .build();
 
         User saved = userRepository.save(user);
@@ -54,6 +55,7 @@ class MongoPersistenceRoundTripTest {
         assertEquals(saved.getId(), reloaded.get().getId());
         assertEquals("roundtrip", reloaded.get().getUserName());
         assertEquals("hashed", reloaded.get().getPassword());
+        assertEquals("987654321", reloaded.get().getPhoneNumber());
     }
 
     @Test
