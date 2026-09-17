@@ -1,16 +1,16 @@
 # Contatodo Backend
 
-Backend para el sistema de registro de compras y ventas. API REST construida con Spring Boot 3.2.5, Java 17, MongoDB, y autenticación JWT.
+Backend for the purchases and sales registry system. REST API built with Spring Boot 3.2.5, Java 17, MongoDB, and JWT authentication.
 
-## Tecnologías
+## Technologies
 
 - **Java 17**
 - **Spring Boot 3.2.5**
 - **Spring Data MongoDB**
-- **Spring Security** con JWT
+- **Spring Security** with JWT
 - **Maven**
 
-## Estructura del Proyecto
+## Project Structure
 
 ```
 contatodo/
@@ -31,203 +31,203 @@ contatodo/
 └── DOCKER.md
 ```
 
-## Desarrollo
+## Development
 
-### Prerrequisitos
+### Prerequisites
 
 - Java 17
 - Maven 3.6+
-- MongoDB (local o Docker)
+- MongoDB (local or Docker)
 
-### Ejecutar Localmente
+### Run Locally
 
 ```bash
-# Clonar el repositorio
+# Clone the repository
 cd contatodo
 
-# Configurar variables de entorno
+# Set environment variables
 cp .env.local .env
 
-# Ejecutar con Maven
+# Run with Maven
 mvn spring-boot:run
 ```
 
-La API estará disponible en `http://localhost:8080`
+The API will be available at `http://localhost:8080`
 
-### Ejecutar Tests
+### Run Tests
 
 ```bash
 mvn test
 ```
 
-### Construir JAR
+### Build JAR
 
 ```bash
 mvn clean package
 ```
 
-El JAR se generará en `target/contatodo-1.0.0.jar`
+The JAR will be generated at `target/contatodo-1.0.0.jar`
 
 ## Docker
 
-Para información detallada sobre Docker, consulta [DOCKER.md](DOCKER.md)
+For detailed Docker information, see [DOCKER.md](DOCKER.md)
 
-### Construir Imagen
+### Build Image
 
 ```bash
 docker build -t contatodo-backend .
 ```
 
-### Ejecutar con Docker Compose
+### Run with Docker Compose
 
 ```bash
-# Desde el directorio raíz del proyecto
+# From the project root directory
 docker-compose up -d
 ```
 
-Esto inicia:
-- MongoDB en puerto 27017
-- Backend en puerto 8080
+This starts:
+- MongoDB on port 27017
+- Backend on port 8080
 
-## Variables de Entorno
+## Environment Variables
 
-| Variable | Descripción | Default |
+| Variable | Description | Default |
 |----------|-------------|---------|
-| `APP_NAME` | Nombre de la aplicación | `Contatodo` |
-| `SERVER_PORT` | Puerto del servidor | `8080` |
-| `MONGO_URI` | URI de conexión MongoDB | `mongodb://localhost:27017/` |
-| `MONGO_DATABASE` | Nombre de base de datos MongoDB | `contatodo` |
-| `JWT_SECRET` | Clave secreta para JWT | `mySecretKeyForJWTTokenGeneration123456789` |
-| `JWT_EXPIRATION` | Tiempo de expiración JWT (ms) | `86400000` |
-| `BCRYPT_STRENGTH` | Fuerza de encriptación BCrypt | `12` |
+| `APP_NAME` | Application name | `Contatodo` |
+| `SERVER_PORT` | Server port | `8080` |
+| `MONGO_URI` | MongoDB connection URI | `mongodb://localhost:27017/` |
+| `MONGO_DATABASE` | MongoDB database name | `contatodo` |
+| `JWT_SECRET` | Secret key for JWT | `mySecretKeyForJWTTokenGeneration123456789` |
+| `JWT_EXPIRATION` | JWT expiration time (ms) | `86400000` |
+| `BCRYPT_STRENGTH` | BCrypt encryption strength | `12` |
 
 ## CI/CD
 
-### Pipeline de Backend
+### Backend Pipeline
 
-El workflow `.github/workflows/backend-pipeline.yml` ejecuta:
+The workflow `.github/workflows/backend-pipeline.yml` runs:
 
-1. **CI** (todas las ramas):
-   - Compilación con Maven
-   - Ejecución de tests
-   - Empaquetado del JAR
-   - Verificación de build Docker
+1. **CI** (all branches):
+   - Compile with Maven
+   - Run tests
+   - Package the JAR
+   - Verify Docker build
 
-2. **CD** (solo master):
-   - Build y push de imagen Docker a GitHub Container Registry
-   - Tagging: `{branch}-{sha}` y `latest` para master
+2. **CD** (master only):
+   - Build and push the Docker image to GitHub Container Registry
+   - Tagging: `{branch}-{sha}` and `latest` for master
 
-### Despliegue Automático
+### Automatic Deployment
 
-El workflow `.github/workflows/deploy.yml` se ejecuta después del CD exitoso en master:
+The workflow `.github/workflows/deploy.yml` runs after a successful CD on master:
 
-- Resuelve la referencia de la imagen Docker
-- Genera archivo `.env` con configuración
-- Sube archivos a EC2 via SSH
-- Ejecuta script de despliegue remoto
-- Reinicia contenedores con la nueva imagen
+- Resolves the Docker image reference
+- Generates a `.env` file with the configuration
+- Uploads files to EC2 via SSH
+- Runs the remote deployment script
+- Restarts the containers with the new image
 
-## Despliegue a Producción
+## Production Deployment
 
-### GitHub Secrets Requeridos
+### Required GitHub Secrets
 
-Configura estos en el entorno `master` de GitHub:
+Configure these in the GitHub `master` environment:
 
 **Secrets:**
-- `SSH_PRIVATE_KEY` - Clave privada SSH para EC2
-- `MONGO_URI` - URI de MongoDB en producción
-- `JWT_SECRET` - Clave secreta JWT para producción
+- `SSH_PRIVATE_KEY` - SSH private key for EC2
+- `MONGO_URI` - MongoDB URI in production
+- `JWT_SECRET` - JWT secret key for production
 
-**Variables (secrets o variables):**
-- `APP_NAME` - Nombre de la aplicación
-- `SERVER_PORT` - Puerto del servidor
-- `MONGO_DATABASE` - Nombre de base de datos
-- `JWT_EXPIRATION` - Expiración JWT
-- `BCRYPT_STRENGTH` - Fuerza BCrypt
+**Variables (secrets or variables):**
+- `APP_NAME` - Application name
+- `SERVER_PORT` - Server port
+- `MONGO_DATABASE` - Database name
+- `JWT_EXPIRATION` - JWT expiration
+- `BCRYPT_STRENGTH` - BCrypt strength
 
-**Variables de entorno (opcionales):**
-- `SSH_HOST` - Host/IP de EC2
-- `SSH_USER` - Usuario SSH
-- `SSH_PORT` - Puerto SSH (default: 22)
-- `EC2_APP_DIR` - Directorio en EC2 (default: `/opt/contatodo`)
+**Environment variables (optional):**
+- `SSH_HOST` - EC2 host/IP
+- `SSH_USER` - SSH user
+- `SSH_PORT` - SSH port (default: 22)
+- `EC2_APP_DIR` - Directory on EC2 (default: `/opt/contatodo`)
 
-### Imagen Docker en Producción
+### Docker Image in Production
 
-La imagen se publica en GitHub Container Registry:
+The image is published to GitHub Container Registry:
 
 ```text
 ghcr.io/davichus1303/contatodo/contatodo:master-<short-sha>
 ghcr.io/davichus1303/contatodo/contatodo:latest
 ```
 
-### Red Docker
+### Docker Network
 
-El backend se conecta a la red Docker `contatodo-network` para comunicación con el frontend.
+The backend connects to the `contatodo-network` Docker network to communicate with the frontend.
 
 ## API Endpoints
 
-### Autenticación
+### Authentication
 
-- `POST /api/auth/login` - Iniciar sesión
-- `POST /api/auth/register` - Registrar usuario
+- `POST /api/auth/login` - Log in
+- `POST /api/auth/register` - Register user
 
-### Compras
+### Purchases
 
-- `GET /api/compras` - Listar compras
-- `POST /api/compras` - Crear compra
-- `GET /api/compras/{id}` - Obtener compra por ID
-- `PUT /api/compras/{id}` - Actualizar compra
-- `DELETE /api/compras/{id}` - Eliminar compra
+- `GET /api/compras` - List purchases
+- `POST /api/compras` - Create purchase
+- `GET /api/compras/{id}` - Get purchase by ID
+- `PUT /api/compras/{id}` - Update purchase
+- `DELETE /api/compras/{id}` - Delete purchase
 
-### Ventas
+### Sales
 
-- `GET /api/ventas` - Listar ventas
-- `POST /api/ventas` - Crear venta
-- `GET /api/ventas/{id}` - Obtener venta por ID
-- `PUT /api/ventas/{id}` - Actualizar venta
-- `DELETE /api/ventas/{id}` - Eliminar venta
+- `GET /api/ventas` - List sales
+- `POST /api/ventas` - Create sale
+- `GET /api/ventas/{id}` - Get sale by ID
+- `PUT /api/ventas/{id}` - Update sale
+- `DELETE /api/ventas/{id}` - Delete sale
 
-## Seguridad
+## Security
 
-- Autenticación JWT basada en tokens
-- Encriptación de contraseñas con BCrypt
-- Configuración de Spring Security para endpoints protegidos
-- CORS configurado para comunicación con frontend
+- Token-based JWT authentication
+- Password encryption with BCrypt
+- Spring Security configuration for protected endpoints
+- CORS configured for frontend communication
 
 ## Troubleshooting
 
-### El contenedor falla al iniciar
+### Container fails to start
 
 ```bash
 docker logs contatodo-backend
 ```
 
-### Problemas de conexión MongoDB
+### MongoDB connection issues
 
-Asegúrate de que MongoDB esté ejecutándose y accesible. En Docker Compose, el backend se conecta usando el nombre del servicio `mongodb` como hostname.
+Make sure MongoDB is running and reachable. In Docker Compose, the backend connects using the `mongodb` service name as hostname.
 
-### Conflictos de puerto
+### Port conflicts
 
-Si el puerto 8080 está en uso, modifica el mapeo de puertos en `docker-compose.yml` o al ejecutar el contenedor manualmente.
+If port 8080 is in use, change the port mapping in `docker-compose.yml` or when running the container manually.
 
-## Deuda Técnica (Pendientes)
+## Technical Debt (Pending)
 
-- **Refactor de excepciones "not found" por recurso.** Hoy existe una excepción por tipo
+- **Per-resource "not found" exceptions refactor.** Today there is one exception per type
   (`UserNotFoundException`, `ProductNotFoundException`, `AcquisitionTypeNotFoundException`,
-  `CompanyNotFoundException`) y un handler casi idéntico por cada una en `GlobalExceptionHandler`.
-  Es boilerplate que crece linealmente con cada módulo nuevo. Solución propuesta: una única
-  excepción de dominio genérica (p. ej. `ResourceNotFoundException` con `resource`/`id` o un
-  `ErrorCode`) y un solo handler que conserve el formato de error `{status, message, details}`.
-  Se abordará en un **PR independiente**.
+  `CompanyNotFoundException`) and a nearly identical handler for each in `GlobalExceptionHandler`.
+  It is boilerplate that grows linearly with every new module. Proposed solution: a single generic
+  domain exception (e.g. `ResourceNotFoundException` with `resource`/`id` or an `ErrorCode`) and a
+  single handler that keeps the `{status, message, details}` error format. It will be addressed in
+  an **independent PR**.
 
-## Contribución
+## Contributing
 
-1. Fork el repositorio
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+1. Fork the repository
+2. Create a branch for your feature (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## Licencia
+## License
 
-Este proyecto está bajo la Licencia MIT.
+This project is under the MIT License.
