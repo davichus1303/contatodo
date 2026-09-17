@@ -2,6 +2,7 @@ package com.contatodo.application.services;
 
 import com.contatodo.application.dto.request.CreateCompaniesRequest;
 import com.contatodo.application.dto.request.CreateCompanyRequest;
+import com.contatodo.application.dto.request.UpdateCompanyRequest;
 import com.contatodo.application.dto.response.CompanyResponse;
 import com.contatodo.application.mapper.CompanyMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
@@ -10,6 +11,7 @@ import com.contatodo.domain.entities.Company;
 import com.contatodo.domain.entities.User;
 import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.domain.repositories.UserRepository;
+import com.contatodo.shared.exceptions.CompanyNotFoundException;
 import com.contatodo.shared.exceptions.InvalidRequestException;
 import com.contatodo.shared.validators.FieldValidator;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,12 +21,15 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -92,6 +97,22 @@ class CompanyServiceTest {
         request.setUbication("Lima");
         request.setContactUserOId(contactUserOId);
         return request;
+    }
+
+    private Company persistedCompany() {
+        return Company.builder()
+                .id("company-1")
+                .name("Acme")
+                .rfc("ACM010101ABC")
+                .webSite("https://acme.example.com")
+                .ubication("Lima")
+                .contactUserOId("user-1")
+                .isActive(true)
+                .isDeleted(false)
+                .createdDate(LocalDateTime.of(2026, 1, 1, 0, 0))
+                .updatedDate(LocalDateTime.of(2026, 1, 1, 0, 0))
+                .createdBy("creator-1")
+                .build();
     }
 
     @Test
@@ -223,4 +244,68 @@ class CompanyServiceTest {
         verify(companyRepository).saveAll(captor.capture());
         assertEquals(Boolean.TRUE, captor.getValue().get(0).getIsActive());
     }
+
+    @Test
+    void updateCompanyAppliesProvidedFieldsAndKeepsTheRest() {
+        UpdateCompanyRequest request = new UpdateCompanyRequest();
+        request.setName("Acme Updated");
+        request.setUbication("Cusco");
+        when(companyRepository.findById("company-1")).thenReturn(Optional.of(persistedCompany()));
+        when(companyRepository.save(any(Company.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userRepository.findById("user-1")).thenReturn(Optional.of(contactUser()));
+
+        CompanyResponse response = companyService.updateCompany("company-1", request);
+
+        assertEquals("company-1", response.getId());
+        assertEquals("Acme Updated", response.getName());
+        assertEquals("Cusco", response.getUbication());
+        assertEquals("ACM010101ABC", response.getRfc());
+        assertEquals("https://acme.example.com", response.getWebSite());
+        assertEquals("user-1", response.getContactUserOId());
+        assertEquals("Ana Contacto", response.getContactName());
+
+        ArgumentCaptor<Company> captor = ArgumentCaptor.forClass(Company.class);
+        verify(companyRepository).save(captor.capture());
+        Company saved = captor.getValue();
+        assertEquals("company-1", saved.getId());
+        assertEquals(Boolean.FALSE, saved.getIsDeleted());
+        assertEquals("creator-1", saved.getCreatedBy());
+        assertEquals(LocalDateTime.of(2026, 1, 1, 0, 0), saved.getCreatedDate());
+        assertTrue(saved.getUpdatedDate().isAfter(LocalDateTime.of(2026, 1, 1, 0, 0)));
+    }
+
+    @Test
+    void updateCompanyThrowsWhenCompanyDoesNotExist() {
+        UpdateCompanyRequest request = new UpdateCompanyRequest();
+        request.setName("Acme Updated");
+        when(companyRepository.findById("missing")).thenReturn(Optional.empty());
+
+        assertThrows(CompanyNotFoundException.class, () -> companyService.updateCompany("missing", request));
+        verify(companyRepository, never()).save(any(Company.class));
+    }
+
+    @Test
+    void updateCompanyThrowsWhenCompanyIsDeleted() {
+        Company deletedCompany = Company.builder()
+                .id("company-1")
+                .name("Acme")
+                .isDeleted(true)
+                .build();
+        when(companyRepository.findById("company-1")).thenReturn(Optional.of(deletedCompany));
+
+        assertThrows(CompanyNotFoundException.class,
+                () -> companyService.updateCompany("company-1", new UpdateCompanyRequest()));
+        verify(companyRepository, never()).save(any(Company.class));
+    }
+
+    @Test
+    void updateCompanyRejectsABlankName() {
+        UpdateCompanyRequest request = new UpdateCompanyRequest();
+        request.setName("   ");
+
+        assertThrows(InvalidRequestException.class, () -> companyService.updateCompany("company-1", request));
+        verify(companyRepository, never()).findById(anyString());
+        verify(companyRepository, never()).save(any(Company.class));
+    }
+
 }

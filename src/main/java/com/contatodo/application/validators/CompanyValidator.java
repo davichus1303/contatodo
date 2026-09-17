@@ -2,6 +2,7 @@ package com.contatodo.application.validators;
 
 import com.contatodo.application.dto.request.CreateCompaniesRequest;
 import com.contatodo.application.dto.request.CreateCompanyRequest;
+import com.contatodo.application.dto.request.UpdateCompanyRequest;
 import com.contatodo.shared.constants.CompanyConstants;
 import com.contatodo.shared.validators.FieldValidator;
 import org.springframework.stereotype.Component;
@@ -48,6 +49,29 @@ public class CompanyValidator {
                 continue;
             }
             fieldValidator.validateRequired(company.getName(), CompanyConstants.COMPANY_NAME_REQUIRED, errors);
+        }
+
+        fieldValidator.throwIfHasErrors(errors);
+    }
+
+    /**
+     * Validates an update company request.
+     *
+     * <p>Every field is optional; a provided name must not be blank.</p>
+     *
+     * @param request Update company request.
+     */
+    public void validateUpdateRequest(UpdateCompanyRequest request) {
+        List<String> errors = fieldValidator.createErrorList();
+
+        if (request == null) {
+            errors.add(CompanyConstants.COMPANY_REQUIRED);
+            fieldValidator.throwIfHasErrors(errors);
+            return;
+        }
+
+        if (request.getName() != null) {
+            fieldValidator.validateRequired(request.getName(), CompanyConstants.COMPANY_NAME_REQUIRED, errors);
         }
 
         fieldValidator.throwIfHasErrors(errors);

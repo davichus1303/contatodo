@@ -5,6 +5,7 @@ import com.contatodo.application.services.CompanyService;
 import com.contatodo.infrastructure.security.JwtService;
 import com.contatodo.shared.constants.CompanyConstants;
 import com.contatodo.shared.constants.ResponseConstants;
+import com.contatodo.shared.exceptions.CompanyNotFoundException;
 import com.contatodo.shared.exceptions.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,10 +18,12 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -76,6 +79,34 @@ class CompanyControllerTest {
                 .andExpect(jsonPath("$.data[0].name").value("Acme"));
 
         verify(companyService).createCompanies(any());
+    }
+
+    @Test
+    void updateCompanyReturnsOkWithMessage() throws Exception {
+        when(companyService.updateCompany(eq("c1"), any())).thenReturn(companyResponse());
+
+        mockMvc.perform(put("/companies/c1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"ubication\":\"Tacna\"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value(CompanyConstants.COMPANY_UPDATED))
+                .andExpect(jsonPath("$.data.id").value("c1"));
+
+        verify(companyService).updateCompany(eq("c1"), any());
+    }
+
+    @Test
+    void updateCompanyReturnsNotFoundWhenServiceThrows() throws Exception {
+        when(companyService.updateCompany(eq("missing"), any()))
+                .thenThrow(new CompanyNotFoundException(CompanyConstants.COMPANY_NOT_FOUND));
+
+        mockMvc.perform(put("/companies/missing")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Acme\"}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value(CompanyConstants.COMPANY_NOT_FOUND));
     }
 
     @Test

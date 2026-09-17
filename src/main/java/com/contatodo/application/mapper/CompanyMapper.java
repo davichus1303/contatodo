@@ -1,6 +1,7 @@
 package com.contatodo.application.mapper;
 
 import com.contatodo.application.dto.request.CreateCompanyRequest;
+import com.contatodo.application.dto.request.UpdateCompanyRequest;
 import com.contatodo.application.dto.response.CompanyResponse;
 import com.contatodo.domain.entities.Company;
 import com.contatodo.domain.entities.User;
@@ -50,6 +51,33 @@ public class CompanyMapper implements ResponseMapper<Company, CompanyResponse> {
         return requests.stream()
                 .map(request -> toEntity(request, createdBy))
                 .toList();
+    }
+
+    /**
+     * Produces an updated copy of an existing company applying request changes.
+     *
+     * <p>Only the fields present in the request are applied; a null field keeps
+     * the current value. The identifier, the logical delete flag, the creation
+     * date and the creator are never changed.</p>
+     *
+     * @param existing Current persisted company.
+     * @param request Update company request.
+     * @return New immutable company instance with the changes applied.
+     */
+    public Company applyUpdate(Company existing, UpdateCompanyRequest request) {
+        return Company.builder()
+                .id(existing.getId())
+                .name(request.getName() != null ? request.getName() : existing.getName())
+                .rfc(request.getRfc() != null ? request.getRfc() : existing.getRfc())
+                .webSite(request.getWebSite() != null ? request.getWebSite() : existing.getWebSite())
+                .ubication(request.getUbication() != null ? request.getUbication() : existing.getUbication())
+                .contactUserOId(request.getContactUserOId() != null ? request.getContactUserOId() : existing.getContactUserOId())
+                .isActive(request.getIsActive() != null ? request.getIsActive() : existing.getIsActive())
+                .isDeleted(existing.getIsDeleted())
+                .createdDate(existing.getCreatedDate())
+                .updatedDate(LocalDateTime.now())
+                .createdBy(existing.getCreatedBy())
+                .build();
     }
 
     /**
