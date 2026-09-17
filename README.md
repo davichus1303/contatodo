@@ -210,6 +210,16 @@ Asegúrate de que MongoDB esté ejecutándose y accesible. En Docker Compose, el
 
 Si el puerto 8080 está en uso, modifica el mapeo de puertos en `docker-compose.yml` o al ejecutar el contenedor manualmente.
 
+## Deuda Técnica (Pendientes)
+
+- **Refactor de excepciones "not found" por recurso.** Hoy existe una excepción por tipo
+  (`UserNotFoundException`, `ProductNotFoundException`, `AcquisitionTypeNotFoundException`,
+  `CompanyNotFoundException`) y un handler casi idéntico por cada una en `GlobalExceptionHandler`.
+  Es boilerplate que crece linealmente con cada módulo nuevo. Solución propuesta: una única
+  excepción de dominio genérica (p. ej. `ResourceNotFoundException` con `resource`/`id` o un
+  `ErrorCode`) y un solo handler que conserve el formato de error `{status, message, details}`.
+  Se abordará en un **PR independiente**.
+
 ## Contribución
 
 1. Fork el repositorio
