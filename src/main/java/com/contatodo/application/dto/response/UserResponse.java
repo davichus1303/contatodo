@@ -11,6 +11,7 @@ public class UserResponse {
     private String userName;
     private String email;
     private String name;
+    private String phoneNumber;
     private RoleResponse role;
     private String createdByUserOid;
     private boolean isActive;
@@ -47,6 +48,14 @@ public class UserResponse {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 
     public RoleResponse getRole() {

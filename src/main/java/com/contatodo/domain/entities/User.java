@@ -22,6 +22,7 @@ public final class User {
     private final String email;
     private final String password;
     private final String name;
+    private final String phoneNumber;
     private final String roleId;
     private final String createdByUserOid;
     private final boolean isActive;
@@ -42,6 +43,7 @@ public final class User {
         this.email = builder.email;
         this.password = builder.password;
         this.name = builder.name;
+        this.phoneNumber = builder.phoneNumber;
         this.roleId = builder.roleId;
         this.createdByUserOid = builder.createdByUserOid;
         this.isActive = builder.isActive;
@@ -79,6 +81,10 @@ public final class User {
 
     public String getName() {
         return name;
+    }
+
+    public String getPhoneNumber() {
+        return phoneNumber;
     }
 
     public String getRoleId() {
@@ -138,6 +144,7 @@ public final class User {
                 .email(email)
                 .password(password)
                 .name(name)
+                .phoneNumber(phoneNumber)
                 .roleId(roleId)
                 .createdByUserOid(createdByUserOid)
                 .isActive(isActive)
@@ -158,6 +165,7 @@ public final class User {
         private String email;
         private String password;
         private String name;
+        private String phoneNumber;
         private String roleId;
         private String createdByUserOid;
         private boolean isActive = true;
@@ -219,6 +227,17 @@ public final class User {
          */
         public Builder name(String name) {
             this.name = name;
+            return this;
+        }
+
+        /**
+         * Sets the optional contact phone number.
+         *
+         * @param phoneNumber Phone number.
+         * @return This builder.
+         */
+        public Builder phoneNumber(String phoneNumber) {
+            this.phoneNumber = phoneNumber;
             return this;
         }
 
