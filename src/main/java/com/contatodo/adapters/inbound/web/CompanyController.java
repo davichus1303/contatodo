@@ -1,6 +1,7 @@
 package com.contatodo.adapters.inbound.web;
 
 import com.contatodo.application.dto.request.CreateCompaniesRequest;
+import com.contatodo.application.dto.request.UpdateCompanyRequest;
 import com.contatodo.application.dto.response.CompanyResponse;
 import com.contatodo.application.services.CompanyService;
 import com.contatodo.shared.constants.CompanyConstants;
@@ -9,7 +10,9 @@ import com.contatodo.shared.response.ApiResponse;
 import com.contatodo.shared.response.WebResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -46,6 +49,22 @@ public class CompanyController {
     ) {
         List<CompanyResponse> companies = companyService.createCompanies(request);
         return WebResponses.ok(CompanyConstants.COMPANIES_CREATED, companies);
+    }
+
+    /**
+     * Updates a single company.
+     *
+     * @param id Company identifier.
+     * @param request Update company request.
+     * @return Updated company.
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<CompanyResponse>> updateCompany(
+            @PathVariable String id,
+            @RequestBody UpdateCompanyRequest request
+    ) {
+        CompanyResponse company = companyService.updateCompany(id, request);
+        return WebResponses.ok(CompanyConstants.COMPANY_UPDATED, company);
     }
 
     /**

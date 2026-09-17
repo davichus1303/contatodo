@@ -4,6 +4,7 @@ import com.contatodo.domain.exception.InvalidEntityStateException;
 import com.contatodo.shared.constants.ResponseConstants;
 import com.contatodo.shared.exceptions.AcquisitionTypeNotFoundException;
 import com.contatodo.shared.exceptions.AuthenticationException;
+import com.contatodo.shared.exceptions.CompanyNotFoundException;
 import com.contatodo.shared.exceptions.InsufficientStockException;
 import com.contatodo.shared.exceptions.InvalidDateRangeException;
 import com.contatodo.shared.exceptions.InvalidRequestException;
@@ -97,6 +98,17 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(AcquisitionTypeNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleAcquisitionTypeNotFoundException(AcquisitionTypeNotFoundException exception) {
+        return buildResponse(HttpStatus.NOT_FOUND, exception.getMessage(), List.of());
+    }
+
+    /**
+     * Handles company not found exceptions.
+     *
+     * @param exception Company not found exception.
+     * @return 404 response.
+     */
+    @ExceptionHandler(CompanyNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleCompanyNotFoundException(CompanyNotFoundException exception) {
         return buildResponse(HttpStatus.NOT_FOUND, exception.getMessage(), List.of());
     }
 

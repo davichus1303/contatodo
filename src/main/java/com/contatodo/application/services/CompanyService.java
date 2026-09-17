@@ -1,6 +1,7 @@
 package com.contatodo.application.services;
 
 import com.contatodo.application.dto.request.CreateCompaniesRequest;
+import com.contatodo.application.dto.request.UpdateCompanyRequest;
 import com.contatodo.application.dto.response.CompanyResponse;
 import com.contatodo.application.mapper.CompanyMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
@@ -9,6 +10,8 @@ import com.contatodo.domain.entities.Company;
 import com.contatodo.domain.entities.User;
 import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.domain.repositories.UserRepository;
+import com.contatodo.shared.constants.CompanyConstants;
+import com.contatodo.shared.exceptions.CompanyNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -66,6 +69,28 @@ public class CompanyService {
         List<Company> companies = companyMapper.toEntityList(request.getCompanies(), createdBy);
         List<Company> savedCompanies = companyRepository.saveAll(companies);
         return companyMapper.toResponseList(savedCompanies, resolveContacts(savedCompanies));
+    }
+
+    /**
+     * Updates a single existing company.
+     *
+     * <p>The original company is loaded from the database; when it does not
+     * exist (or is logically deleted) the process stops with a not found error.
+     * Only the fields present in the request are changed.</p>
+     *
+     * @param id Company identifier.
+     * @param request Update company request.
+     * @return Updated company response with its resolved contact data.
+     */
+    public CompanyResponse updateCompany(String id, UpdateCompanyRequest request) {
+        companyValidator.validateUpdateRequest(request);
+
+        Company company = companyRepository.findById(id)
+                .filter(existingCompany -> !Boolean.TRUE.equals(existingCompany.getIsDeleted()))
+                .orElseThrow(() -> new CompanyNotFoundException(CompanyConstants.COMPANY_NOT_FOUND));
+
+        Company updatedCompany = companyRepository.save(companyMapper.applyUpdate(company, request));
+        return companyMapper.toResponse(updatedCompany, resolveContact(updatedCompany.getContactUserOId()));
     }
 
     /**
