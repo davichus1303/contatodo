@@ -308,4 +308,41 @@ class CompanyServiceTest {
         verify(companyRepository, never()).save(any(Company.class));
     }
 
+    @Test
+    void deleteCompanyMarksItAsDeletedAndInactive() {
+        when(companyRepository.findById("company-1")).thenReturn(Optional.of(persistedCompany()));
+        when(companyRepository.save(any(Company.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        companyService.deleteCompany("company-1");
+
+        ArgumentCaptor<Company> captor = ArgumentCaptor.forClass(Company.class);
+        verify(companyRepository).save(captor.capture());
+        Company saved = captor.getValue();
+        assertEquals("company-1", saved.getId());
+        assertEquals(Boolean.TRUE, saved.getIsDeleted());
+        assertEquals(Boolean.FALSE, saved.getIsActive());
+        assertEquals(LocalDateTime.of(2026, 1, 1, 0, 0), saved.getCreatedDate());
+        assertTrue(saved.getUpdatedDate().isAfter(LocalDateTime.of(2026, 1, 1, 0, 0)));
+    }
+
+    @Test
+    void deleteCompanyThrowsWhenCompanyDoesNotExist() {
+        when(companyRepository.findById("missing")).thenReturn(Optional.empty());
+
+        assertThrows(CompanyNotFoundException.class, () -> companyService.deleteCompany("missing"));
+        verify(companyRepository, never()).save(any(Company.class));
+    }
+
+    @Test
+    void deleteCompanyThrowsWhenCompanyIsAlreadyDeleted() {
+        Company deletedCompany = Company.builder()
+                .id("company-1")
+                .name("Acme")
+                .isDeleted(true)
+                .build();
+        when(companyRepository.findById("company-1")).thenReturn(Optional.of(deletedCompany));
+
+        assertThrows(CompanyNotFoundException.class, () -> companyService.deleteCompany("company-1"));
+        verify(companyRepository, never()).save(any(Company.class));
+    }
 }

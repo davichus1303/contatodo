@@ -9,6 +9,7 @@ import com.contatodo.shared.constants.ResponseConstants;
 import com.contatodo.shared.response.ApiResponse;
 import com.contatodo.shared.response.WebResponses;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -65,6 +66,18 @@ public class CompanyController {
     ) {
         CompanyResponse company = companyService.updateCompany(id, request);
         return WebResponses.ok(CompanyConstants.COMPANY_UPDATED, company);
+    }
+
+    /**
+     * Performs the logical deletion of a single company.
+     *
+     * @param id Company identifier.
+     * @return Success response without data.
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<ApiResponse<List<Object>>> deleteCompany(@PathVariable String id) {
+        companyService.deleteCompany(id);
+        return WebResponses.okNoData(CompanyConstants.COMPANY_DELETED);
     }
 
     /**

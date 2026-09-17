@@ -94,6 +94,22 @@ public class CompanyService {
     }
 
     /**
+     * Performs the logical deletion of a single company.
+     *
+     * <p>The company is loaded and, when found, persisted again as an updated
+     * copy with its delete flag set to true and its active flag set to false.</p>
+     *
+     * @param id Company identifier.
+     */
+    public void deleteCompany(String id) {
+        Company company = companyRepository.findById(id)
+                .filter(existingCompany -> !Boolean.TRUE.equals(existingCompany.getIsDeleted()))
+                .orElseThrow(() -> new CompanyNotFoundException(CompanyConstants.COMPANY_NOT_FOUND));
+
+        companyRepository.save(company.markDeleted());
+    }
+
+    /**
      * Retrieves all non-deleted companies, resolving each related contact user.
      *
      * <p>Each contact is looked up at most once. A contact that cannot be

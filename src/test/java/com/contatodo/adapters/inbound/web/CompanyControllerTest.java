@@ -19,8 +19,10 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -97,6 +99,17 @@ class CompanyControllerTest {
     }
 
     @Test
+    void deleteCompanyReturnsOkWithoutData() throws Exception {
+        mockMvc.perform(delete("/companies/c1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value(CompanyConstants.COMPANY_DELETED))
+                .andExpect(jsonPath("$.data").isEmpty());
+
+        verify(companyService).deleteCompany("c1");
+    }
+
+    @Test
     void updateCompanyReturnsNotFoundWhenServiceThrows() throws Exception {
         when(companyService.updateCompany(eq("missing"), any()))
                 .thenThrow(new CompanyNotFoundException(CompanyConstants.COMPANY_NOT_FOUND));
@@ -104,6 +117,17 @@ class CompanyControllerTest {
         mockMvc.perform(put("/companies/missing")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"name\":\"Acme\"}"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.status").value(404))
+                .andExpect(jsonPath("$.message").value(CompanyConstants.COMPANY_NOT_FOUND));
+    }
+
+    @Test
+    void deleteCompanyReturnsNotFoundWhenServiceThrows() throws Exception {
+        doThrow(new CompanyNotFoundException(CompanyConstants.COMPANY_NOT_FOUND))
+                .when(companyService).deleteCompany("missing");
+
+        mockMvc.perform(delete("/companies/missing"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value(404))
                 .andExpect(jsonPath("$.message").value(CompanyConstants.COMPANY_NOT_FOUND));
