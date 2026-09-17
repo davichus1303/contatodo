@@ -63,6 +63,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/acquisition-types/**").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/acquisition-types/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/companies").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/companies").authenticated()
                         .requestMatchers(HttpMethod.GET, "/expenses").authenticated()
                         .requestMatchers(HttpMethod.POST, "/expenses").authenticated()
                         .requestMatchers("/roles/**").authenticated()

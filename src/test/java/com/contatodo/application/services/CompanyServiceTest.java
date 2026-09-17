@@ -1,14 +1,21 @@
 package com.contatodo.application.services;
 
+import com.contatodo.application.dto.request.CreateCompaniesRequest;
+import com.contatodo.application.dto.request.CreateCompanyRequest;
 import com.contatodo.application.dto.response.CompanyResponse;
 import com.contatodo.application.mapper.CompanyMapper;
+import com.contatodo.application.port.AuthenticatedUserProvider;
+import com.contatodo.application.validators.CompanyValidator;
 import com.contatodo.domain.entities.Company;
 import com.contatodo.domain.entities.User;
 import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.domain.repositories.UserRepository;
+import com.contatodo.shared.exceptions.InvalidRequestException;
+import com.contatodo.shared.validators.FieldValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -17,6 +24,8 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -35,11 +44,20 @@ class CompanyServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private AuthenticatedUserProvider authenticatedUserProvider;
+
     private CompanyService companyService;
 
     @BeforeEach
     void setUp() {
-        companyService = new CompanyService(companyRepository, userRepository, new CompanyMapper());
+        companyService = new CompanyService(
+                companyRepository,
+                userRepository,
+                new CompanyMapper(),
+                new CompanyValidator(new FieldValidator()),
+                authenticatedUserProvider
+        );
     }
 
     private Company companyWithContact(String contactUserOId) {
@@ -64,6 +82,16 @@ class CompanyServiceTest {
                 .name("Ana Contacto")
                 .phoneNumber("987654321")
                 .build();
+    }
+
+    private CreateCompanyRequest createRequest(String name, String contactUserOId) {
+        CreateCompanyRequest request = new CreateCompanyRequest();
+        request.setName(name);
+        request.setRfc("RFC-" + name);
+        request.setWebSite("https://" + name.toLowerCase() + ".example.com");
+        request.setUbication("Lima");
+        request.setContactUserOId(contactUserOId);
+        return request;
     }
 
     @Test
@@ -131,5 +159,68 @@ class CompanyServiceTest {
         assertEquals("Ana Contacto", response.get(0).getContactName());
         assertEquals("Ana Contacto", response.get(1).getContactName());
         verify(userRepository, times(1)).findById("user-1");
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void createCompaniesMapsEveryCompanyAndRecordsTheAuthenticatedCreator() {
+        CreateCompaniesRequest request = new CreateCompaniesRequest();
+        request.setCompanies(List.of(createRequest("Acme", "user-1"), createRequest("Globex", null)));
+        when(authenticatedUserProvider.getCurrentUserOid()).thenReturn("creator-1");
+        when(companyRepository.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userRepository.findById("user-1")).thenReturn(Optional.of(contactUser()));
+
+        List<CompanyResponse> response = companyService.createCompanies(request);
+
+        assertEquals(2, response.size());
+        assertEquals("Acme", response.get(0).getName());
+        assertEquals("Ana Contacto", response.get(0).getContactName());
+        assertEquals("Globex", response.get(1).getName());
+        assertNull(response.get(1).getContactName());
+
+        ArgumentCaptor<List<Company>> captor = ArgumentCaptor.forClass(List.class);
+        verify(companyRepository).saveAll(captor.capture());
+        List<Company> saved = captor.getValue();
+        assertEquals(2, saved.size());
+        assertEquals("RFC-Acme", saved.get(0).getRfc());
+        assertEquals("creator-1", saved.get(0).getCreatedBy());
+        assertEquals(Boolean.TRUE, saved.get(0).getIsActive());
+        assertEquals(Boolean.FALSE, saved.get(0).getIsDeleted());
+        assertEquals(saved.get(0).getCreatedDate(), saved.get(0).getUpdatedDate());
+    }
+
+    @Test
+    void createCompaniesRejectsAnEmptyBatch() {
+        CreateCompaniesRequest request = new CreateCompaniesRequest();
+        request.setCompanies(List.of());
+
+        assertThrows(InvalidRequestException.class, () -> companyService.createCompanies(request));
+        verify(companyRepository, never()).saveAll(anyList());
+        verify(authenticatedUserProvider, never()).getCurrentUserOid();
+    }
+
+    @Test
+    void createCompaniesRejectsABatchWithACompanyWithoutName() {
+        CreateCompaniesRequest request = new CreateCompaniesRequest();
+        CreateCompanyRequest companyWithoutName = new CreateCompanyRequest();
+        request.setCompanies(List.of(createRequest("Acme", null), companyWithoutName));
+
+        assertThrows(InvalidRequestException.class, () -> companyService.createCompanies(request));
+        verify(companyRepository, never()).saveAll(anyList());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void createCompaniesDefaultsTheActiveFlagToTrueWhenItIsNotProvided() {
+        CreateCompaniesRequest request = new CreateCompaniesRequest();
+        request.setCompanies(List.of(createRequest("Acme", null)));
+        when(authenticatedUserProvider.getCurrentUserOid()).thenReturn("creator-1");
+        when(companyRepository.saveAll(anyList())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        companyService.createCompanies(request);
+
+        ArgumentCaptor<List<Company>> captor = ArgumentCaptor.forClass(List.class);
+        verify(companyRepository).saveAll(captor.capture());
+        assertEquals(Boolean.TRUE, captor.getValue().get(0).getIsActive());
     }
 }

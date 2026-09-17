@@ -1,12 +1,16 @@
 package com.contatodo.adapters.inbound.web;
 
+import com.contatodo.application.dto.request.CreateCompaniesRequest;
 import com.contatodo.application.dto.response.CompanyResponse;
 import com.contatodo.application.services.CompanyService;
+import com.contatodo.shared.constants.CompanyConstants;
 import com.contatodo.shared.constants.ResponseConstants;
 import com.contatodo.shared.response.ApiResponse;
 import com.contatodo.shared.response.WebResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -28,6 +32,20 @@ public class CompanyController {
      */
     public CompanyController(CompanyService companyService) {
         this.companyService = companyService;
+    }
+
+    /**
+     * Creates one or more companies in a single call.
+     *
+     * @param request Create companies request.
+     * @return Created companies.
+     */
+    @PostMapping
+    public ResponseEntity<ApiResponse<List<CompanyResponse>>> createCompanies(
+            @RequestBody CreateCompaniesRequest request
+    ) {
+        List<CompanyResponse> companies = companyService.createCompanies(request);
+        return WebResponses.ok(CompanyConstants.COMPANIES_CREATED, companies);
     }
 
     /**

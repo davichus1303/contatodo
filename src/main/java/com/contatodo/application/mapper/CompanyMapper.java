@@ -1,10 +1,12 @@
 package com.contatodo.application.mapper;
 
+import com.contatodo.application.dto.request.CreateCompanyRequest;
 import com.contatodo.application.dto.response.CompanyResponse;
 import com.contatodo.domain.entities.Company;
 import com.contatodo.domain.entities.User;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -13,6 +15,42 @@ import java.util.Map;
  */
 @Component
 public class CompanyMapper implements ResponseMapper<Company, CompanyResponse> {
+
+    /**
+     * Maps a create request to a domain entity.
+     *
+     * @param request Create company request.
+     * @param createdBy Identifier of the user that creates it.
+     * @return Company entity.
+     */
+    public Company toEntity(CreateCompanyRequest request, String createdBy) {
+        LocalDateTime now = LocalDateTime.now();
+        return Company.builder()
+                .name(request.getName())
+                .rfc(request.getRfc())
+                .webSite(request.getWebSite())
+                .ubication(request.getUbication())
+                .contactUserOId(request.getContactUserOId())
+                .isActive(request.getIsActive() != null ? request.getIsActive() : true)
+                .isDeleted(false)
+                .createdDate(now)
+                .updatedDate(now)
+                .createdBy(createdBy)
+                .build();
+    }
+
+    /**
+     * Maps a list of create requests to domain entities.
+     *
+     * @param requests Create company requests.
+     * @param createdBy Identifier of the user that creates them.
+     * @return Company entities.
+     */
+    public List<Company> toEntityList(List<CreateCompanyRequest> requests, String createdBy) {
+        return requests.stream()
+                .map(request -> toEntity(request, createdBy))
+                .toList();
+    }
 
     /**
      * Maps a company entity to a response DTO without contact data.
