@@ -11,7 +11,7 @@ import com.contatodo.domain.entities.User;
 import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.shared.constants.CompanyConstants;
-import com.contatodo.shared.exceptions.CompanyNotFoundException;
+import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -87,7 +87,7 @@ public class CompanyService {
 
         Company company = companyRepository.findById(id)
                 .filter(existingCompany -> !Boolean.TRUE.equals(existingCompany.getIsDeleted()))
-                .orElseThrow(() -> new CompanyNotFoundException(CompanyConstants.COMPANY_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(CompanyConstants.COMPANY_NOT_FOUND));
 
         Company updatedCompany = companyRepository.save(companyMapper.applyUpdate(company, request));
         return companyMapper.toResponse(updatedCompany, resolveContact(updatedCompany.getContactUserOId()));
@@ -104,7 +104,7 @@ public class CompanyService {
     public void deleteCompany(String id) {
         Company company = companyRepository.findById(id)
                 .filter(existingCompany -> !Boolean.TRUE.equals(existingCompany.getIsDeleted()))
-                .orElseThrow(() -> new CompanyNotFoundException(CompanyConstants.COMPANY_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(CompanyConstants.COMPANY_NOT_FOUND));
 
         companyRepository.save(company.markDeleted());
     }

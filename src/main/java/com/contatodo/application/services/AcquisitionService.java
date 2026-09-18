@@ -14,7 +14,7 @@ import com.contatodo.domain.repositories.AcquisitionTypeRepository;
 import com.contatodo.domain.repositories.ProductRepository;
 import com.contatodo.shared.constants.AcquisitionTypeConstants;
 import com.contatodo.shared.constants.ExpenseConstants;
-import com.contatodo.shared.exceptions.AcquisitionTypeNotFoundException;
+import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.shared.utils.DateUtils;
 import org.springframework.stereotype.Service;
 
@@ -186,11 +186,11 @@ public class AcquisitionService {
      *
      * @param acquisitionTypeOid Acquisition type identifier.
      * @return Acquisition type entity.
-     * @throws AcquisitionTypeNotFoundException if the type does not exist.
+     * @throws ResourceNotFoundException if the type does not exist.
      */
     private AcquisitionType findAcquisitionType(String acquisitionTypeOid) {
         return acquisitionTypeRepository.findById(acquisitionTypeOid)
-                .orElseThrow(() -> new AcquisitionTypeNotFoundException(AcquisitionTypeConstants.NOT_FOUND_ERROR));
+                .orElseThrow(() -> new ResourceNotFoundException(AcquisitionTypeConstants.NOT_FOUND_ERROR));
     }
 
     /**

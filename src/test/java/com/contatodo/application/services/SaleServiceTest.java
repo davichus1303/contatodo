@@ -12,7 +12,7 @@ import com.contatodo.domain.repositories.SaleRepository;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.shared.constants.SaleConstants;
 import com.contatodo.shared.exceptions.InsufficientStockException;
-import com.contatodo.shared.exceptions.ProductNotFoundException;
+import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -110,7 +110,7 @@ class SaleServiceTest {
         stubAuthenticatedContext();
         when(productRepository.findById("product-1")).thenReturn(Optional.empty());
 
-        assertThrows(ProductNotFoundException.class, () -> saleService.createSale(saleRequest(40.0)));
+        assertThrows(ResourceNotFoundException.class, () -> saleService.createSale(saleRequest(40.0)));
         verify(saleRepository, never()).save(any());
     }
 
