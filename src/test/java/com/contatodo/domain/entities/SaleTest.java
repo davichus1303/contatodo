@@ -17,7 +17,7 @@ class SaleTest {
     void placeCreatesProfitableSale() {
         Sale sale = Sale.place(
                 1L, "product-1", "Cafe", "user-1",
-                2, 40.0, Money.of(20.0), Money.of(30.0), "first sale"
+                2, 40.0, Money.of(10.0), Money.of(15.0), "first sale"
         );
 
         assertEquals(1L, sale.getSaleNumber());
@@ -35,7 +35,7 @@ class SaleTest {
                 SaleWithoutProfitException.class,
                 () -> Sale.place(
                         1L, "product-1", "Cafe", "user-1",
-                        2, 20.0, Money.of(20.0), Money.of(30.0), null
+                        2, 20.0, Money.of(10.0), Money.of(15.0), null
                 )
         );
         assertEquals(SaleConstants.SALE_WITHOUT_PROFIT, exception.getMessage());
@@ -47,7 +47,7 @@ class SaleTest {
                 SaleWithoutProfitException.class,
                 () -> Sale.place(
                         1L, "product-1", "Cafe", "user-1",
-                        2, 15.0, Money.of(20.0), Money.of(30.0), null
+                        2, 15.0, Money.of(10.0), Money.of(15.0), null
                 )
         );
     }

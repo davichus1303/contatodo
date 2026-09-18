@@ -80,8 +80,8 @@ public class SaleService {
         String productName = product.getName();
         Product updatedProduct = product.decreaseStock(request.getQuantity());
 
-        Money totalCost = unitCostOf(product).multiply(request.getQuantity());
-        Money originalTotalPrice = listUnitPriceOf(product).multiply(request.getQuantity());
+        Money unitRealCost = Money.of(product.getUnitRealCost() != null ? product.getUnitRealCost() : product.getRealCost());
+        Money unitPublicCost = Money.of(product.getUnitPublicCost() != null ? product.getUnitPublicCost() : product.getRealCost());
 
         Long saleNumber = generateDailySaleNumber(userOid);
 
@@ -92,8 +92,8 @@ public class SaleService {
                 user.getId(),
                 request.getQuantity(),
                 request.getTotalSalePrice(),
-                totalCost,
-                originalTotalPrice,
+                unitRealCost,
+                unitPublicCost,
                 request.getNotes()
         );
 
@@ -126,28 +126,6 @@ public class SaleService {
 
         List<Sale> sales = saleRepository.findBySaleDateBetween(startDateTime, endDateTime);
         return saleMapper.toResponseList(sales);
-    }
-
-    /**
-     * Resolves the effective real unit cost of a product.
-     *
-     * @param product Source product.
-     * @return Unit cost as money.
-     */
-    private Money unitCostOf(Product product) {
-        Double unitRealCost = product.getUnitRealCost() != null ? product.getUnitRealCost() : product.getRealCost();
-        return Money.of(unitRealCost);
-    }
-
-    /**
-     * Resolves the effective list unit price of a product.
-     *
-     * @param product Source product.
-     * @return Unit price as money.
-     */
-    private Money listUnitPriceOf(Product product) {
-        Double unitPublicCost = product.getUnitPublicCost() != null ? product.getUnitPublicCost() : product.getRealCost();
-        return Money.of(unitPublicCost);
     }
 
     /**
