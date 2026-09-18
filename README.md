@@ -210,16 +210,6 @@ Make sure MongoDB is running and reachable. In Docker Compose, the backend conne
 
 If port 8080 is in use, change the port mapping in `docker-compose.yml` or when running the container manually.
 
-## Technical Debt (Pending)
-
-- **Per-resource "not found" exceptions refactor.** Today there is one exception per type
-  (`UserNotFoundException`, `ProductNotFoundException`, `AcquisitionTypeNotFoundException`,
-  `CompanyNotFoundException`) and a nearly identical handler for each in `GlobalExceptionHandler`.
-  It is boilerplate that grows linearly with every new module. Proposed solution: a single generic
-  domain exception (e.g. `ResourceNotFoundException` with `resource`/`id` or an `ErrorCode`) and a
-  single handler that keeps the `{status, message, details}` error format. It will be addressed in
-  an **independent PR**.
-
 ## Contributing
 
 1. Fork the repository

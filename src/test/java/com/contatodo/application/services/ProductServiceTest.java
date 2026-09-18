@@ -9,7 +9,7 @@ import com.contatodo.domain.entities.User;
 import com.contatodo.domain.repositories.ProductRepository;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.shared.constants.ProductConstants;
-import com.contatodo.shared.exceptions.ProductNotFoundException;
+import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -78,8 +78,8 @@ class ProductServiceTest {
         when(authenticatedUserProvider.getCurrentUserEmail()).thenReturn("ghost@example.com");
         when(userRepository.findByEmail("ghost@example.com")).thenReturn(Optional.empty());
 
-        ProductNotFoundException exception = assertThrows(
-                ProductNotFoundException.class,
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
                 () -> productService.createProduct(createRequest())
         );
         assertEquals(ProductConstants.USER_NOT_FOUND, exception.getMessage());
@@ -112,8 +112,8 @@ class ProductServiceTest {
     void getProductByUnknownCodeThrowsNotFound() {
         when(productRepository.findByCode("999")).thenReturn(Optional.empty());
 
-        ProductNotFoundException exception = assertThrows(
-                ProductNotFoundException.class,
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
                 () -> productService.getProductByCode("999")
         );
         assertEquals(ProductConstants.PRODUCT_NOT_FOUND, exception.getMessage());

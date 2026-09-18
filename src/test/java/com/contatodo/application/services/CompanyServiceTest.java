@@ -11,7 +11,7 @@ import com.contatodo.domain.entities.Company;
 import com.contatodo.domain.entities.User;
 import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.domain.repositories.UserRepository;
-import com.contatodo.shared.exceptions.CompanyNotFoundException;
+import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.shared.exceptions.InvalidRequestException;
 import com.contatodo.shared.validators.FieldValidator;
 import org.junit.jupiter.api.BeforeEach;
@@ -280,7 +280,7 @@ class CompanyServiceTest {
         request.setName("Acme Updated");
         when(companyRepository.findById("missing")).thenReturn(Optional.empty());
 
-        assertThrows(CompanyNotFoundException.class, () -> companyService.updateCompany("missing", request));
+        assertThrows(ResourceNotFoundException.class, () -> companyService.updateCompany("missing", request));
         verify(companyRepository, never()).save(any(Company.class));
     }
 
@@ -293,7 +293,7 @@ class CompanyServiceTest {
                 .build();
         when(companyRepository.findById("company-1")).thenReturn(Optional.of(deletedCompany));
 
-        assertThrows(CompanyNotFoundException.class,
+        assertThrows(ResourceNotFoundException.class,
                 () -> companyService.updateCompany("company-1", new UpdateCompanyRequest()));
         verify(companyRepository, never()).save(any(Company.class));
     }
@@ -329,7 +329,7 @@ class CompanyServiceTest {
     void deleteCompanyThrowsWhenCompanyDoesNotExist() {
         when(companyRepository.findById("missing")).thenReturn(Optional.empty());
 
-        assertThrows(CompanyNotFoundException.class, () -> companyService.deleteCompany("missing"));
+        assertThrows(ResourceNotFoundException.class, () -> companyService.deleteCompany("missing"));
         verify(companyRepository, never()).save(any(Company.class));
     }
 
@@ -342,7 +342,7 @@ class CompanyServiceTest {
                 .build();
         when(companyRepository.findById("company-1")).thenReturn(Optional.of(deletedCompany));
 
-        assertThrows(CompanyNotFoundException.class, () -> companyService.deleteCompany("company-1"));
+        assertThrows(ResourceNotFoundException.class, () -> companyService.deleteCompany("company-1"));
         verify(companyRepository, never()).save(any(Company.class));
     }
 }

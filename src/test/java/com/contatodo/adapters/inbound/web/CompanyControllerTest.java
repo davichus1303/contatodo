@@ -5,7 +5,7 @@ import com.contatodo.application.services.CompanyService;
 import com.contatodo.infrastructure.security.JwtService;
 import com.contatodo.shared.constants.CompanyConstants;
 import com.contatodo.shared.constants.ResponseConstants;
-import com.contatodo.shared.exceptions.CompanyNotFoundException;
+import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.shared.exceptions.InvalidRequestException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -112,7 +112,7 @@ class CompanyControllerTest {
     @Test
     void updateCompanyReturnsNotFoundWhenServiceThrows() throws Exception {
         when(companyService.updateCompany(eq("missing"), any()))
-                .thenThrow(new CompanyNotFoundException(CompanyConstants.COMPANY_NOT_FOUND));
+                .thenThrow(new ResourceNotFoundException(CompanyConstants.COMPANY_NOT_FOUND));
 
         mockMvc.perform(put("/companies/missing")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -124,7 +124,7 @@ class CompanyControllerTest {
 
     @Test
     void deleteCompanyReturnsNotFoundWhenServiceThrows() throws Exception {
-        doThrow(new CompanyNotFoundException(CompanyConstants.COMPANY_NOT_FOUND))
+        doThrow(new ResourceNotFoundException(CompanyConstants.COMPANY_NOT_FOUND))
                 .when(companyService).deleteCompany("missing");
 
         mockMvc.perform(delete("/companies/missing"))

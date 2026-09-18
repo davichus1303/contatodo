@@ -5,7 +5,7 @@ import com.contatodo.domain.entities.User;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.UserConstants;
-import com.contatodo.shared.exceptions.UserNotFoundException;
+import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
@@ -49,24 +49,24 @@ public class AuthenticatedUserProviderAdapter implements AuthenticatedUserProvid
      * Loads the active user matching the authenticated email.
      *
      * @return Authenticated domain user.
-     * @throws UserNotFoundException if there is no authentication or the user does not exist.
+     * @throws ResourceNotFoundException if there is no authentication or the user does not exist.
      */
     private User findCurrentUser() {
         String email = currentAuthentication().getName();
         return userRepository.findActiveUserByEmail(email, false)
-                .orElseThrow(() -> new UserNotFoundException(UserConstants.USER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(UserConstants.USER_NOT_FOUND));
     }
 
     /**
      * Gets the current authentication or fails when absent.
      *
      * @return Current Spring Security authentication.
-     * @throws UserNotFoundException if the request is not authenticated.
+     * @throws ResourceNotFoundException if the request is not authenticated.
      */
     private Authentication currentAuthentication() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new UserNotFoundException(AuthConstants.USER_NOT_AUTHENTICATED);
+            throw new ResourceNotFoundException(AuthConstants.USER_NOT_AUTHENTICATED);
         }
         return authentication;
     }

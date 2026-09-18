@@ -11,7 +11,7 @@ import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.domain.entities.User;
 import com.contatodo.domain.repositories.ProductRepository;
 import com.contatodo.shared.constants.ProductConstants;
-import com.contatodo.shared.exceptions.ProductNotFoundException;
+import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -63,7 +63,7 @@ public class ProductService {
         String userEmail = authenticatedUserProvider.getCurrentUserEmail();
         String userOid = userRepository.findByEmail(userEmail)
                 .map(User::getId)
-                .orElseThrow(() -> new ProductNotFoundException(ProductConstants.USER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ProductConstants.USER_NOT_FOUND));
 
         String nextCode = generateNextCode();
         Product product = productMapper.toEntity(request, nextCode, userOid);
@@ -83,7 +83,7 @@ public class ProductService {
         productValidator.validateUpdateRequest(request);
 
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new ProductNotFoundException(ProductConstants.PRODUCT_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ProductConstants.PRODUCT_NOT_FOUND));
 
         Product updatedProduct = productRepository.save(productMapper.applyUpdate(product, request));
         return productMapper.toResponse(updatedProduct);
@@ -106,7 +106,7 @@ public class ProductService {
      */
     public ProductResponse getProductByCode(String code) {
         Product product = productRepository.findByCode(code)
-                .orElseThrow(() -> new ProductNotFoundException(ProductConstants.PRODUCT_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(ProductConstants.PRODUCT_NOT_FOUND));
         return productMapper.toResponse(product);
     }
 

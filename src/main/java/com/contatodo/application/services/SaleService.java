@@ -13,8 +13,7 @@ import com.contatodo.domain.repositories.ProductRepository;
 import com.contatodo.domain.repositories.SaleRepository;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.shared.constants.SaleConstants;
-import com.contatodo.shared.exceptions.ProductNotFoundException;
-import com.contatodo.shared.exceptions.UserNotFoundException;
+import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.shared.utils.DateUtils;
 import org.springframework.stereotype.Service;
 
@@ -73,10 +72,10 @@ public class SaleService {
 
         String userOid = authenticatedUserProvider.getCurrentUserOid();
         User user = userRepository.findById(userOid)
-                .orElseThrow(() -> new UserNotFoundException(SaleConstants.USER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(SaleConstants.USER_NOT_FOUND));
 
         Product product = productRepository.findById(request.getProductOid())
-                .orElseThrow(() -> new ProductNotFoundException(SaleConstants.PRODUCT_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(SaleConstants.PRODUCT_NOT_FOUND));
 
         String productName = product.getName();
         Product updatedProduct = product.decreaseStock(request.getQuantity());

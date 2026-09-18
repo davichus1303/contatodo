@@ -16,7 +16,7 @@ import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.shared.constants.UserConstants;
 import com.contatodo.shared.exceptions.AuthenticationException;
 import com.contatodo.shared.exceptions.UserAlreadyExistsException;
-import com.contatodo.shared.exceptions.UserNotFoundException;
+import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -123,7 +123,7 @@ public class UserService {
 
         User user = userRepository.findById(id)
                 .filter(existingUser -> !existingUser.isDelete())
-                .orElseThrow(() -> new UserNotFoundException(UserConstants.USER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(UserConstants.USER_NOT_FOUND));
 
         if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
             if (userRepository.existsByEmail(request.getEmail())) {
@@ -147,7 +147,7 @@ public class UserService {
     public void deleteUser(String id) {
         User user = userRepository.findById(id)
                 .filter(existingUser -> !existingUser.isDelete())
-                .orElseThrow(() -> new UserNotFoundException(UserConstants.USER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(UserConstants.USER_NOT_FOUND));
 
         userRepository.save(user.markDeleted());
     }
@@ -197,7 +197,7 @@ public class UserService {
      */
     public UserResponse getUserByEmail(String email) {
         User user = userRepository.findActiveUserByEmail(email, false)
-                .orElseThrow(() -> new UserNotFoundException(UserConstants.USER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(UserConstants.USER_NOT_FOUND));
         return userMapper.toResponse(user);
     }
 
