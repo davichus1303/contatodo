@@ -1,5 +1,6 @@
 package com.contatodo.domain.entities;
 
+import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.model.Money;
 import com.contatodo.shared.constants.SaleConstants;
 import com.contatodo.shared.exceptions.SaleWithoutProfitException;
@@ -24,6 +25,7 @@ public final class Sale {
     private final String productOid;
     private final String productName;
     private final String userOid;
+    private final CompanyOid companyOid;
     private final Integer quantity;
     private final Double totalCost;
     private final Double originalTotalPrice;
@@ -45,6 +47,7 @@ public final class Sale {
         this.productOid = builder.productOid;
         this.productName = builder.productName;
         this.userOid = builder.userOid;
+        this.companyOid = builder.companyOid;
         this.quantity = builder.quantity;
         this.totalCost = builder.totalCost;
         this.originalTotalPrice = builder.originalTotalPrice;
@@ -92,6 +95,39 @@ public final class Sale {
             Money unitPublicCost,
             String notes
     ) {
+        return place(saleNumber, productOid, productName, userOid, quantity, totalSalePrice,
+                unitRealCost, unitPublicCost, notes, null);
+    }
+
+    /**
+     * Places a new sale enforcing the profit invariant.
+     *
+     * @param saleNumber Sequential daily sale number.
+     * @param productOid Product identifier.
+     * @param productName Product name at the time of the sale.
+     * @param userOid Selling user identifier.
+     * @param quantity Sold quantity.
+     * @param totalSalePrice Agreed total sale price.
+     * @param unitRealCost Real unit cost of the product.
+     * @param unitPublicCost List unit price of the product.
+     * @param notes Optional sale notes.
+     * @param companyOid Owning company identifier (null for root).
+     * @return Immutable sale ready to persist.
+     * @throws SaleWithoutProfitException if the sale price does not exceed the total cost.
+     * @throws InvalidEntityStateException if mandatory fields are missing.
+     */
+    public static Sale place(
+            Long saleNumber,
+            String productOid,
+            String productName,
+            String userOid,
+            Integer quantity,
+            Double totalSalePrice,
+            Money unitRealCost,
+            Money unitPublicCost,
+            String notes,
+            CompanyOid companyOid
+    ) {
         Objects.requireNonNull(unitRealCost, "Unit real cost must not be null");
         Objects.requireNonNull(unitPublicCost, "Unit public cost must not be null");
         Objects.requireNonNull(quantity, "Quantity must not be null");
@@ -108,6 +144,7 @@ public final class Sale {
                 .productOid(productOid)
                 .productName(productName)
                 .userOid(userOid)
+                .companyOid(companyOid)
                 .quantity(quantity)
                 .totalCost(totalCost.toDouble())
                 .originalTotalPrice(originalTotalPrice.toDouble())
@@ -138,6 +175,10 @@ public final class Sale {
 
     public String getUserOid() {
         return userOid;
+    }
+
+    public CompanyOid getCompanyOid() {
+        return companyOid;
     }
 
     public Integer getQuantity() {
@@ -186,6 +227,7 @@ public final class Sale {
         private String productOid;
         private String productName;
         private String userOid;
+        private CompanyOid companyOid;
         private Integer quantity;
         private Double totalCost;
         private Double originalTotalPrice;
@@ -248,6 +290,17 @@ public final class Sale {
          */
         public Builder userOid(String userOid) {
             this.userOid = userOid;
+            return this;
+        }
+
+        /**
+         * Sets the owning company identifier.
+         *
+         * @param companyOid Company identifier.
+         * @return This builder.
+         */
+        public Builder companyOid(CompanyOid companyOid) {
+            this.companyOid = companyOid;
             return this;
         }
 

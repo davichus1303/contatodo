@@ -1,5 +1,6 @@
 package com.contatodo.domain.entities;
 
+import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.shared.constants.ValidationConstants;
 import com.contatodo.shared.utils.EntityValidation;
 
@@ -26,6 +27,7 @@ public final class Acquisition {
     private final LocalDateTime acquisitionDate;
     private final String observations;
     private final String userOid;
+    private final CompanyOid companyOid;
     private final Boolean isDeleted;
     private final LocalDateTime createdDate;
     private final LocalDateTime updatedDate;
@@ -50,6 +52,7 @@ public final class Acquisition {
         this.acquisitionDate = builder.acquisitionDate;
         this.observations = builder.observations;
         this.userOid = builder.userOid;
+        this.companyOid = builder.companyOid;
         this.isDeleted = builder.isDeleted;
         this.createdDate = builder.createdDate;
         this.updatedDate = builder.updatedDate;
@@ -120,6 +123,10 @@ public final class Acquisition {
         return userOid;
     }
 
+    public CompanyOid getCompanyOid() {
+        return companyOid;
+    }
+
     public Boolean getIsDeleted() {
         return isDeleted;
     }
@@ -151,6 +158,7 @@ public final class Acquisition {
         private LocalDateTime acquisitionDate;
         private String observations;
         private String userOid;
+        private CompanyOid companyOid;
         private Boolean isDeleted;
         private LocalDateTime createdDate;
         private LocalDateTime updatedDate;
@@ -306,6 +314,17 @@ public final class Acquisition {
          */
         public Builder userOid(String userOid) {
             this.userOid = userOid;
+            return this;
+        }
+
+        /**
+         * Sets the owning company identifier.
+         *
+         * @param companyOid Company identifier.
+         * @return This builder.
+         */
+        public Builder companyOid(CompanyOid companyOid) {
+            this.companyOid = companyOid;
             return this;
         }
 

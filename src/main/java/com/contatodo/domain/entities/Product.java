@@ -1,5 +1,6 @@
 package com.contatodo.domain.entities;
 
+import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.model.Money;
 import com.contatodo.shared.constants.ProductConstants;
 import com.contatodo.shared.constants.SaleConstants;
@@ -30,6 +31,7 @@ public final class Product {
     private final String urlPhoto;
     private final Boolean isActive;
     private final String userOid;
+    private final CompanyOid companyOid;
     private final LocalDateTime createdDate;
     private final LocalDateTime updatedDate;
 
@@ -50,6 +52,7 @@ public final class Product {
         this.urlPhoto = builder.urlPhoto;
         this.isActive = builder.isActive;
         this.userOid = builder.userOid;
+        this.companyOid = builder.companyOid;
         this.createdDate = builder.createdDate;
         this.updatedDate = builder.updatedDate;
     }
@@ -105,6 +108,10 @@ public final class Product {
 
     public String getUserOid() {
         return userOid;
+    }
+
+    public CompanyOid getCompanyOid() {
+        return companyOid;
     }
 
     public LocalDateTime getCreatedDate() {
@@ -207,6 +214,7 @@ public final class Product {
                 .urlPhoto(urlPhoto)
                 .isActive(isActive)
                 .userOid(userOid)
+                .companyOid(companyOid)
                 .createdDate(createdDate)
                 .updatedDate(updatedDate);
     }
@@ -227,6 +235,7 @@ public final class Product {
         private String urlPhoto;
         private Boolean isActive;
         private String userOid;
+        private CompanyOid companyOid;
         private LocalDateTime createdDate;
         private LocalDateTime updatedDate;
 
@@ -348,6 +357,17 @@ public final class Product {
          */
         public Builder userOid(String userOid) {
             this.userOid = userOid;
+            return this;
+        }
+
+        /**
+         * Sets the owning company identifier.
+         *
+         * @param companyOid Company identifier.
+         * @return This builder.
+         */
+        public Builder companyOid(CompanyOid companyOid) {
+            this.companyOid = companyOid;
             return this;
         }
 

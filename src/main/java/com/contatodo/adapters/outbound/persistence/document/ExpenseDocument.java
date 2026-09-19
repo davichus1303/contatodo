@@ -21,6 +21,7 @@ public class ExpenseDocument {
     private String currency;
     private LocalDateTime expenseDate;
     private String userOid;
+    private String companyOid;
     private Boolean isActive;
     private Boolean isDeleted;
     private LocalDateTime createdDate;
@@ -96,6 +97,14 @@ public class ExpenseDocument {
 
     public void setUserOid(String userOid) {
         this.userOid = userOid;
+    }
+
+    public String getCompanyOid() {
+        return companyOid;
+    }
+
+    public void setCompanyOid(String companyOid) {
+        this.companyOid = companyOid;
     }
 
     public Boolean getIsActive() {

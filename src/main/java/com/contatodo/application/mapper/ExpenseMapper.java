@@ -3,6 +3,7 @@ package com.contatodo.application.mapper;
 import com.contatodo.application.dto.request.CreateExpenseRequest;
 import com.contatodo.application.dto.response.ExpenseResponse;
 import com.contatodo.domain.entities.Expense;
+import com.contatodo.domain.model.CompanyOid;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -20,9 +21,10 @@ public class ExpenseMapper implements ResponseMapper<Expense, ExpenseResponse> {
      * @param request Create expense request.
      * @param userOid Authenticated user identifier.
      * @param expenseDate Resolved expense date.
+     * @param companyOid Owning company identifier (null for root).
      * @return Expense entity.
      */
-    public Expense toEntity(CreateExpenseRequest request, String userOid, LocalDateTime expenseDate) {
+    public Expense toEntity(CreateExpenseRequest request, String userOid, LocalDateTime expenseDate, CompanyOid companyOid) {
         LocalDateTime now = LocalDateTime.now();
         return Expense.builder()
                 .acquisitionOid(request.getAcquisitionOid())
@@ -33,6 +35,7 @@ public class ExpenseMapper implements ResponseMapper<Expense, ExpenseResponse> {
                 .currency(request.getCurrency())
                 .expenseDate(expenseDate)
                 .userOid(userOid)
+                .companyOid(companyOid)
                 .isActive(true)
                 .isDeleted(false)
                 .createdDate(now)

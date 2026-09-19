@@ -3,9 +3,11 @@ package com.contatodo.application.services;
 import com.contatodo.application.dto.request.CreateProductRequest;
 import com.contatodo.application.mapper.ProductMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
+import com.contatodo.application.port.CompanyContextProvider;
 import com.contatodo.application.validators.ProductValidator;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.entities.User;
+import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.ProductRepository;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.shared.constants.ProductConstants;
@@ -21,6 +23,8 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -46,13 +50,16 @@ class ProductServiceTest {
     @Mock
     private AuthenticatedUserProvider authenticatedUserProvider;
 
+    @Mock
+    private CompanyContextProvider companyContextProvider;
+
     private ProductService productService;
 
     @BeforeEach
     void setUp() {
         productService = new ProductService(
                 productRepository, userRepository, productValidator,
-                productMapper, authenticatedUserProvider
+                productMapper, authenticatedUserProvider, companyContextProvider
         );
     }
 
@@ -84,6 +91,36 @@ class ProductServiceTest {
         );
         assertEquals(ProductConstants.USER_NOT_FOUND, exception.getMessage());
         verify(productRepository, never()).save(any());
+    }
+
+    @Test
+    void createProductAssignsCompanyToNormalUser() {
+        when(authenticatedUserProvider.getCurrentUserEmail()).thenReturn("david@example.com");
+        when(userRepository.findByEmail("david@example.com")).thenReturn(Optional.of(owner()));
+        when(companyContextProvider.isRoot()).thenReturn(false);
+        when(companyContextProvider.currentCompanyOid())
+                .thenReturn(Optional.of(CompanyOid.of("company-1")));
+        when(productRepository.findTopByOrderByCodeDesc()).thenReturn(Optional.empty());
+        when(productRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(productMapper.toResponse(any())).thenReturn(new com.contatodo.application.dto.response.ProductResponse());
+
+        productService.createProduct(createRequest());
+
+        verify(productMapper).toEntity(any(), eq("1"), eq("user-1"), eq(CompanyOid.of("company-1")));
+    }
+
+    @Test
+    void createProductAssignsNullCompanyToRoot() {
+        when(authenticatedUserProvider.getCurrentUserEmail()).thenReturn("david@example.com");
+        when(userRepository.findByEmail("david@example.com")).thenReturn(Optional.of(owner()));
+        when(companyContextProvider.isRoot()).thenReturn(true);
+        when(productRepository.findTopByOrderByCodeDesc()).thenReturn(Optional.empty());
+        when(productRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(productMapper.toResponse(any())).thenReturn(new com.contatodo.application.dto.response.ProductResponse());
+
+        productService.createProduct(createRequest());
+
+        verify(productMapper).toEntity(any(), eq("1"), eq("user-1"), isNull());
     }
 
     @Test
