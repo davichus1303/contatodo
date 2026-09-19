@@ -9,6 +9,8 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 /**
  * Adapter implementing the module repository port.
@@ -57,5 +59,15 @@ public class ModuleRepositoryAdapter implements ModuleRepository {
     @Override
     public List<Module> findAllActive() {
         return persistenceMapper.toEntityList(moduleMongoRepository.findActiveModules());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<Module> findAllById(Iterable<String> ids) {
+        return StreamSupport.stream(moduleMongoRepository.findAllById(ids).spliterator(), false)
+                .map(persistenceMapper::toEntity)
+                .collect(Collectors.toList());
     }
 }

@@ -2,19 +2,24 @@ package com.contatodo.application.services;
 
 import com.contatodo.application.dto.request.CreateUserRequest;
 import com.contatodo.application.dto.request.LoginRequest;
+import com.contatodo.application.dto.response.CompanyResponse;
 import com.contatodo.application.dto.response.LoginResponse;
 import com.contatodo.application.dto.response.RoleResponse;
 import com.contatodo.application.dto.response.UserResponse;
+import com.contatodo.application.mapper.CompanyMapper;
 import com.contatodo.application.mapper.RoleMapper;
 import com.contatodo.application.mapper.UserMapper;
 import com.contatodo.application.port.TokenProvider;
 import com.contatodo.application.validators.UserValidator;
+import com.contatodo.domain.entities.Company;
 import com.contatodo.domain.entities.Role;
 import com.contatodo.domain.entities.User;
+import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.domain.repositories.RoleRepository;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.shared.constants.UserConstants;
 import com.contatodo.shared.exceptions.AuthenticationException;
+import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.shared.exceptions.UserAlreadyExistsException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,8 +39,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -51,10 +58,16 @@ class UserServiceTest {
     private RoleRepository roleRepository;
 
     @Mock
+    private CompanyRepository companyRepository;
+
+    @Mock
     private UserValidator userValidator;
 
     @Mock
     private UserMapper userMapper;
+
+    @Mock
+    private CompanyMapper companyMapper;
 
     @Mock
     private RoleMapper roleMapper;
@@ -70,7 +83,7 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         userService = new UserService(
-                userRepository, roleRepository, userValidator, userMapper, roleMapper, passwordEncoder, tokenProvider);
+                userRepository, roleRepository, companyRepository, userValidator, userMapper, roleMapper, companyMapper, passwordEncoder, tokenProvider);
     }
 
     private CreateUserRequest createRequest(String email) {
@@ -100,6 +113,18 @@ class UserServiceTest {
                 .password("hashed")
                 .name("David " + roleId)
                 .roleId(roleId)
+                .build();
+    }
+
+    private User activeUserWithRoleAndCompany(String roleId, String companyOid) {
+        return User.builder()
+                .id("user-" + roleId)
+                .userName("david-" + roleId)
+                .email("david-" + roleId + "@example.com")
+                .password("hashed")
+                .name("David " + roleId)
+                .roleId(roleId)
+                .companyOid(companyOid)
                 .build();
     }
 
@@ -203,6 +228,35 @@ class UserServiceTest {
     }
 
     @Test
+    void createUserRejectsInvalidCompanyOid() {
+        CreateUserRequest request = createRequest("new@example.com");
+        request.setCompanyOid("invalid-company");
+        when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(companyRepository.findById("invalid-company")).thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> userService.createUser(request, Optional.empty()));
+    }
+
+    @Test
+    void createUserAcceptsValidCompanyOid() {
+        CreateUserRequest request = createRequest("new@example.com");
+        request.setCompanyOid("valid-company");
+        when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(companyRepository.findById("valid-company")).thenReturn(Optional.of(
+                Company.builder().id("valid-company").name("Test Company").build()
+        ));
+        when(passwordEncoder.encode("secret123")).thenReturn("hashed-value");
+        when(userRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userMapper.toEntity(any(), any(), any(), any(), anyBoolean())).thenReturn(activeUser());
+        when(userMapper.toResponse(any())).thenReturn(new UserResponse());
+
+        userService.createUser(request, Optional.empty());
+
+        verify(userRepository).save(any());
+    }
+
+    @Test
     void loginReturnsTokenForValidCredentials() {
         LoginRequest request = new LoginRequest();
         request.setEmail("david@example.com");
@@ -210,8 +264,8 @@ class UserServiceTest {
 
         when(userRepository.findByEmail("david@example.com")).thenReturn(Optional.of(activeUser()));
         when(passwordEncoder.matches("secret123", "hashed")).thenReturn(true);
-        when(tokenProvider.generateToken("david@example.com")).thenReturn("jwt-token");
-        when(userMapper.toResponse(any())).thenReturn(new UserResponse());
+        when(tokenProvider.generateToken(eq("david@example.com"), any())).thenReturn("jwt-token");
+        when(userMapper.toResponse(any(), any(), any())).thenReturn(new UserResponse());
 
         LoginResponse response = userService.login(request);
 
@@ -288,44 +342,43 @@ class UserServiceTest {
         );
         assertEquals(UserConstants.USER_INACTIVE, exception.getMessage());
     }
-
-    @Test
-    void getAllUsersResolvesTheRoleOfEachUser() {
-        User user = activeUserWithRole("role-1");
-        RoleResponse roleResponse = new RoleResponse();
-        roleResponse.setId("role-1");
-        roleResponse.setName("Admin");
+@Test
+    void getAllUsersReturnsMinimalUserDataWithoutRoleAndCompany() {
+        User user = activeUserWithRoleAndCompany("role-1", "company-1");
 
         when(userRepository.findAllActive()).thenReturn(List.of(user));
-        when(roleRepository.findById("role-1")).thenReturn(Optional.of(role("role-1", "Admin")));
-        when(roleMapper.toResponse(any())).thenReturn(roleResponse);
-        when(userMapper.toResponseList(anyList(), anyMap())).thenAnswer(invocation -> {
-            Map<String, RoleResponse> roles = invocation.getArgument(1);
-            assertEquals(roleResponse, roles.get("role-1"));
-            return List.of(new UserResponse());
-        });
+        when(userMapper.toListResponseList(anyList())).thenReturn(List.of(new UserResponse()));
 
         List<UserResponse> response = userService.getAllUsers();
 
         assertEquals(1, response.size());
-        verify(roleRepository).findById("role-1");
+        verify(userMapper).toListResponseList(anyList());
+        verifyNoInteractions(roleRepository, companyRepository, roleMapper, companyMapper);
     }
 
     @Test
-    void getAllUsersStillReturnsUsersWhenARoleLookupFails() {
-        User user = activeUserWithRole("role-1");
+    void getAllUsersReturnsUsersWhenRoleLookupFails() {
+        User user = activeUserWithRoleAndCompany("role-1", "company-1");
 
         when(userRepository.findAllActive()).thenReturn(List.of(user));
-        when(roleRepository.findById("role-1")).thenThrow(new RuntimeException("role lookup failed"));
-        when(userMapper.toResponseList(anyList(), anyMap())).thenAnswer(invocation -> {
-            Map<String, RoleResponse> roles = invocation.getArgument(1);
-            assertEquals(0, roles.size());
-            return List.of(new UserResponse());
-        });
+        when(userMapper.toListResponseList(anyList())).thenReturn(List.of(new UserResponse()));
 
         List<UserResponse> response = userService.getAllUsers();
 
         assertEquals(1, response.size());
-        verify(roleRepository).findById("role-1");
+        verifyNoInteractions(roleRepository, companyRepository);
+    }
+
+    @Test
+    void getAllUsersReturnsUsersWhenCompanyLookupFails() {
+        User user = activeUserWithRoleAndCompany("role-1", "company-1");
+
+        when(userRepository.findAllActive()).thenReturn(List.of(user));
+        when(userMapper.toListResponseList(anyList())).thenReturn(List.of(new UserResponse()));
+
+        List<UserResponse> response = userService.getAllUsers();
+
+        assertEquals(1, response.size());
+        verifyNoInteractions(roleRepository, companyRepository);
     }
 }

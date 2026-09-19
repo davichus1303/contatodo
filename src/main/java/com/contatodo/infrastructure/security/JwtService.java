@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.util.Date;
+import java.util.Map;
 
 /**
  * Service for JWT token generation and validation.
@@ -41,7 +42,7 @@ public class JwtService implements TokenProvider {
      * {@inheritDoc}
      */
     @Override
-    public String generateToken(String subject) {
+    public String generateToken(String subject, Map<String, Object> claims) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + expiration);
 
@@ -49,6 +50,7 @@ public class JwtService implements TokenProvider {
                 .subject(subject)
                 .issuedAt(now)
                 .expiration(expiryDate)
+                .claims(claims)
                 .signWith(secretKey)
                 .compact();
     }
@@ -61,6 +63,20 @@ public class JwtService implements TokenProvider {
      */
     public String extractSubject(String token) {
         return extractAllClaims(token).getSubject();
+    }
+
+    /**
+     * Extracts all claims from a JWT token.
+     *
+     * @param token JWT token.
+     * @return All claims in the token.
+     */
+    public Claims extractAllClaims(String token) {
+        return Jwts.parser()
+                .verifyWith(secretKey)
+                .build()
+                .parseSignedClaims(token)
+                .getPayload();
     }
 
     /**
@@ -77,13 +93,4 @@ public class JwtService implements TokenProvider {
             return false;
         }
     }
-
-    private Claims extractAllClaims(String token) {
-        return Jwts.parser()
-                .verifyWith(secretKey)
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-    }
-
 }

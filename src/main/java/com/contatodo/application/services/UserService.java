@@ -3,14 +3,19 @@ package com.contatodo.application.services;
 import com.contatodo.application.dto.request.CreateUserRequest;
 import com.contatodo.application.dto.request.LoginRequest;
 import com.contatodo.application.dto.request.UpdateUserRequest;
+import com.contatodo.application.dto.response.CompanyResponse;
 import com.contatodo.application.dto.response.LoginResponse;
+import com.contatodo.application.dto.response.RolePermissionResponse;
 import com.contatodo.application.dto.response.RoleResponse;
 import com.contatodo.application.dto.response.UserResponse;
+import com.contatodo.application.mapper.CompanyMapper;
 import com.contatodo.application.mapper.RoleMapper;
 import com.contatodo.application.mapper.UserMapper;
 import com.contatodo.application.port.TokenProvider;
 import com.contatodo.application.validators.UserValidator;
+import com.contatodo.domain.entities.Role;
 import com.contatodo.domain.entities.User;
+import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.domain.repositories.RoleRepository;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.shared.constants.UserConstants;
@@ -33,9 +38,11 @@ public class UserService {
 
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
+    private final CompanyRepository companyRepository;
     private final UserValidator userValidator;
     private final UserMapper userMapper;
     private final RoleMapper roleMapper;
+    private final CompanyMapper companyMapper;
     private final PasswordEncoder passwordEncoder;
     private final TokenProvider tokenProvider;
 
@@ -44,26 +51,32 @@ public class UserService {
      *
      * @param userRepository User repository port.
      * @param roleRepository Role repository port.
+     * @param companyRepository Company repository port.
      * @param userValidator User validator.
      * @param userMapper User mapper.
      * @param roleMapper Role mapper.
+     * @param companyMapper Company mapper.
      * @param passwordEncoder Password encoder.
      * @param tokenProvider Security token provider.
      */
     public UserService(
             UserRepository userRepository,
             RoleRepository roleRepository,
+            CompanyRepository companyRepository,
             UserValidator userValidator,
             UserMapper userMapper,
             RoleMapper roleMapper,
+            CompanyMapper companyMapper,
             PasswordEncoder passwordEncoder,
             TokenProvider tokenProvider
     ) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.companyRepository = companyRepository;
         this.userValidator = userValidator;
         this.userMapper = userMapper;
         this.roleMapper = roleMapper;
+        this.companyMapper = companyMapper;
         this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
     }
@@ -85,6 +98,13 @@ public class UserService {
 
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new UserAlreadyExistsException(UserConstants.USER_ALREADY_EXISTS);
+        }
+
+        // Validate companyOid if provided
+        if (request.getCompanyOid() != null && !request.getCompanyOid().isEmpty()) {
+            if (!companyRepository.findById(request.getCompanyOid()).isPresent()) {
+                throw new ResourceNotFoundException("Company not found with id: " + request.getCompanyOid());
+            }
         }
 
         String hashedPassword = passwordEncoder.encode(request.getPassword());
@@ -131,6 +151,13 @@ public class UserService {
             }
         }
 
+        // Validate companyOid if provided
+        if (request.getCompanyOid() != null && !request.getCompanyOid().isEmpty()) {
+            if (!companyRepository.findById(request.getCompanyOid()).isPresent()) {
+                throw new ResourceNotFoundException("Company not found with id: " + request.getCompanyOid());
+            }
+        }
+
         String hashedPassword = request.getPassword() != null
                 ? passwordEncoder.encode(request.getPassword())
                 : null;
@@ -153,17 +180,16 @@ public class UserService {
     }
 
     /**
-     * Retrieves all active users, resolving each related role.
+     * Retrieves all active users, resolving only roleId and companyOid.
      *
-     * <p>Each role is looked up at most once. A role that cannot be resolved
-     * (missing identifier, not found or lookup error) is left empty for that
-     * user without failing the whole query.</p>
+     * <p>Returns minimal user data without nested role/company objects.
+     * Full role/company data is only available in login/single-user responses.</p>
      *
      * @return List of user responses.
      */
     public List<UserResponse> getAllUsers() {
         List<User> users = userRepository.findAllActive();
-        return userMapper.toResponseList(users, resolveRoles(users));
+        return userMapper.toListResponseList(users);
     }
 
     /**
@@ -190,6 +216,29 @@ public class UserService {
     }
 
     /**
+     * Resolves the companies referenced by the given users, keyed by company identifier.
+     *
+     * @param users Users whose companies must be resolved.
+     * @return Map of company identifiers to resolved company responses.
+     */
+    private Map<String, CompanyResponse> resolveCompanies(List<User> users) {
+        Map<String, CompanyResponse> companies = new HashMap<>();
+        for (User user : users) {
+            String companyOid = user.getCompanyOid();
+            if (companyOid == null || companies.containsKey(companyOid)) {
+                continue;
+            }
+            try {
+                companyRepository.findById(companyOid)
+                        .ifPresent(company -> companies.put(companyOid, companyMapper.toResponse(company)));
+            } catch (RuntimeException exception) {
+                // A single broken company must not prevent the remaining users from loading.
+            }
+        }
+        return companies;
+    }
+
+    /**
      * Retrieves a user by email.
      *
      * @param email User email.
@@ -198,7 +247,9 @@ public class UserService {
     public UserResponse getUserByEmail(String email) {
         User user = userRepository.findActiveUserByEmail(email, false)
                 .orElseThrow(() -> new ResourceNotFoundException(UserConstants.USER_NOT_FOUND));
-        return userMapper.toResponse(user);
+        Map<String, RoleResponse> roles = resolveRoles(List.of(user));
+        Map<String, CompanyResponse> companies = resolveCompanies(List.of(user));
+        return userMapper.toResponse(user, roles.get(user.getRoleId()), companies.get(user.getCompanyOid()));
     }
 
     /**
@@ -222,9 +273,25 @@ public class UserService {
             throw new AuthenticationException(UserConstants.USER_INVALID_CREDENTIALS);
         }
 
+        // Fetch user's role with permissions
+        Map<String, RoleResponse> roles = resolveRoles(List.of(user));
+        RoleResponse roleResponse = user.getRoleId() != null ? roles.get(user.getRoleId()) : null;
+
+        // Build token claims with minimal role info (permissions fetched from API when needed)
+        Map<String, Object> claims = new HashMap<>();
+        if (roleResponse != null) {
+            claims.put("roleId", roleResponse.getId());
+            claims.put("roleName", roleResponse.getName());
+        }
+        if (user.getCompanyOid() != null) {
+            claims.put("companyOid", user.getCompanyOid());
+        }
+
+        Map<String, CompanyResponse> companies = resolveCompanies(List.of(user));
+
         LoginResponse response = new LoginResponse();
-        response.setToken(tokenProvider.generateToken(user.getEmail()));
-        response.setUser(userMapper.toResponse(user));
+        response.setToken(tokenProvider.generateToken(user.getEmail(), claims));
+        response.setUser(userMapper.toResponse(user, roleResponse, companies.get(user.getCompanyOid())));
         return response;
     }
 }

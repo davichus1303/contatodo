@@ -27,6 +27,7 @@ public class UserPersistenceMapper implements PersistenceMapper<UserDocument, Us
         document.setName(user.getName());
         document.setPhoneNumber(user.getPhoneNumber());
         document.setRoleId(user.getRoleId());
+        document.setCompanyOid(user.getCompanyOid());
         document.setCreatedByUserOid(user.getCreatedByUserOid());
         document.setActive(user.isActive());
         document.setIsDeleted(user.isDelete());
@@ -52,6 +53,7 @@ public class UserPersistenceMapper implements PersistenceMapper<UserDocument, Us
                 .name(document.getName())
                 .phoneNumber(document.getPhoneNumber())
                 .roleId(document.getRoleId())
+                .companyOid(document.getCompanyOid())
                 .createdByUserOid(document.getCreatedByUserOid())
                 .isActive(document.isActive())
                 .isDelete(document.getIsDeleted())
