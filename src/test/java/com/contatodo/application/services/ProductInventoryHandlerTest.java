@@ -4,6 +4,7 @@ import com.contatodo.application.dto.request.CreateAcquisitionRequest;
 import com.contatodo.domain.entities.Acquisition;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.entities.ProductCostHistory;
+import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.AcquisitionRepository;
 import com.contatodo.domain.repositories.ProductCostHistoryRepository;
 import com.contatodo.domain.repositories.ProductRepository;
@@ -87,11 +88,12 @@ class ProductInventoryHandlerTest {
                     .unitPublicCost(toSave.getUnitPublicCost())
                     .isActive(true)
                     .userOid(toSave.getUserOid())
+                    .companyOid(toSave.getCompanyOid())
                     .build();
         });
 
         ProductInventoryHandler.InventoryOutcome outcome =
-                handler.applyToInventory(request(50.0, 5), "user-1");
+                handler.applyToInventory(request(50.0, 5), "user-1", CompanyOid.of("company-1"));
 
         assertEquals("p-new", outcome.productOid());
         assertEquals("Cafe", outcome.productName());
@@ -101,6 +103,7 @@ class ProductInventoryHandlerTest {
         verify(productRepository).save(captor.capture());
         assertEquals(5, captor.getValue().getStock());
         assertEquals("1", captor.getValue().getCode());
+        assertEquals(CompanyOid.of("company-1"), captor.getValue().getCompanyOid());
     }
 
     @Test
@@ -113,7 +116,7 @@ class ProductInventoryHandlerTest {
         when(productRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         ProductInventoryHandler.InventoryOutcome outcome =
-                handler.applyToInventory(request(60.0, 6), "user-1");
+                handler.applyToInventory(request(60.0, 6), "user-1", CompanyOid.of("company-1"));
 
         assertEquals("p-1", outcome.productOid());
         assertEquals(10.0, outcome.averageUnitRealCost());

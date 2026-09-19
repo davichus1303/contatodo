@@ -2,6 +2,7 @@ package com.contatodo.adapters.outbound.persistence.mapper;
 
 import com.contatodo.adapters.outbound.persistence.document.ExpenseDocument;
 import com.contatodo.domain.entities.Expense;
+import com.contatodo.domain.model.CompanyOid;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -30,6 +31,9 @@ public class ExpensePersistenceMapper implements PersistenceMapper<ExpenseDocume
         document.setCurrency(expense.getCurrency());
         document.setExpenseDate(expense.getExpenseDate());
         document.setUserOid(expense.getUserOid());
+        document.setCompanyOid(expense.getCompanyOid() != null
+                ? expense.getCompanyOid().value()
+                : null);
         document.setIsActive(expense.getIsActive());
         document.setIsDeleted(expense.getIsDeleted());
         document.setCreatedDate(expense.getCreatedDate());
@@ -54,6 +58,9 @@ public class ExpensePersistenceMapper implements PersistenceMapper<ExpenseDocume
                 .currency(document.getCurrency())
                 .expenseDate(document.getExpenseDate())
                 .userOid(document.getUserOid())
+                .companyOid(document.getCompanyOid() != null
+                        ? CompanyOid.of(document.getCompanyOid())
+                        : null)
                 .isActive(document.getIsActive())
                 .isDeleted(document.getIsDeleted())
                 .createdDate(document.getCreatedDate())

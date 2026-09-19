@@ -2,6 +2,7 @@ package com.contatodo.adapters.outbound.persistence.mapper;
 
 import com.contatodo.adapters.outbound.persistence.document.ProductCostHistoryDocument;
 import com.contatodo.domain.entities.ProductCostHistory;
+import com.contatodo.domain.model.CompanyOid;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -31,6 +32,9 @@ public class ProductCostHistoryPersistenceMapper implements PersistenceMapper<Pr
         document.setUnitPublicCostAtPurchase(productCostHistory.getUnitPublicCostAtPurchase());
         document.setAcquisitionDate(productCostHistory.getAcquisitionDate());
         document.setUserOid(productCostHistory.getUserOid());
+        document.setCompanyOid(productCostHistory.getCompanyOid() != null
+                ? productCostHistory.getCompanyOid().value()
+                : null);
         document.setCreatedDate(productCostHistory.getCreatedDate());
         return document;
     }
@@ -53,6 +57,9 @@ public class ProductCostHistoryPersistenceMapper implements PersistenceMapper<Pr
                 .unitPublicCostAtPurchase(document.getUnitPublicCostAtPurchase())
                 .acquisitionDate(document.getAcquisitionDate())
                 .userOid(document.getUserOid())
+                .companyOid(document.getCompanyOid() != null
+                        ? CompanyOid.of(document.getCompanyOid())
+                        : null)
                 .createdDate(document.getCreatedDate())
                 .build();
     }

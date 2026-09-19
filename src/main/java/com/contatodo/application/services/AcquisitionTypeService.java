@@ -6,9 +6,12 @@ import com.contatodo.application.dto.response.AcquisitionTypeResponse;
 import com.contatodo.application.mapper.AcquisitionTypeMapper;
 import com.contatodo.application.validators.AcquisitionTypeValidator;
 import com.contatodo.domain.entities.AcquisitionType;
+import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.AcquisitionTypeRepository;
 import com.contatodo.application.port.AuthenticatedUserProvider;
+import com.contatodo.application.port.CompanyContextProvider;
 import org.springframework.stereotype.Service;
+import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.AcquisitionTypeConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 
@@ -24,6 +27,7 @@ public class AcquisitionTypeService {
     private final AcquisitionTypeValidator acquisitionTypeValidator;
     private final AcquisitionTypeMapper acquisitionTypeMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
+    private final CompanyContextProvider companyContextProvider;
 
     /**
      * Creates an acquisition type service.
@@ -32,17 +36,20 @@ public class AcquisitionTypeService {
      * @param acquisitionTypeValidator Acquisition type validator.
      * @param acquisitionTypeMapper Acquisition type mapper.
      * @param authenticatedUserProvider Authenticated user provider.
+     * @param companyContextProvider Company context provider.
      */
     public AcquisitionTypeService(
             AcquisitionTypeRepository acquisitionTypeRepository,
             AcquisitionTypeValidator acquisitionTypeValidator,
             AcquisitionTypeMapper acquisitionTypeMapper,
-            AuthenticatedUserProvider authenticatedUserProvider
+            AuthenticatedUserProvider authenticatedUserProvider,
+            CompanyContextProvider companyContextProvider
     ) {
         this.acquisitionTypeRepository = acquisitionTypeRepository;
         this.acquisitionTypeValidator = acquisitionTypeValidator;
         this.acquisitionTypeMapper = acquisitionTypeMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
+        this.companyContextProvider = companyContextProvider;
     }
 
     /**
@@ -55,7 +62,8 @@ public class AcquisitionTypeService {
         acquisitionTypeValidator.validateCreateRequest(request);
 
         String userOid = authenticatedUserProvider.getCurrentUserOid();
-        AcquisitionType acquisitionType = acquisitionTypeMapper.toEntity(request, userOid);
+        CompanyOid companyOid = resolveCompanyOid();
+        AcquisitionType acquisitionType = acquisitionTypeMapper.toEntity(request, userOid, companyOid);
         AcquisitionType savedAcquisitionType = acquisitionTypeRepository.save(acquisitionType);
         return acquisitionTypeMapper.toResponse(savedAcquisitionType);
     }
@@ -118,5 +126,18 @@ public class AcquisitionTypeService {
     public List<AcquisitionTypeResponse> getAllNotDeletedAcquisitionTypes() {
         List<AcquisitionType> acquisitionTypes = acquisitionTypeRepository.findAllNotDeleted();
         return acquisitionTypeMapper.toResponseList(acquisitionTypes);
+    }
+
+    /**
+     * Resolves the owning company for a non-root write.
+     *
+     * @return Company identifier, or {@code null} for the root user.
+     */
+    private CompanyOid resolveCompanyOid() {
+        if (companyContextProvider.isRoot()) {
+            return null;
+        }
+        return companyContextProvider.currentCompanyOid()
+                .orElseThrow(() -> new ResourceNotFoundException(AuthConstants.COMPANY_CONTEXT_REQUIRED));
     }
 }

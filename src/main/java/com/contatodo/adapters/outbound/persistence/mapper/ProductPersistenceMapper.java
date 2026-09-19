@@ -2,6 +2,7 @@ package com.contatodo.adapters.outbound.persistence.mapper;
 
 import com.contatodo.adapters.outbound.persistence.document.ProductDocument;
 import com.contatodo.domain.entities.Product;
+import com.contatodo.domain.model.CompanyOid;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -31,6 +32,9 @@ public class ProductPersistenceMapper implements PersistenceMapper<ProductDocume
         document.setUrlPhoto(product.getUrlPhoto());
         document.setIsActive(product.getIsActive());
         document.setUserOid(product.getUserOid());
+        document.setCompanyOid(product.getCompanyOid() != null
+                ? product.getCompanyOid().value()
+                : null);
         document.setCreatedDate(product.getCreatedDate());
         document.setUpdatedDate(product.getUpdatedDate());
         return document;
@@ -55,6 +59,9 @@ public class ProductPersistenceMapper implements PersistenceMapper<ProductDocume
                 .urlPhoto(document.getUrlPhoto())
                 .isActive(document.getIsActive())
                 .userOid(document.getUserOid())
+                .companyOid(document.getCompanyOid() != null
+                        ? CompanyOid.of(document.getCompanyOid())
+                        : null)
                 .createdDate(document.getCreatedDate())
                 .updatedDate(document.getUpdatedDate())
                 .build();

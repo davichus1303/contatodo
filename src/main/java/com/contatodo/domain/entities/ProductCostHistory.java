@@ -1,5 +1,6 @@
 package com.contatodo.domain.entities;
 
+import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.shared.constants.ValidationConstants;
 import com.contatodo.shared.utils.EntityValidation;
 
@@ -23,6 +24,7 @@ public final class ProductCostHistory {
     private final Double unitPublicCostAtPurchase;
     private final LocalDateTime acquisitionDate;
     private final String userOid;
+    private final CompanyOid companyOid;
     private final LocalDateTime createdDate;
 
     /**
@@ -41,6 +43,7 @@ public final class ProductCostHistory {
         this.unitPublicCostAtPurchase = builder.unitPublicCostAtPurchase;
         this.acquisitionDate = builder.acquisitionDate;
         this.userOid = builder.userOid;
+        this.companyOid = builder.companyOid;
         this.createdDate = builder.createdDate;
     }
 
@@ -93,6 +96,10 @@ public final class ProductCostHistory {
         return userOid;
     }
 
+    public CompanyOid getCompanyOid() {
+        return companyOid;
+    }
+
     public LocalDateTime getCreatedDate() {
         return createdDate;
     }
@@ -112,6 +119,7 @@ public final class ProductCostHistory {
         private Double unitPublicCostAtPurchase;
         private LocalDateTime acquisitionDate;
         private String userOid;
+        private CompanyOid companyOid;
         private LocalDateTime createdDate;
 
         /**
@@ -221,6 +229,17 @@ public final class ProductCostHistory {
          */
         public Builder userOid(String userOid) {
             this.userOid = userOid;
+            return this;
+        }
+
+        /**
+         * Sets the owning company identifier.
+         *
+         * @param companyOid Company identifier.
+         * @return This builder.
+         */
+        public Builder companyOid(CompanyOid companyOid) {
+            this.companyOid = companyOid;
             return this;
         }
 

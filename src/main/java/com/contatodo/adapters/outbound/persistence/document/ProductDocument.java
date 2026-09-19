@@ -23,6 +23,7 @@ public class ProductDocument {
     private String urlPhoto;
     private Boolean isActive;
     private String userOid;
+    private String companyOid;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
 
@@ -128,5 +129,13 @@ public class ProductDocument {
 
     public void setUserOid(String userOid) {
         this.userOid = userOid;
+    }
+
+    public String getCompanyOid() {
+        return companyOid;
+    }
+
+    public void setCompanyOid(String companyOid) {
+        this.companyOid = companyOid;
     }
 }

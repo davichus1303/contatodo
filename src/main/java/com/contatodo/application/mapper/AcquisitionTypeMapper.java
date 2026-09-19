@@ -4,6 +4,7 @@ import com.contatodo.application.dto.request.CreateAcquisitionTypeRequest;
 import com.contatodo.application.dto.request.UpdateAcquisitionTypeRequest;
 import com.contatodo.application.dto.response.AcquisitionTypeResponse;
 import com.contatodo.domain.entities.AcquisitionType;
+import com.contatodo.domain.model.CompanyOid;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -20,14 +21,16 @@ public class AcquisitionTypeMapper implements ResponseMapper<AcquisitionType, Ac
      *
      * @param request Create acquisition type request.
      * @param userOid Authenticated owner identifier.
+     * @param companyOid Owning company identifier (null for root).
      * @return Acquisition type entity.
      */
-    public AcquisitionType toEntity(CreateAcquisitionTypeRequest request, String userOid) {
+    public AcquisitionType toEntity(CreateAcquisitionTypeRequest request, String userOid, CompanyOid companyOid) {
         LocalDateTime now = LocalDateTime.now();
         return AcquisitionType.builder()
                 .name(request.getName())
                 .description(request.getDescription())
                 .userOid(userOid)
+                .companyOid(companyOid)
                 .affectsInventory(request.getAffectsInventory() != null ? request.getAffectsInventory() : false)
                 .isActive(true)
                 .isDeleted(false)
@@ -70,6 +73,7 @@ public class AcquisitionTypeMapper implements ResponseMapper<AcquisitionType, Ac
                 .name(request.getName() != null ? request.getName() : existing.getName())
                 .description(request.getDescription() != null ? request.getDescription() : existing.getDescription())
                 .userOid(existing.getUserOid())
+                .companyOid(existing.getCompanyOid())
                 .isActive(request.getIsActive() != null ? request.getIsActive() : existing.getIsActive())
                 .isDeleted(existing.getIsDeleted())
                 .affectsInventory(request.getAffectsInventory() != null ? request.getAffectsInventory() : existing.getAffectsInventory())

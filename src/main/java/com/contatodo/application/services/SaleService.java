@@ -4,14 +4,17 @@ import com.contatodo.application.dto.request.CreateSaleRequest;
 import com.contatodo.application.dto.response.SaleResponse;
 import com.contatodo.application.mapper.SaleMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
+import com.contatodo.application.port.CompanyContextProvider;
 import com.contatodo.application.validators.SaleValidator;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.entities.Sale;
 import com.contatodo.domain.entities.User;
+import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.model.Money;
 import com.contatodo.domain.repositories.ProductRepository;
 import com.contatodo.domain.repositories.SaleRepository;
 import com.contatodo.domain.repositories.UserRepository;
+import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.SaleConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.shared.utils.DateUtils;
@@ -34,6 +37,7 @@ public class SaleService {
     private final SaleValidator saleValidator;
     private final SaleMapper saleMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
+    private final CompanyContextProvider companyContextProvider;
 
     /**
      * Creates a sale service.
@@ -44,6 +48,7 @@ public class SaleService {
      * @param saleValidator Sale validator.
      * @param saleMapper Sale mapper.
      * @param authenticatedUserProvider Authenticated user provider.
+     * @param companyContextProvider Company context provider.
      */
     public SaleService(
             SaleRepository saleRepository,
@@ -51,7 +56,8 @@ public class SaleService {
             UserRepository userRepository,
             SaleValidator saleValidator,
             SaleMapper saleMapper,
-            AuthenticatedUserProvider authenticatedUserProvider
+            AuthenticatedUserProvider authenticatedUserProvider,
+            CompanyContextProvider companyContextProvider
     ) {
         this.saleRepository = saleRepository;
         this.productRepository = productRepository;
@@ -59,6 +65,7 @@ public class SaleService {
         this.saleValidator = saleValidator;
         this.saleMapper = saleMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
+        this.companyContextProvider = companyContextProvider;
     }
 
     /**
@@ -94,7 +101,8 @@ public class SaleService {
                 request.getTotalSalePrice(),
                 unitRealCost,
                 unitPublicCost,
-                request.getNotes()
+                request.getNotes(),
+                resolveCompanyOid()
         );
 
         productRepository.save(updatedProduct);
@@ -144,5 +152,18 @@ public class SaleService {
                 .map(Sale::getSaleNumber)
                 .max(Long::compareTo);
         return highestSaleNumber.map(number -> number + 1).orElse(1L);
+    }
+
+    /**
+     * Resolves the owning company for a non-root write.
+     *
+     * @return Company identifier, or {@code null} for the root user.
+     */
+    private CompanyOid resolveCompanyOid() {
+        if (companyContextProvider.isRoot()) {
+            return null;
+        }
+        return companyContextProvider.currentCompanyOid()
+                .orElseThrow(() -> new ResourceNotFoundException(AuthConstants.COMPANY_CONTEXT_REQUIRED));
     }
 }

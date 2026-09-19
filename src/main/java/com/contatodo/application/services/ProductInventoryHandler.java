@@ -4,6 +4,7 @@ import com.contatodo.application.dto.request.CreateAcquisitionRequest;
 import com.contatodo.domain.entities.Acquisition;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.entities.ProductCostHistory;
+import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.model.Money;
 import com.contatodo.domain.repositories.AcquisitionRepository;
 import com.contatodo.domain.repositories.ProductCostHistoryRepository;
@@ -64,15 +65,16 @@ public class ProductInventoryHandler {
      *
      * @param request Create acquisition request.
      * @param userOid Owner of the product.
+     * @param companyOid Owning company identifier (null for root).
      * @return Outcome describing the affected product.
      */
-    public InventoryOutcome applyToInventory(CreateAcquisitionRequest request, String userOid) {
+    public InventoryOutcome applyToInventory(CreateAcquisitionRequest request, String userOid, CompanyOid companyOid) {
         Product existingProduct = productRepository
                 .findByNameAndUserOid(request.getProductName(), userOid)
                 .orElse(null);
 
         if (existingProduct == null) {
-            return createProductFromAcquisition(request, userOid);
+            return createProductFromAcquisition(request, userOid, companyOid);
         }
         return replenishExistingProduct(existingProduct, request);
     }
@@ -121,11 +123,12 @@ public class ProductInventoryHandler {
      *
      * @param request Create acquisition request.
      * @param userOid Owner of the product.
+     * @param companyOid Owning company identifier (null for root).
      * @return Outcome describing the created product.
      */
-    private InventoryOutcome createProductFromAcquisition(CreateAcquisitionRequest request, String userOid) {
+    private InventoryOutcome createProductFromAcquisition(CreateAcquisitionRequest request, String userOid, CompanyOid companyOid) {
         Double averageUnitRealCost = Money.of(request.getRealCost()).divide(request.getQuantity()).toDouble();
-        Product savedProduct = productRepository.save(buildProduct(request, userOid, averageUnitRealCost));
+        Product savedProduct = productRepository.save(buildProduct(request, userOid, companyOid, averageUnitRealCost));
         return new InventoryOutcome(savedProduct.getId(), savedProduct.getName(), averageUnitRealCost);
     }
 
@@ -157,10 +160,11 @@ public class ProductInventoryHandler {
      *
      * @param request The acquisition request containing product information.
      * @param userOid The OID of the user creating the product.
+     * @param companyOid Owning company identifier (null for root).
      * @param averageUnitRealCost Unit real cost derived from the acquisition.
      * @return A new product entity ready to persist.
      */
-    private Product buildProduct(CreateAcquisitionRequest request, String userOid, Double averageUnitRealCost) {
+    private Product buildProduct(CreateAcquisitionRequest request, String userOid, CompanyOid companyOid, Double averageUnitRealCost) {
         LocalDateTime now = LocalDateTime.now();
         return Product.builder()
                 .name(request.getProductName())
@@ -172,6 +176,7 @@ public class ProductInventoryHandler {
                 .unitPublicCost(request.getUnitPublicCost())
                 .isActive(true)
                 .userOid(userOid)
+                .companyOid(companyOid)
                 .createdDate(now)
                 .updatedDate(now)
                 .build();
@@ -202,6 +207,7 @@ public class ProductInventoryHandler {
                 .unitPublicCostAtPurchase(request.getUnitPublicCost())
                 .acquisitionDate(savedAcquisition.getAcquisitionDate())
                 .userOid(savedAcquisition.getUserOid())
+                .companyOid(savedAcquisition.getCompanyOid())
                 .createdDate(LocalDateTime.now())
                 .build();
     }
