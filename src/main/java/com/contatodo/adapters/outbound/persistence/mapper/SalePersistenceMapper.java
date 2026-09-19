@@ -2,6 +2,7 @@ package com.contatodo.adapters.outbound.persistence.mapper;
 
 import com.contatodo.adapters.outbound.persistence.document.SaleDocument;
 import com.contatodo.domain.entities.Sale;
+import com.contatodo.domain.model.CompanyOid;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -25,6 +26,9 @@ public class SalePersistenceMapper implements PersistenceMapper<SaleDocument, Sa
         document.setProductOid(sale.getProductOid());
         document.setProductName(sale.getProductName());
         document.setUserOid(sale.getUserOid());
+        document.setCompanyOid(sale.getCompanyOid() != null
+                ? sale.getCompanyOid().value()
+                : null);
         document.setQuantity(sale.getQuantity());
         document.setTotalCost(sale.getTotalCost());
         document.setOriginalTotalPrice(sale.getOriginalTotalPrice());
@@ -50,6 +54,9 @@ public class SalePersistenceMapper implements PersistenceMapper<SaleDocument, Sa
                 .productOid(document.getProductOid())
                 .productName(document.getProductName())
                 .userOid(document.getUserOid())
+                .companyOid(document.getCompanyOid() != null
+                        ? CompanyOid.of(document.getCompanyOid())
+                        : null)
                 .quantity(document.getQuantity())
                 .totalCost(document.getTotalCost())
                 .originalTotalPrice(document.getOriginalTotalPrice())

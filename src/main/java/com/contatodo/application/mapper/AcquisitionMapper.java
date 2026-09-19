@@ -3,6 +3,7 @@ package com.contatodo.application.mapper;
 import com.contatodo.application.dto.request.CreateAcquisitionRequest;
 import com.contatodo.application.dto.response.AcquisitionResponse;
 import com.contatodo.domain.entities.Acquisition;
+import com.contatodo.domain.model.CompanyOid;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -21,9 +22,10 @@ public class AcquisitionMapper {
      * @param productOid Product OID.
      * @param userOid User OID.
      * @param unitRealCost Calculated unit real cost.
+     * @param companyOid Owning company identifier (null for root).
      * @return Acquisition entity.
      */
-    public Acquisition toEntity(CreateAcquisitionRequest request, String productOid, String userOid, Double unitRealCost) {
+    public Acquisition toEntity(CreateAcquisitionRequest request, String productOid, String userOid, Double unitRealCost, CompanyOid companyOid) {
         LocalDateTime now = LocalDateTime.now();
         return Acquisition.builder()
                 .acquisitionTypeOid(request.getAcquisitionTypeOid())
@@ -38,6 +40,7 @@ public class AcquisitionMapper {
                 .invoiceNumber(request.getInvoiceNumber())
                 .observations(request.getObservations())
                 .userOid(userOid)
+                .companyOid(companyOid)
                 .acquisitionDate(now)
                 .isDeleted(false)
                 .createdDate(now)

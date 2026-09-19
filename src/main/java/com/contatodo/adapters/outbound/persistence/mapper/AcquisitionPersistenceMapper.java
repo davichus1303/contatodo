@@ -2,6 +2,7 @@ package com.contatodo.adapters.outbound.persistence.mapper;
 
 import com.contatodo.adapters.outbound.persistence.document.AcquisitionDocument;
 import com.contatodo.domain.entities.Acquisition;
+import com.contatodo.domain.model.CompanyOid;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -35,6 +36,9 @@ public class AcquisitionPersistenceMapper implements PersistenceMapper<Acquisiti
         document.setAcquisitionDate(acquisition.getAcquisitionDate());
         document.setObservations(acquisition.getObservations());
         document.setUserOid(acquisition.getUserOid());
+        document.setCompanyOid(acquisition.getCompanyOid() != null
+                ? acquisition.getCompanyOid().value()
+                : null);
         document.setIsDeleted(acquisition.getIsDeleted());
         document.setCreatedDate(acquisition.getCreatedDate());
         document.setUpdatedDate(acquisition.getUpdatedDate());
@@ -63,6 +67,9 @@ public class AcquisitionPersistenceMapper implements PersistenceMapper<Acquisiti
                 .acquisitionDate(document.getAcquisitionDate())
                 .observations(document.getObservations())
                 .userOid(document.getUserOid())
+                .companyOid(document.getCompanyOid() != null
+                        ? CompanyOid.of(document.getCompanyOid())
+                        : null)
                 .isDeleted(document.getIsDeleted())
                 .createdDate(document.getCreatedDate())
                 .updatedDate(document.getUpdatedDate())

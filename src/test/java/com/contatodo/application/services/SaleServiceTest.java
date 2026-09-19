@@ -4,6 +4,7 @@ import com.contatodo.application.dto.request.CreateSaleRequest;
 import com.contatodo.application.dto.response.SaleResponse;
 import com.contatodo.application.mapper.SaleMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
+import com.contatodo.application.port.CompanyContextProvider;
 import com.contatodo.application.validators.SaleValidator;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.entities.User;
@@ -52,13 +53,16 @@ class SaleServiceTest {
     @Mock
     private AuthenticatedUserProvider authenticatedUserProvider;
 
+    @Mock
+    private CompanyContextProvider companyContextProvider;
+
     private SaleService saleService;
 
     @BeforeEach
     void setUp() {
         saleService = new SaleService(
                 saleRepository, productRepository, userRepository,
-                saleValidator, saleMapper, authenticatedUserProvider
+                saleValidator, saleMapper, authenticatedUserProvider, companyContextProvider
         );
     }
 
@@ -118,7 +122,8 @@ class SaleServiceTest {
     void createSalePlacesSaleAndDecreasesStock() {
         stubAuthenticatedContext();
         when(productRepository.findById("product-1")).thenReturn(Optional.of(productWithStock(5)));
-        when(saleRepository.findByUserOidAndSaleDateBetween(any(), any(), any())).thenReturn(java.util.List.of());
+        when(companyContextProvider.isRoot()).thenReturn(true);
+        when(saleRepository.findBySaleDateBetween(any(), any())).thenReturn(java.util.List.of());
         when(saleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         SaleResponse expected = new SaleResponse();
         when(saleMapper.toResponse(any())).thenReturn(expected);

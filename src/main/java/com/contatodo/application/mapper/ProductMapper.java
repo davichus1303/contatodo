@@ -4,6 +4,7 @@ import com.contatodo.application.dto.request.CreateProductRequest;
 import com.contatodo.application.dto.request.UpdateProductRequest;
 import com.contatodo.application.dto.response.ProductResponse;
 import com.contatodo.domain.entities.Product;
+import com.contatodo.domain.model.CompanyOid;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -21,9 +22,10 @@ public class ProductMapper implements ResponseMapper<Product, ProductResponse> {
      * @param request Create product request.
      * @param code Generated product code.
      * @param userOid Owning user identifier.
+     * @param companyOid Owning company identifier (null for root).
      * @return Product entity.
      */
-    public Product toEntity(CreateProductRequest request, String code, String userOid) {
+    public Product toEntity(CreateProductRequest request, String code, String userOid, CompanyOid companyOid) {
         LocalDateTime now = LocalDateTime.now();
         return Product.builder()
                 .name(request.getName())
@@ -36,6 +38,7 @@ public class ProductMapper implements ResponseMapper<Product, ProductResponse> {
                 .urlPhoto(request.getUrlPhoto())
                 .isActive(request.getIsActive() != null ? request.getIsActive() : true)
                 .userOid(userOid)
+                .companyOid(companyOid)
                 .createdDate(now)
                 .updatedDate(now)
                 .build();
@@ -61,6 +64,7 @@ public class ProductMapper implements ResponseMapper<Product, ProductResponse> {
                 .urlPhoto(request.getUrlPhoto() != null ? request.getUrlPhoto() : existing.getUrlPhoto())
                 .isActive(request.getIsActive() != null ? request.getIsActive() : existing.getIsActive())
                 .userOid(existing.getUserOid())
+                .companyOid(existing.getCompanyOid())
                 .createdDate(existing.getCreatedDate())
                 .updatedDate(now)
                 .build();

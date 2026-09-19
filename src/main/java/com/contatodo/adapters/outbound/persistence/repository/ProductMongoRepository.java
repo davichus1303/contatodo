@@ -3,51 +3,8 @@ package com.contatodo.adapters.outbound.persistence.repository;
 import com.contatodo.adapters.outbound.persistence.document.ProductDocument;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
-import java.util.List;
-import java.util.Optional;
-
 /**
  * Spring Data MongoDB repository for products.
  */
 public interface ProductMongoRepository extends MongoRepository<ProductDocument, String> {
-
-    /**
-     * Finds a product by code.
-     *
-     * @param code Product code.
-     * @return Optional product document.
-     */
-    Optional<ProductDocument> findByCode(String code);
-
-    /**
-     * Finds products by name.
-     *
-     * @param name Product name.
-     * @return List of product documents.
-     */
-    List<ProductDocument> findByName(String name);
-
-    /**
-     * Finds the product with the highest code.
-     *
-     * @return Optional product document.
-     */
-    Optional<ProductDocument> findTopByOrderByCodeDesc();
-
-    /**
-     * Finds products with stock greater than specified value.
-     *
-     * @param stock Stock threshold.
-     * @return List of product documents.
-     */
-    List<ProductDocument> findByStockGreaterThan(Integer stock);
-
-    /**
-     * Finds a product by name and user OID.
-     *
-     * @param name Product name.
-     * @param userOid User OID.
-     * @return Optional product document.
-     */
-    Optional<ProductDocument> findByNameAndUserOidAndIsActiveTrue(String name, String userOid);
 }

@@ -64,11 +64,10 @@ public interface ProductRepository {
     List<Product> findByStockGreaterThan(Integer stock);
 
     /**
-     * Finds a product by name and user OID.
+     * Finds an active product by name.
      *
      * @param name Product name.
-     * @param userOid User OID.
      * @return Optional product.
      */
-    Optional<Product> findByNameAndUserOid(String name, String userOid);
+    Optional<Product> findByNameAndIsActiveTrue(String name);
 }

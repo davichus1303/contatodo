@@ -11,13 +11,16 @@ import com.contatodo.application.dto.response.UserResponse;
 import com.contatodo.application.mapper.CompanyMapper;
 import com.contatodo.application.mapper.RoleMapper;
 import com.contatodo.application.mapper.UserMapper;
+import com.contatodo.application.port.CompanyContextProvider;
 import com.contatodo.application.port.TokenProvider;
 import com.contatodo.application.validators.UserValidator;
 import com.contatodo.domain.entities.Role;
 import com.contatodo.domain.entities.User;
+import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.domain.repositories.RoleRepository;
 import com.contatodo.domain.repositories.UserRepository;
+import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.UserConstants;
 import com.contatodo.shared.exceptions.AuthenticationException;
 import com.contatodo.shared.exceptions.UserAlreadyExistsException;
@@ -45,6 +48,7 @@ public class UserService {
     private final CompanyMapper companyMapper;
     private final PasswordEncoder passwordEncoder;
     private final TokenProvider tokenProvider;
+    private final CompanyContextProvider companyContextProvider;
 
     /**
      * Creates a user service.
@@ -58,6 +62,7 @@ public class UserService {
      * @param companyMapper Company mapper.
      * @param passwordEncoder Password encoder.
      * @param tokenProvider Security token provider.
+     * @param companyContextProvider Company context provider.
      */
     public UserService(
             UserRepository userRepository,
@@ -68,7 +73,8 @@ public class UserService {
             RoleMapper roleMapper,
             CompanyMapper companyMapper,
             PasswordEncoder passwordEncoder,
-            TokenProvider tokenProvider
+            TokenProvider tokenProvider,
+            CompanyContextProvider companyContextProvider
     ) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -79,6 +85,7 @@ public class UserService {
         this.companyMapper = companyMapper;
         this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
+        this.companyContextProvider = companyContextProvider;
     }
 
     /**
@@ -101,9 +108,11 @@ public class UserService {
         }
 
         // Validate companyOid if provided
-        if (request.getCompanyOid() != null && !request.getCompanyOid().isEmpty()) {
-            if (!companyRepository.findById(request.getCompanyOid()).isPresent()) {
-                throw new ResourceNotFoundException("Company not found with id: " + request.getCompanyOid());
+        String effectiveCompanyOid = resolveWritableCompanyOid(request.getCompanyOid());
+        request.setCompanyOid(effectiveCompanyOid);
+        if (effectiveCompanyOid != null && !effectiveCompanyOid.isEmpty()) {
+            if (!companyRepository.findById(effectiveCompanyOid).isPresent()) {
+                throw new ResourceNotFoundException("Company not found with id: " + effectiveCompanyOid);
             }
         }
 
@@ -152,9 +161,11 @@ public class UserService {
         }
 
         // Validate companyOid if provided
-        if (request.getCompanyOid() != null && !request.getCompanyOid().isEmpty()) {
-            if (!companyRepository.findById(request.getCompanyOid()).isPresent()) {
-                throw new ResourceNotFoundException("Company not found with id: " + request.getCompanyOid());
+        String effectiveCompanyOid = resolveWritableCompanyOid(request.getCompanyOid());
+        request.setCompanyOid(effectiveCompanyOid);
+        if (effectiveCompanyOid != null && !effectiveCompanyOid.isEmpty()) {
+            if (!companyRepository.findById(effectiveCompanyOid).isPresent()) {
+                throw new ResourceNotFoundException("Company not found with id: " + effectiveCompanyOid);
             }
         }
 
@@ -180,16 +191,36 @@ public class UserService {
     }
 
     /**
-     * Retrieves all active users, resolving only roleId and companyOid.
-     *
-     * <p>Returns minimal user data without nested role/company objects.
-     * Full role/company data is only available in login/single-user responses.</p>
+     * Retrieves all active users with their role and company resolved.
      *
      * @return List of user responses.
      */
     public List<UserResponse> getAllUsers() {
         List<User> users = userRepository.findAllActive();
-        return userMapper.toListResponseList(users);
+        Map<String, RoleResponse> roles = resolveRoles(users);
+        Map<String, CompanyResponse> companies = resolveCompanies(users);
+        return userMapper.toResponseList(users, roles, companies);
+    }
+
+    /**
+     * Resolves the company to persist for a user write.
+     *
+     * <p>The company selected in the request is respected so an operator can
+     * assign any company. When the request carries no company, the company of
+     * the current session is used as a sensible default; without an
+     * authenticated company context (public registration) the requested value
+     * is kept.</p>
+     *
+     * @param requestedCompanyOid Company requested in the payload.
+     * @return Company identifier to persist.
+     */
+    private String resolveWritableCompanyOid(String requestedCompanyOid) {
+        if (requestedCompanyOid != null && !requestedCompanyOid.isBlank()) {
+            return requestedCompanyOid;
+        }
+        return companyContextProvider.currentCompanyOid()
+                .map(CompanyOid::value)
+                .orElse(requestedCompanyOid);
     }
 
     /**
@@ -282,9 +313,13 @@ public class UserService {
         if (roleResponse != null) {
             claims.put("roleId", roleResponse.getId());
             claims.put("roleName", roleResponse.getName());
+            claims.put(AuthConstants.JWT_CLAIM_ROLE,
+                    AuthConstants.ROOT_ROLE_NAME.equalsIgnoreCase(roleResponse.getName())
+                            ? AuthConstants.ROOT_ROLE_CLAIM
+                            : roleResponse.getName());
         }
         if (user.getCompanyOid() != null) {
-            claims.put("companyOid", user.getCompanyOid());
+            claims.put(AuthConstants.JWT_CLAIM_COMPANY_OID, user.getCompanyOid());
         }
 
         Map<String, CompanyResponse> companies = resolveCompanies(List.of(user));

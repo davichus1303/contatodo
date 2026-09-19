@@ -5,11 +5,14 @@ import com.contatodo.application.dto.request.UpdateProductRequest;
 import com.contatodo.application.dto.response.ProductResponse;
 import com.contatodo.application.mapper.ProductMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
+import com.contatodo.application.port.CompanyContextProvider;
 import com.contatodo.application.validators.ProductValidator;
 import com.contatodo.domain.entities.Product;
+import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.domain.entities.User;
 import com.contatodo.domain.repositories.ProductRepository;
+import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.ProductConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
@@ -27,6 +30,7 @@ public class ProductService {
     private final ProductValidator productValidator;
     private final ProductMapper productMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
+    private final CompanyContextProvider companyContextProvider;
 
     /**
      * Creates a product service.
@@ -36,19 +40,22 @@ public class ProductService {
      * @param productValidator Product validator.
      * @param productMapper Product mapper.
      * @param authenticatedUserProvider Authenticated user provider.
+     * @param companyContextProvider Company context provider.
      */
     public ProductService(
             ProductRepository productRepository,
             UserRepository userRepository,
             ProductValidator productValidator,
             ProductMapper productMapper,
-            AuthenticatedUserProvider authenticatedUserProvider
+            AuthenticatedUserProvider authenticatedUserProvider,
+            CompanyContextProvider companyContextProvider
     ) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.productValidator = productValidator;
         this.productMapper = productMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
+        this.companyContextProvider = companyContextProvider;
     }
 
     /**
@@ -66,7 +73,8 @@ public class ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException(ProductConstants.USER_NOT_FOUND));
 
         String nextCode = generateNextCode();
-        Product product = productMapper.toEntity(request, nextCode, userOid);
+        CompanyOid companyOid = resolveCompanyOid();
+        Product product = productMapper.toEntity(request, nextCode, userOid, companyOid);
 
         Product savedProduct = productRepository.save(product);
         return productMapper.toResponse(savedProduct);
@@ -145,6 +153,19 @@ public class ProductService {
                     }
                 })
                 .orElse("1");
+    }
+
+    /**
+     * Resolves the owning company for a non-root write.
+     *
+     * @return Company identifier, or {@code null} for the root user.
+     */
+    private CompanyOid resolveCompanyOid() {
+        if (companyContextProvider.isRoot()) {
+            return null;
+        }
+        return companyContextProvider.currentCompanyOid()
+                .orElseThrow(() -> new ResourceNotFoundException(AuthConstants.COMPANY_CONTEXT_REQUIRED));
     }
 
 }
