@@ -24,6 +24,7 @@ public final class User {
     private final String name;
     private final String phoneNumber;
     private final String roleId;
+    private final String companyOid;
     private final String createdByUserOid;
     private final boolean isActive;
     private final boolean isDelete;
@@ -45,6 +46,7 @@ public final class User {
         this.name = builder.name;
         this.phoneNumber = builder.phoneNumber;
         this.roleId = builder.roleId;
+        this.companyOid = builder.companyOid;
         this.createdByUserOid = builder.createdByUserOid;
         this.isActive = builder.isActive;
         this.isDelete = builder.isDelete;
@@ -89,6 +91,10 @@ public final class User {
 
     public String getRoleId() {
         return roleId;
+    }
+
+    public String getCompanyOid() {
+        return companyOid;
     }
 
     public String getCreatedByUserOid() {
@@ -146,6 +152,7 @@ public final class User {
                 .name(name)
                 .phoneNumber(phoneNumber)
                 .roleId(roleId)
+                .companyOid(companyOid)
                 .createdByUserOid(createdByUserOid)
                 .isActive(isActive)
                 .isDelete(isDelete)
@@ -167,6 +174,7 @@ public final class User {
         private String name;
         private String phoneNumber;
         private String roleId;
+        private String companyOid;
         private String createdByUserOid;
         private boolean isActive = true;
         private boolean isDelete;
@@ -249,6 +257,17 @@ public final class User {
          */
         public Builder roleId(String roleId) {
             this.roleId = roleId;
+            return this;
+        }
+
+        /**
+         * Sets the optional company identifier.
+         *
+         * @param companyOid Company identifier.
+         * @return This builder.
+         */
+        public Builder companyOid(String companyOid) {
+            this.companyOid = companyOid;
             return this;
         }
 

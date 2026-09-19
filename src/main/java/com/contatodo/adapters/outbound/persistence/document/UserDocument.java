@@ -19,6 +19,7 @@ public class UserDocument {
     private String name;
     private String phoneNumber;
     private String roleId;
+    private String companyOid;
     private String createdByUserOid;
     private boolean isActive;
     private boolean isDeleted;
@@ -81,6 +82,14 @@ public class UserDocument {
 
     public void setRoleId(String roleId) {
         this.roleId = roleId;
+    }
+
+    public String getCompanyOid() {
+        return companyOid;
+    }
+
+    public void setCompanyOid(String companyOid) {
+        this.companyOid = companyOid;
     }
 
     public String getCreatedByUserOid() {

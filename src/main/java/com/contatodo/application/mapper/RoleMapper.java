@@ -5,18 +5,33 @@ import com.contatodo.application.dto.request.RolePermissionRequest;
 import com.contatodo.application.dto.request.UpdateRoleRequest;
 import com.contatodo.application.dto.response.RolePermissionResponse;
 import com.contatodo.application.dto.response.RoleResponse;
+import com.contatodo.domain.entities.Module;
 import com.contatodo.domain.entities.Role;
 import com.contatodo.domain.entities.RolePermission;
+import com.contatodo.domain.repositories.ModuleRepository;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Mapper for role entities and DTOs.
  */
 @Component
 public class RoleMapper implements ResponseMapper<Role, RoleResponse> {
+
+    private final ModuleRepository moduleRepository;
+
+    /**
+     * Creates a role mapper.
+     *
+     * @param moduleRepository Module repository port.
+     */
+    public RoleMapper(ModuleRepository moduleRepository) {
+        this.moduleRepository = moduleRepository;
+    }
 
     /**
      * Maps a create request to a domain entity.
@@ -120,21 +135,36 @@ public class RoleMapper implements ResponseMapper<Role, RoleResponse> {
      * @return Response permissions.
      */
     private List<RolePermissionResponse> toPermissionResponses(List<RolePermission> permissions) {
+        if (permissions == null || permissions.isEmpty()) {
+            return List.of();
+        }
+
+        // Fetch module names in bulk
+        Map<String, String> moduleNames = moduleRepository.findAllById(
+                permissions.stream()
+                        .map(RolePermission::getModuleOid)
+                        .distinct()
+                        .toList()
+        ).stream()
+                .collect(Collectors.toMap(Module::getId, Module::getName));
+
         return permissions.stream()
-                .map(RoleMapper::toPermissionResponse)
+                .map(permission -> toPermissionResponse(permission, moduleNames.get(permission.getModuleOid())))
                 .toList();
     }
 
     /**
-     * Maps a single domain permission to its response form.
+     * Maps a single domain permission to its response form with module name.
      *
      * @param permission Domain permission.
+     * @param moduleName Module name (may be null).
      * @return Response permission.
      */
-    private static RolePermissionResponse toPermissionResponse(RolePermission permission) {
+    private static RolePermissionResponse toPermissionResponse(RolePermission permission, String moduleName) {
         RolePermission.PermissionDetails flags = permission.getPermissions();
         return new RolePermissionResponse(
                 permission.getModuleOid(),
+                moduleName,
                 new RolePermissionResponse.Permissions(
                         flags != null ? flags.getCreate() : null,
                         flags != null ? flags.getUpdate() : null,

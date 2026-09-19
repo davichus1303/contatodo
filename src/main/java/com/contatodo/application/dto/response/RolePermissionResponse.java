@@ -6,6 +6,7 @@ package com.contatodo.application.dto.response;
 public class RolePermissionResponse {
 
     private String moduleOid;
+    private String moduleName;
     private Permissions permissions;
 
     /**
@@ -16,6 +17,19 @@ public class RolePermissionResponse {
 
     /**
      * Creates a response with values.
+     *
+     * @param moduleOid Module identifier.
+     * @param moduleName Module name.
+     * @param permissions Permission flags.
+     */
+    public RolePermissionResponse(String moduleOid, String moduleName, Permissions permissions) {
+        this.moduleOid = moduleOid;
+        this.moduleName = moduleName;
+        this.permissions = permissions;
+    }
+
+    /**
+     * Creates a response with values (backwards compatible - moduleName will be null).
      *
      * @param moduleOid Module identifier.
      * @param permissions Permission flags.
@@ -31,6 +45,14 @@ public class RolePermissionResponse {
 
     public void setModuleOid(String moduleOid) {
         this.moduleOid = moduleOid;
+    }
+
+    public String getModuleName() {
+        return moduleName;
+    }
+
+    public void setModuleName(String moduleName) {
+        this.moduleName = moduleName;
     }
 
     public Permissions getPermissions() {

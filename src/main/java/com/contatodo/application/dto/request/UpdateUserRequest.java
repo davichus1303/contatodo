@@ -12,6 +12,7 @@ public class UpdateUserRequest {
     private String phoneNumber;
     private String roleId;
     private Boolean isActive;
+    private String companyOid;
 
     public String getUserName() {
         return userName;
@@ -67,5 +68,13 @@ public class UpdateUserRequest {
 
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
+    }
+
+    public String getCompanyOid() {
+        return companyOid;
+    }
+
+    public void setCompanyOid(String companyOid) {
+        this.companyOid = companyOid;
     }
 }
