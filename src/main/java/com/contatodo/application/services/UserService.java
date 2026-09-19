@@ -308,7 +308,7 @@ public class UserService {
         Map<String, RoleResponse> roles = resolveRoles(List.of(user));
         RoleResponse roleResponse = user.getRoleId() != null ? roles.get(user.getRoleId()) : null;
 
-        // Build token claims with minimal role info (permissions fetched from API when needed)
+        // Build token claims with role info and permissions
         Map<String, Object> claims = new HashMap<>();
         if (roleResponse != null) {
             claims.put("roleId", roleResponse.getId());
@@ -317,6 +317,10 @@ public class UserService {
                     AuthConstants.ROOT_ROLE_NAME.equalsIgnoreCase(roleResponse.getName())
                             ? AuthConstants.ROOT_ROLE_CLAIM
                             : roleResponse.getName());
+
+            if (roleResponse.getPermissions() != null) {
+                claims.put("permissionOfRole", roleResponse.getPermissions());
+            }
         }
         if (user.getCompanyOid() != null) {
             claims.put(AuthConstants.JWT_CLAIM_COMPANY_OID, user.getCompanyOid());
