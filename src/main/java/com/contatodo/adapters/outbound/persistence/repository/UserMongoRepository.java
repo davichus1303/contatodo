@@ -3,13 +3,11 @@ package com.contatodo.adapters.outbound.persistence.repository;
 import com.contatodo.adapters.outbound.persistence.document.UserDocument;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
  * Spring Data MongoDB repository for users.
- *
- * <p>Only the unscoped lookups needed for authentication live here; all
- * company-scoped reads are implemented in {@code UserRepositoryAdapter}.</p>
  */
 public interface UserMongoRepository extends MongoRepository<UserDocument, String> {
 
@@ -20,6 +18,23 @@ public interface UserMongoRepository extends MongoRepository<UserDocument, Strin
      * @return Optional user document.
      */
     Optional<UserDocument> findByEmail(String email);
+
+    /**
+     * Finds all users that are not deleted.
+     *
+     * @param isDeleted Delete flag.
+     * @return List of user documents.
+     */
+    List<UserDocument> findByIsDeleted(boolean isDeleted);
+
+    /**
+     * Finds a user by email and delete status.
+     *
+     * @param email User email.
+     * @param isDeleted Delete flag.
+     * @return Optional user document.
+     */
+    Optional<UserDocument> findByEmailAndIsDeleted(String email, boolean isDeleted);
 
     /**
      * Checks if a user exists by email.

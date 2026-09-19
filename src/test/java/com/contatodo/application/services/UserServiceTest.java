@@ -44,7 +44,6 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 /**
@@ -262,11 +261,31 @@ class UserServiceTest {
     }
 
     @Test
-    void createUserAsCompanyUserForcesSessionCompany() {
+    void createUserRespectsRequestedCompanyEvenForCompanySession() {
         CreateUserRequest request = createRequest("new@example.com");
         request.setCompanyOid("other-company");
         when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
-        when(companyContextProvider.isRoot()).thenReturn(false);
+        when(companyRepository.findById("other-company")).thenReturn(Optional.of(
+                Company.builder().id("other-company").name("Other Company").build()
+        ));
+        when(passwordEncoder.encode("secret123")).thenReturn("hashed-value");
+        when(userRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userMapper.toEntity(any(), any(), any(), any(), anyBoolean())).thenReturn(activeUser());
+        when(userMapper.toResponse(any())).thenReturn(new UserResponse());
+
+        userService.createUser(request, Optional.of("david@example.com"));
+
+        ArgumentCaptor<CreateUserRequest> requestCaptor = ArgumentCaptor.forClass(CreateUserRequest.class);
+        verify(userMapper).toEntity(requestCaptor.capture(), any(), any(), any(), anyBoolean());
+        assertEquals("other-company", requestCaptor.getValue().getCompanyOid());
+    }
+
+    @Test
+    void createUserFallsBackToSessionCompanyWhenNoneRequested() {
+        CreateUserRequest request = createRequest("new@example.com");
+        when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(userRepository.findActiveUserByEmail("david@example.com", false))
+                .thenReturn(Optional.of(activeUser()));
         when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.of(CompanyOid.of("company-1")));
         when(companyRepository.findById("company-1")).thenReturn(Optional.of(
                 Company.builder().id("company-1").name("Test Company").build()
@@ -276,7 +295,7 @@ class UserServiceTest {
         when(userMapper.toEntity(any(), any(), any(), any(), anyBoolean())).thenReturn(activeUser());
         when(userMapper.toResponse(any())).thenReturn(new UserResponse());
 
-        userService.createUser(request, Optional.empty());
+        userService.createUser(request, Optional.of("david@example.com"));
 
         ArgumentCaptor<CreateUserRequest> requestCaptor = ArgumentCaptor.forClass(CreateUserRequest.class);
         verify(userMapper).toEntity(requestCaptor.capture(), any(), any(), any(), anyBoolean());
@@ -288,7 +307,6 @@ class UserServiceTest {
         CreateUserRequest request = createRequest("new@example.com");
         request.setCompanyOid("company-2");
         when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
-        when(companyContextProvider.isRoot()).thenReturn(true);
         when(companyRepository.findById("company-2")).thenReturn(Optional.of(
                 Company.builder().id("company-2").name("Test Company").build()
         ));
@@ -391,17 +409,22 @@ class UserServiceTest {
         assertEquals(UserConstants.USER_INACTIVE, exception.getMessage());
     }
 @Test
-    void getAllUsersReturnsMinimalUserDataWithoutRoleAndCompany() {
+    void getAllUsersResolvesRoleAndCompany() {
         User user = activeUserWithRoleAndCompany("role-1", "company-1");
 
         when(userRepository.findAllActive()).thenReturn(List.of(user));
-        when(userMapper.toListResponseList(anyList())).thenReturn(List.of(new UserResponse()));
+        when(roleRepository.findById("role-1")).thenReturn(Optional.of(role("role-1", "Admin")));
+        when(companyRepository.findById("company-1")).thenReturn(Optional.of(
+                Company.builder().id("company-1").name("VichoBox").build()
+        ));
+        when(userMapper.toResponseList(anyList(), anyMap(), anyMap())).thenReturn(List.of(new UserResponse()));
 
         List<UserResponse> response = userService.getAllUsers();
 
         assertEquals(1, response.size());
-        verify(userMapper).toListResponseList(anyList());
-        verifyNoInteractions(roleRepository, companyRepository, roleMapper, companyMapper);
+        verify(roleRepository).findById("role-1");
+        verify(companyRepository).findById("company-1");
+        verify(userMapper).toResponseList(anyList(), anyMap(), anyMap());
     }
 
     @Test
@@ -409,12 +432,13 @@ class UserServiceTest {
         User user = activeUserWithRoleAndCompany("role-1", "company-1");
 
         when(userRepository.findAllActive()).thenReturn(List.of(user));
-        when(userMapper.toListResponseList(anyList())).thenReturn(List.of(new UserResponse()));
+        when(roleRepository.findById("role-1")).thenThrow(new RuntimeException("boom"));
+        when(userMapper.toResponseList(anyList(), anyMap(), anyMap())).thenReturn(List.of(new UserResponse()));
 
         List<UserResponse> response = userService.getAllUsers();
 
         assertEquals(1, response.size());
-        verifyNoInteractions(roleRepository, companyRepository);
+        verify(userMapper).toResponseList(anyList(), anyMap(), anyMap());
     }
 
     @Test
@@ -422,11 +446,12 @@ class UserServiceTest {
         User user = activeUserWithRoleAndCompany("role-1", "company-1");
 
         when(userRepository.findAllActive()).thenReturn(List.of(user));
-        when(userMapper.toListResponseList(anyList())).thenReturn(List.of(new UserResponse()));
+        when(companyRepository.findById("company-1")).thenThrow(new RuntimeException("boom"));
+        when(userMapper.toResponseList(anyList(), anyMap(), anyMap())).thenReturn(List.of(new UserResponse()));
 
         List<UserResponse> response = userService.getAllUsers();
 
         assertEquals(1, response.size());
-        verifyNoInteractions(roleRepository, companyRepository);
+        verify(userMapper).toResponseList(anyList(), anyMap(), anyMap());
     }
 }

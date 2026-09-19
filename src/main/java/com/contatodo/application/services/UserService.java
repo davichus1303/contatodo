@@ -191,31 +191,31 @@ public class UserService {
     }
 
     /**
-     * Retrieves all active users, resolving only roleId and companyOid.
-     *
-     * <p>Returns minimal user data without nested role/company objects.
-     * Full role/company data is only available in login/single-user responses.</p>
+     * Retrieves all active users with their role and company resolved.
      *
      * @return List of user responses.
      */
     public List<UserResponse> getAllUsers() {
         List<User> users = userRepository.findAllActive();
-        return userMapper.toListResponseList(users);
+        Map<String, RoleResponse> roles = resolveRoles(users);
+        Map<String, CompanyResponse> companies = resolveCompanies(users);
+        return userMapper.toResponseList(users, roles, companies);
     }
 
     /**
      * Resolves the company to persist for a user write.
      *
-     * <p>Root users keep the requested company. Any other authenticated user
-     * has its company forced to the session company to prevent cross-tenant
-     * assignments. When there is no authenticated company context (public
-     * registration) the requested value is kept.</p>
+     * <p>The company selected in the request is respected so an operator can
+     * assign any company. When the request carries no company, the company of
+     * the current session is used as a sensible default; without an
+     * authenticated company context (public registration) the requested value
+     * is kept.</p>
      *
      * @param requestedCompanyOid Company requested in the payload.
      * @return Company identifier to persist.
      */
     private String resolveWritableCompanyOid(String requestedCompanyOid) {
-        if (companyContextProvider.isRoot()) {
+        if (requestedCompanyOid != null && !requestedCompanyOid.isBlank()) {
             return requestedCompanyOid;
         }
         return companyContextProvider.currentCompanyOid()
