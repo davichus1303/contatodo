@@ -16,7 +16,6 @@ public class AcquisitionTypeDocument {
     private String name;
     private String description;
     private String userOid;
-    private String companyOid;
     private Boolean isActive;
     private Boolean isDeleted;
     private Boolean affectsInventory;
@@ -53,14 +52,6 @@ public class AcquisitionTypeDocument {
 
     public void setUserOid(String userOid) {
         this.userOid = userOid;
-    }
-
-    public String getCompanyOid() {
-        return companyOid;
-    }
-
-    public void setCompanyOid(String companyOid) {
-        this.companyOid = companyOid;
     }
 
     public Boolean getIsActive() {

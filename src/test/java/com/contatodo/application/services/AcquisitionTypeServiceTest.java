@@ -1,13 +1,10 @@
 package com.contatodo.application.services;
 
-import com.contatodo.application.dto.request.CreateAcquisitionTypeRequest;
 import com.contatodo.application.dto.response.AcquisitionTypeResponse;
 import com.contatodo.application.mapper.AcquisitionTypeMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
-import com.contatodo.application.port.CompanyContextProvider;
 import com.contatodo.application.validators.AcquisitionTypeValidator;
 import com.contatodo.domain.entities.AcquisitionType;
-import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.AcquisitionTypeRepository;
 import com.contatodo.shared.constants.AcquisitionTypeConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
@@ -22,8 +19,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -46,53 +41,14 @@ class AcquisitionTypeServiceTest {
     @Mock
     private AuthenticatedUserProvider authenticatedUserProvider;
 
-    @Mock
-    private CompanyContextProvider companyContextProvider;
-
     private AcquisitionTypeService service;
 
     @BeforeEach
     void setUp() {
         service = new AcquisitionTypeService(
                 acquisitionTypeRepository, acquisitionTypeValidator,
-                acquisitionTypeMapper, authenticatedUserProvider, companyContextProvider
+                acquisitionTypeMapper, authenticatedUserProvider
         );
-    }
-
-    @Test
-    void createAcquisitionTypeAssignsCompanyToNormalUser() {
-        when(companyContextProvider.isRoot()).thenReturn(false);
-        when(companyContextProvider.currentCompanyOid())
-                .thenReturn(Optional.of(CompanyOid.of("company-1")));
-        when(authenticatedUserProvider.getCurrentUserOid()).thenReturn("user-1");
-        when(acquisitionTypeRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(acquisitionTypeMapper.toResponse(any())).thenReturn(new AcquisitionTypeResponse());
-        AcquisitionType saved = AcquisitionType.builder()
-                .id("t-1")
-                .name("Compra")
-                .userOid("user-1")
-                .companyOid(CompanyOid.of("company-1"))
-                .isActive(true)
-                .isDeleted(false)
-                .affectsInventory(true)
-                .build();
-        when(acquisitionTypeRepository.save(any())).thenReturn(saved);
-
-        service.createAcquisitionType(new CreateAcquisitionTypeRequest());
-
-        verify(acquisitionTypeMapper).toEntity(any(), eq("user-1"), eq(CompanyOid.of("company-1")));
-    }
-
-    @Test
-    void createAcquisitionTypeAssignsNullCompanyToRoot() {
-        when(companyContextProvider.isRoot()).thenReturn(true);
-        when(authenticatedUserProvider.getCurrentUserOid()).thenReturn("user-1");
-        when(acquisitionTypeRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
-        when(acquisitionTypeMapper.toResponse(any())).thenReturn(new AcquisitionTypeResponse());
-
-        service.createAcquisitionType(new CreateAcquisitionTypeRequest());
-
-        verify(acquisitionTypeMapper).toEntity(any(), eq("user-1"), isNull());
     }
 
     private AcquisitionType activeType() {

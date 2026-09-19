@@ -73,7 +73,7 @@ class ProductInventoryHandlerTest {
 
     @Test
     void applyToInventoryCreatesProductWhenMissing() {
-        when(productRepository.findByNameAndUserOid("Cafe", "user-1")).thenReturn(Optional.empty());
+        when(productRepository.findByNameAndIsActiveTrue("Cafe")).thenReturn(Optional.empty());
         when(productRepository.findAll()).thenReturn(List.of());
         when(productRepository.save(any())).thenAnswer(invocation -> {
             Product toSave = invocation.getArgument(0);
@@ -108,7 +108,7 @@ class ProductInventoryHandlerTest {
 
     @Test
     void applyToInventoryReplenishesExistingProductWithWeightedAverage() {
-        when(productRepository.findByNameAndUserOid("Cafe", "user-1"))
+        when(productRepository.findByNameAndIsActiveTrue("Cafe"))
                 .thenReturn(Optional.of(existingProduct()));
         when(acquisitionRepository.findByProductOid("p-1")).thenReturn(List.of(
                 acquisition(40.0, 4)

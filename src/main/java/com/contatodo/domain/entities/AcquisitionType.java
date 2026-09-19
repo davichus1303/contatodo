@@ -1,6 +1,5 @@
 package com.contatodo.domain.entities;
 
-import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.shared.constants.ValidationConstants;
 import com.contatodo.shared.utils.EntityValidation;
 
@@ -18,7 +17,6 @@ public final class AcquisitionType {
     private final String name;
     private final String description;
     private final String userOid;
-    private final CompanyOid companyOid;
     private final Boolean isActive;
     private final Boolean isDeleted;
     private final Boolean affectsInventory;
@@ -35,7 +33,6 @@ public final class AcquisitionType {
         this.name = builder.name;
         this.description = builder.description;
         this.userOid = builder.userOid;
-        this.companyOid = builder.companyOid;
         this.isActive = builder.isActive;
         this.isDeleted = builder.isDeleted;
         this.affectsInventory = builder.affectsInventory;
@@ -91,10 +88,6 @@ public final class AcquisitionType {
         return userOid;
     }
 
-    public CompanyOid getCompanyOid() {
-        return companyOid;
-    }
-
     public Boolean getIsActive() {
         return isActive;
     }
@@ -126,7 +119,6 @@ public final class AcquisitionType {
                 .name(name)
                 .description(description)
                 .userOid(userOid)
-                .companyOid(companyOid)
                 .isActive(isActive)
                 .isDeleted(isDeleted)
                 .affectsInventory(affectsInventory)
@@ -143,7 +135,6 @@ public final class AcquisitionType {
         private String name;
         private String description;
         private String userOid;
-        private CompanyOid companyOid;
         private Boolean isActive;
         private Boolean isDeleted;
         private Boolean affectsInventory;
@@ -191,17 +182,6 @@ public final class AcquisitionType {
          */
         public Builder userOid(String userOid) {
             this.userOid = userOid;
-            return this;
-        }
-
-        /**
-         * Sets the owning company identifier.
-         *
-         * @param companyOid Company identifier.
-         * @return This builder.
-         */
-        public Builder companyOid(CompanyOid companyOid) {
-            this.companyOid = companyOid;
             return this;
         }
 

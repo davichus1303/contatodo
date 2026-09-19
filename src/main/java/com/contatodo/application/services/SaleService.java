@@ -90,7 +90,7 @@ public class SaleService {
         Money unitRealCost = Money.of(product.getUnitRealCost() != null ? product.getUnitRealCost() : product.getRealCost());
         Money unitPublicCost = Money.of(product.getUnitPublicCost() != null ? product.getUnitPublicCost() : product.getRealCost());
 
-        Long saleNumber = generateDailySaleNumber(userOid);
+        Long saleNumber = generateDailySaleNumber();
 
         Sale sale = Sale.place(
                 saleNumber,
@@ -137,17 +137,16 @@ public class SaleService {
     }
 
     /**
-     * Generates a daily sale number for the given user.
+     * Generates the next daily sale number for the current company.
      *
-     * @param userOid Owner of the sales.
      * @return Next available sale number for today.
      */
-    private Long generateDailySaleNumber(String userOid) {
+    private Long generateDailySaleNumber() {
         LocalDate today = LocalDate.now();
         LocalDateTime startOfDay = DateUtils.startOfDay(today);
         LocalDateTime endOfDay = DateUtils.endOfDay(today);
 
-        Optional<Long> highestSaleNumber = saleRepository.findByUserOidAndSaleDateBetween(userOid, startOfDay, endOfDay)
+        Optional<Long> highestSaleNumber = saleRepository.findBySaleDateBetween(startOfDay, endOfDay)
                 .stream()
                 .map(Sale::getSaleNumber)
                 .max(Long::compareTo);

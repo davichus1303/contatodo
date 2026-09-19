@@ -82,17 +82,6 @@ public class SaleRepositoryAdapter implements SaleRepository {
         return toEntityList(query);
     }
 
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<Sale> findByUserOidAndSaleDateBetween(String userOid, LocalDateTime startOfDay, LocalDateTime endOfDay) {
-        Query query = buildBaseQuery();
-        query.addCriteria(Criteria.where("userOid").is(userOid)
-                .and("saleDate").gte(startOfDay).lte(endOfDay));
-        return toEntityList(query);
-    }
-
     private List<Sale> toEntityList(Query query) {
         return mongoTemplate.find(query, SaleDocument.class).stream()
                 .map(persistenceMapper::toEntity)

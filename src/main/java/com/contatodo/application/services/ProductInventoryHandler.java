@@ -70,7 +70,7 @@ public class ProductInventoryHandler {
      */
     public InventoryOutcome applyToInventory(CreateAcquisitionRequest request, String userOid, CompanyOid companyOid) {
         Product existingProduct = productRepository
-                .findByNameAndUserOid(request.getProductName(), userOid)
+                .findByNameAndIsActiveTrue(request.getProductName())
                 .orElse(null);
 
         if (existingProduct == null) {

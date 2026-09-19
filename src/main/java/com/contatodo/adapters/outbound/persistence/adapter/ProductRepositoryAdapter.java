@@ -127,9 +127,9 @@ public class ProductRepositoryAdapter implements ProductRepository {
      * {@inheritDoc}
      */
     @Override
-    public Optional<Product> findByNameAndUserOid(String name, String userOid) {
+    public Optional<Product> findByNameAndIsActiveTrue(String name) {
         Query query = buildBaseQuery();
-        query.addCriteria(Criteria.where("name").is(name).and("userOid").is(userOid).and("isActive").is(true));
+        query.addCriteria(Criteria.where("name").is(name).and("isActive").is(true));
         ProductDocument document = mongoTemplate.findOne(query, ProductDocument.class);
         return document != null ? Optional.of(persistenceMapper.toEntity(document)) : Optional.empty();
     }

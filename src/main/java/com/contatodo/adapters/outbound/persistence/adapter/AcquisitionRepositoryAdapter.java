@@ -8,7 +8,6 @@ import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.domain.entities.Acquisition;
 import com.contatodo.domain.repositories.AcquisitionRepository;
-import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
@@ -69,17 +68,6 @@ public class AcquisitionRepositoryAdapter implements AcquisitionRepository {
         Query query = buildBaseQuery();
         query.addCriteria(Criteria.where("acquisitionDate").gte(startDate).lte(endDate)
                 .and("isDeleted").is(false));
-        return toEntityList(query);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public List<Acquisition> findByUserOidOrderByAcquisitionDateDesc(String userOid) {
-        Query query = buildBaseQuery();
-        query.addCriteria(Criteria.where("userOid").is(userOid).and("isDeleted").is(false));
-        query.with(Sort.by(Sort.Direction.DESC, "acquisitionDate"));
         return toEntityList(query);
     }
 
