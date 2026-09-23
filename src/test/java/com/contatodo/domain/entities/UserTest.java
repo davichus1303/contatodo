@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -20,6 +21,7 @@ class UserTest {
                 .email("david@example.com")
                 .password("secret")
                 .name("David")
+                .phoneNumber("987654321")
                 .build();
     }
 
@@ -29,6 +31,18 @@ class UserTest {
         assertTrue(user.isActive());
         assertFalse(user.isDelete());
         assertEquals("david@example.com", user.getEmail());
+        assertEquals("987654321", user.getPhoneNumber());
+    }
+
+    @Test
+    void buildAcceptsAUserWithoutPhoneNumber() {
+        User user = User.builder()
+                .userName("david")
+                .email("david@example.com")
+                .password("secret")
+                .name("David")
+                .build();
+        assertNull(user.getPhoneNumber());
     }
 
     @Test

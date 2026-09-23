@@ -14,7 +14,7 @@ public interface AuthenticatedUserProvider {
      * Gets the identifier of the currently authenticated user.
      *
      * @return Authenticated user identifier.
-     * @throws UserNotFoundException if there is no authenticated user or it cannot be resolved.
+     * @throws ResourceNotFoundException if there is no authenticated user or it cannot be resolved.
      */
     String getCurrentUserOid();
 
@@ -22,7 +22,7 @@ public interface AuthenticatedUserProvider {
      * Gets the email of the currently authenticated user.
      *
      * @return Authenticated user email.
-     * @throws UserNotFoundException if there is no authenticated user.
+     * @throws ResourceNotFoundException if there is no authenticated user.
      */
     String getCurrentUserEmail();
 }

@@ -7,7 +7,7 @@ import com.contatodo.application.validators.AcquisitionTypeValidator;
 import com.contatodo.domain.entities.AcquisitionType;
 import com.contatodo.domain.repositories.AcquisitionTypeRepository;
 import com.contatodo.shared.constants.AcquisitionTypeConstants;
-import com.contatodo.shared.exceptions.AcquisitionTypeNotFoundException;
+import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -80,8 +80,8 @@ class AcquisitionTypeServiceTest {
     void deleteUnknownTypeThrowsNotFound() {
         when(acquisitionTypeRepository.findById("missing")).thenReturn(Optional.empty());
 
-        AcquisitionTypeNotFoundException exception = assertThrows(
-                AcquisitionTypeNotFoundException.class,
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
                 () -> service.deleteAcquisitionType("missing")
         );
         assertEquals(AcquisitionTypeConstants.NOT_FOUND_ERROR, exception.getMessage());
@@ -93,8 +93,8 @@ class AcquisitionTypeServiceTest {
         AcquisitionType deleted = activeType().markDeleted();
         when(acquisitionTypeRepository.findById("t-1")).thenReturn(Optional.of(deleted));
 
-        AcquisitionTypeNotFoundException exception = assertThrows(
-                AcquisitionTypeNotFoundException.class,
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
                 () -> service.deleteAcquisitionType("t-1")
         );
         assertEquals(AcquisitionTypeConstants.ALREADY_DELETED_ERROR, exception.getMessage());

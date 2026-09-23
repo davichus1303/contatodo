@@ -28,14 +28,6 @@ public interface AcquisitionRepository {
     List<Acquisition> findByAcquisitionDateBetween(LocalDateTime startDate, LocalDateTime endDate);
 
     /**
-     * Finds acquisitions by user OID ordered by acquisition date descending.
-     *
-     * @param userOid User OID.
-     * @return List of acquisitions.
-     */
-    List<Acquisition> findByUserOidOrderByAcquisitionDateDesc(String userOid);
-
-    /**
      * Finds acquisitions by product OID.
      *
      * @param productOid Product OID.

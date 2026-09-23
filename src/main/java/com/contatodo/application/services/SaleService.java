@@ -4,17 +4,19 @@ import com.contatodo.application.dto.request.CreateSaleRequest;
 import com.contatodo.application.dto.response.SaleResponse;
 import com.contatodo.application.mapper.SaleMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
+import com.contatodo.application.port.CompanyContextProvider;
 import com.contatodo.application.validators.SaleValidator;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.entities.Sale;
 import com.contatodo.domain.entities.User;
+import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.model.Money;
 import com.contatodo.domain.repositories.ProductRepository;
 import com.contatodo.domain.repositories.SaleRepository;
 import com.contatodo.domain.repositories.UserRepository;
+import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.SaleConstants;
-import com.contatodo.shared.exceptions.ProductNotFoundException;
-import com.contatodo.shared.exceptions.UserNotFoundException;
+import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.shared.utils.DateUtils;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +37,7 @@ public class SaleService {
     private final SaleValidator saleValidator;
     private final SaleMapper saleMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
+    private final CompanyContextProvider companyContextProvider;
 
     /**
      * Creates a sale service.
@@ -45,6 +48,7 @@ public class SaleService {
      * @param saleValidator Sale validator.
      * @param saleMapper Sale mapper.
      * @param authenticatedUserProvider Authenticated user provider.
+     * @param companyContextProvider Company context provider.
      */
     public SaleService(
             SaleRepository saleRepository,
@@ -52,7 +56,8 @@ public class SaleService {
             UserRepository userRepository,
             SaleValidator saleValidator,
             SaleMapper saleMapper,
-            AuthenticatedUserProvider authenticatedUserProvider
+            AuthenticatedUserProvider authenticatedUserProvider,
+            CompanyContextProvider companyContextProvider
     ) {
         this.saleRepository = saleRepository;
         this.productRepository = productRepository;
@@ -60,6 +65,7 @@ public class SaleService {
         this.saleValidator = saleValidator;
         this.saleMapper = saleMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
+        this.companyContextProvider = companyContextProvider;
     }
 
     /**
@@ -73,18 +79,18 @@ public class SaleService {
 
         String userOid = authenticatedUserProvider.getCurrentUserOid();
         User user = userRepository.findById(userOid)
-                .orElseThrow(() -> new UserNotFoundException(SaleConstants.USER_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(SaleConstants.USER_NOT_FOUND));
 
         Product product = productRepository.findById(request.getProductOid())
-                .orElseThrow(() -> new ProductNotFoundException(SaleConstants.PRODUCT_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException(SaleConstants.PRODUCT_NOT_FOUND));
 
         String productName = product.getName();
         Product updatedProduct = product.decreaseStock(request.getQuantity());
 
-        Money totalCost = unitCostOf(product).multiply(request.getQuantity());
-        Money originalTotalPrice = listUnitPriceOf(product).multiply(request.getQuantity());
+        Money unitRealCost = Money.of(product.getUnitRealCost() != null ? product.getUnitRealCost() : product.getRealCost());
+        Money unitPublicCost = Money.of(product.getUnitPublicCost() != null ? product.getUnitPublicCost() : product.getRealCost());
 
-        Long saleNumber = generateDailySaleNumber(userOid);
+        Long saleNumber = generateDailySaleNumber();
 
         Sale sale = Sale.place(
                 saleNumber,
@@ -93,9 +99,10 @@ public class SaleService {
                 user.getId(),
                 request.getQuantity(),
                 request.getTotalSalePrice(),
-                totalCost,
-                originalTotalPrice,
-                request.getNotes()
+                unitRealCost,
+                unitPublicCost,
+                request.getNotes(),
+                resolveCompanyOid()
         );
 
         productRepository.save(updatedProduct);
@@ -130,42 +137,32 @@ public class SaleService {
     }
 
     /**
-     * Resolves the effective real unit cost of a product.
+     * Generates the next daily sale number for the current company.
      *
-     * @param product Source product.
-     * @return Unit cost as money.
-     */
-    private Money unitCostOf(Product product) {
-        Double unitRealCost = product.getUnitRealCost() != null ? product.getUnitRealCost() : product.getRealCost();
-        return Money.of(unitRealCost);
-    }
-
-    /**
-     * Resolves the effective list unit price of a product.
-     *
-     * @param product Source product.
-     * @return Unit price as money.
-     */
-    private Money listUnitPriceOf(Product product) {
-        Double unitPublicCost = product.getUnitPublicCost() != null ? product.getUnitPublicCost() : product.getRealCost();
-        return Money.of(unitPublicCost);
-    }
-
-    /**
-     * Generates a daily sale number for the given user.
-     *
-     * @param userOid Owner of the sales.
      * @return Next available sale number for today.
      */
-    private Long generateDailySaleNumber(String userOid) {
+    private Long generateDailySaleNumber() {
         LocalDate today = LocalDate.now();
         LocalDateTime startOfDay = DateUtils.startOfDay(today);
         LocalDateTime endOfDay = DateUtils.endOfDay(today);
 
-        Optional<Long> highestSaleNumber = saleRepository.findByUserOidAndSaleDateBetween(userOid, startOfDay, endOfDay)
+        Optional<Long> highestSaleNumber = saleRepository.findBySaleDateBetween(startOfDay, endOfDay)
                 .stream()
                 .map(Sale::getSaleNumber)
                 .max(Long::compareTo);
         return highestSaleNumber.map(number -> number + 1).orElse(1L);
+    }
+
+    /**
+     * Resolves the owning company for a non-root write.
+     *
+     * @return Company identifier, or {@code null} for the root user.
+     */
+    private CompanyOid resolveCompanyOid() {
+        if (companyContextProvider.isRoot()) {
+            return null;
+        }
+        return companyContextProvider.currentCompanyOid()
+                .orElseThrow(() -> new ResourceNotFoundException(AuthConstants.COMPANY_CONTEXT_REQUIRED));
     }
 }

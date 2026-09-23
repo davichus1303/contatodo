@@ -22,6 +22,7 @@ public class ProductCostHistoryDocument {
     private Double unitPublicCostAtPurchase;
     private LocalDateTime acquisitionDate;
     private String userOid;
+    private String companyOid;
     private LocalDateTime createdDate;
 
     public String getId() {
@@ -102,6 +103,14 @@ public class ProductCostHistoryDocument {
 
     public void setUserOid(String userOid) {
         this.userOid = userOid;
+    }
+
+    public String getCompanyOid() {
+        return companyOid;
+    }
+
+    public void setCompanyOid(String companyOid) {
+        this.companyOid = companyOid;
     }
 
     public LocalDateTime getCreatedDate() {

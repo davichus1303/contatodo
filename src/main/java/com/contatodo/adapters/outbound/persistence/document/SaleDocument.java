@@ -17,6 +17,7 @@ public class SaleDocument {
     private String productOid;
     private String productName;
     private String userOid;
+    private String companyOid;
     private Integer quantity;
     private Double totalCost;
     private Double originalTotalPrice;
@@ -65,6 +66,14 @@ public class SaleDocument {
 
     public void setUserOid(String userOid) {
         this.userOid = userOid;
+    }
+
+    public String getCompanyOid() {
+        return companyOid;
+    }
+
+    public void setCompanyOid(String companyOid) {
+        this.companyOid = companyOid;
     }
 
     public Integer getQuantity() {

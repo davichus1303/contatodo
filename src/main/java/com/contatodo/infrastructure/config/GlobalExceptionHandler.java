@@ -2,15 +2,13 @@ package com.contatodo.infrastructure.config;
 
 import com.contatodo.domain.exception.InvalidEntityStateException;
 import com.contatodo.shared.constants.ResponseConstants;
-import com.contatodo.shared.exceptions.AcquisitionTypeNotFoundException;
 import com.contatodo.shared.exceptions.AuthenticationException;
 import com.contatodo.shared.exceptions.InsufficientStockException;
 import com.contatodo.shared.exceptions.InvalidDateRangeException;
 import com.contatodo.shared.exceptions.InvalidRequestException;
-import com.contatodo.shared.exceptions.ProductNotFoundException;
+import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.shared.exceptions.SaleWithoutProfitException;
 import com.contatodo.shared.exceptions.UserAlreadyExistsException;
-import com.contatodo.shared.exceptions.UserNotFoundException;
 import com.contatodo.shared.response.ErrorResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,35 +66,13 @@ public class GlobalExceptionHandler {
     }
 
     /**
-     * Handles user not found exceptions.
+     * Handles resource not found exceptions raised for any domain resource.
      *
-     * @param exception User not found exception.
+     * @param exception Resource not found exception.
      * @return 404 response.
      */
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleUserNotFoundException(UserNotFoundException exception) {
-        return buildResponse(HttpStatus.NOT_FOUND, exception.getMessage(), List.of());
-    }
-
-    /**
-     * Handles product not found exceptions.
-     *
-     * @param exception Product not found exception.
-     * @return 404 response.
-     */
-    @ExceptionHandler(ProductNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleProductNotFoundException(ProductNotFoundException exception) {
-        return buildResponse(HttpStatus.NOT_FOUND, exception.getMessage(), List.of());
-    }
-
-    /**
-     * Handles acquisition type not found exceptions.
-     *
-     * @param exception Acquisition type not found exception.
-     * @return 404 response.
-     */
-    @ExceptionHandler(AcquisitionTypeNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleAcquisitionTypeNotFoundException(AcquisitionTypeNotFoundException exception) {
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException exception) {
         return buildResponse(HttpStatus.NOT_FOUND, exception.getMessage(), List.of());
     }
 

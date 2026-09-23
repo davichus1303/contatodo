@@ -5,16 +5,19 @@ import com.contatodo.application.dto.request.CreateExpenseRequest;
 import com.contatodo.application.dto.response.AcquisitionResponse;
 import com.contatodo.application.mapper.AcquisitionMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
+import com.contatodo.application.port.CompanyContextProvider;
 import com.contatodo.application.validators.AcquisitionValidator;
 import com.contatodo.domain.entities.Acquisition;
 import com.contatodo.domain.entities.AcquisitionType;
 import com.contatodo.domain.entities.Product;
+import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.AcquisitionRepository;
 import com.contatodo.domain.repositories.AcquisitionTypeRepository;
 import com.contatodo.domain.repositories.ProductRepository;
+import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.AcquisitionTypeConstants;
 import com.contatodo.shared.constants.ExpenseConstants;
-import com.contatodo.shared.exceptions.AcquisitionTypeNotFoundException;
+import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.shared.utils.DateUtils;
 import org.springframework.stereotype.Service;
 
@@ -43,6 +46,7 @@ public class AcquisitionService {
     private final AcquisitionValidator acquisitionValidator;
     private final AcquisitionMapper acquisitionMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
+    private final CompanyContextProvider companyContextProvider;
     private final ExpenseService expenseService;
     private final ProductInventoryHandler productInventoryHandler;
 
@@ -55,6 +59,7 @@ public class AcquisitionService {
      * @param acquisitionValidator Acquisition validator.
      * @param acquisitionMapper Acquisition mapper.
      * @param authenticatedUserProvider Authenticated user provider.
+     * @param companyContextProvider Company context provider.
      * @param expenseService Expense use case service.
      * @param productInventoryHandler Inventory side effects handler.
      */
@@ -65,6 +70,7 @@ public class AcquisitionService {
             AcquisitionValidator acquisitionValidator,
             AcquisitionMapper acquisitionMapper,
             AuthenticatedUserProvider authenticatedUserProvider,
+            CompanyContextProvider companyContextProvider,
             ExpenseService expenseService,
             ProductInventoryHandler productInventoryHandler
     ) {
@@ -74,6 +80,7 @@ public class AcquisitionService {
         this.acquisitionValidator = acquisitionValidator;
         this.acquisitionMapper = acquisitionMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
+        this.companyContextProvider = companyContextProvider;
         this.expenseService = expenseService;
         this.productInventoryHandler = productInventoryHandler;
     }
@@ -86,16 +93,17 @@ public class AcquisitionService {
      */
     public AcquisitionResponse registerAcquisition(CreateAcquisitionRequest request) {
         String userOid = authenticatedUserProvider.getCurrentUserOid();
+        CompanyOid companyOid = resolveCompanyOid();
 
         AcquisitionType acquisitionType = findAcquisitionType(request.getAcquisitionTypeOid());
 
         if (acquisitionType.affectsInventory()) {
             acquisitionValidator.validateCreateRequest(request);
-            return registerInventoryAffectingAcquisition(request, userOid, acquisitionType);
+            return registerInventoryAffectingAcquisition(request, userOid, acquisitionType, companyOid);
         }
 
         acquisitionValidator.validateNonInventoryAffectingRequest(request);
-        return registerNonInventoryAffectingAcquisition(request, userOid, acquisitionType);
+        return registerNonInventoryAffectingAcquisition(request, userOid, acquisitionType, companyOid);
     }
 
     /**
@@ -135,13 +143,14 @@ public class AcquisitionService {
     private AcquisitionResponse registerInventoryAffectingAcquisition(
             CreateAcquisitionRequest request,
             String userOid,
-            AcquisitionType acquisitionType
+            AcquisitionType acquisitionType,
+            CompanyOid companyOid
     ) {
         ProductInventoryHandler.InventoryOutcome outcome =
-                productInventoryHandler.applyToInventory(request, userOid);
+                productInventoryHandler.applyToInventory(request, userOid, companyOid);
 
         Acquisition acquisition = acquisitionMapper.toEntity(
-                request, outcome.productOid(), userOid, outcome.averageUnitRealCost());
+                request, outcome.productOid(), userOid, outcome.averageUnitRealCost(), companyOid);
         Acquisition savedAcquisition = acquisitionRepository.save(acquisition);
 
         productInventoryHandler.recordCostHistory(
@@ -162,9 +171,10 @@ public class AcquisitionService {
     private AcquisitionResponse registerNonInventoryAffectingAcquisition(
             CreateAcquisitionRequest request,
             String userOid,
-            AcquisitionType acquisitionType
+            AcquisitionType acquisitionType,
+            CompanyOid companyOid
     ) {
-        Acquisition acquisition = acquisitionMapper.toEntity(request, null, userOid, 0.0);
+        Acquisition acquisition = acquisitionMapper.toEntity(request, null, userOid, 0.0, companyOid);
         Acquisition savedAcquisition = acquisitionRepository.save(acquisition);
 
         CreateExpenseRequest expenseRequest = new CreateExpenseRequest();
@@ -186,11 +196,24 @@ public class AcquisitionService {
      *
      * @param acquisitionTypeOid Acquisition type identifier.
      * @return Acquisition type entity.
-     * @throws AcquisitionTypeNotFoundException if the type does not exist.
+     * @throws ResourceNotFoundException if the type does not exist.
      */
     private AcquisitionType findAcquisitionType(String acquisitionTypeOid) {
         return acquisitionTypeRepository.findById(acquisitionTypeOid)
-                .orElseThrow(() -> new AcquisitionTypeNotFoundException(AcquisitionTypeConstants.NOT_FOUND_ERROR));
+                .orElseThrow(() -> new ResourceNotFoundException(AcquisitionTypeConstants.NOT_FOUND_ERROR));
+    }
+
+    /**
+     * Resolves the owning company for a non-root write.
+     *
+     * @return Company identifier, or {@code null} for the root user.
+     */
+    private CompanyOid resolveCompanyOid() {
+        if (companyContextProvider.isRoot()) {
+            return null;
+        }
+        return companyContextProvider.currentCompanyOid()
+                .orElseThrow(() -> new ResourceNotFoundException(AuthConstants.COMPANY_CONTEXT_REQUIRED));
     }
 
     /**

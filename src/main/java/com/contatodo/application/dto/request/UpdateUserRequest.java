@@ -9,8 +9,10 @@ public class UpdateUserRequest {
     private String email;
     private String password;
     private String name;
+    private String phoneNumber;
     private String roleId;
     private Boolean isActive;
+    private String companyOid;
 
     public String getUserName() {
         return userName;
@@ -44,6 +46,14 @@ public class UpdateUserRequest {
         this.name = name;
     }
 
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
     public String getRoleId() {
         return roleId;
     }
@@ -58,5 +68,13 @@ public class UpdateUserRequest {
 
     public void setIsActive(Boolean isActive) {
         this.isActive = isActive;
+    }
+
+    public String getCompanyOid() {
+        return companyOid;
+    }
+
+    public void setCompanyOid(String companyOid) {
+        this.companyOid = companyOid;
     }
 }

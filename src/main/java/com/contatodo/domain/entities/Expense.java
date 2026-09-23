@@ -1,5 +1,6 @@
 package com.contatodo.domain.entities;
 
+import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.shared.constants.ValidationConstants;
 import com.contatodo.shared.utils.EntityValidation;
 
@@ -21,6 +22,7 @@ public final class Expense {
     private final String currency;
     private final LocalDateTime expenseDate;
     private final String userOid;
+    private final CompanyOid companyOid;
     private final Boolean isActive;
     private final Boolean isDeleted;
     private final LocalDateTime createdDate;
@@ -41,6 +43,7 @@ public final class Expense {
         this.currency = builder.currency;
         this.expenseDate = builder.expenseDate;
         this.userOid = builder.userOid;
+        this.companyOid = builder.companyOid;
         this.isActive = builder.isActive;
         this.isDeleted = builder.isDeleted;
         this.createdDate = builder.createdDate;
@@ -92,6 +95,10 @@ public final class Expense {
         return userOid;
     }
 
+    public CompanyOid getCompanyOid() {
+        return companyOid;
+    }
+
     public Boolean getIsActive() {
         return isActive;
     }
@@ -122,6 +129,7 @@ public final class Expense {
         private String currency;
         private LocalDateTime expenseDate;
         private String userOid;
+        private CompanyOid companyOid;
         private Boolean isActive;
         private Boolean isDeleted;
         private LocalDateTime createdDate;
@@ -223,6 +231,17 @@ public final class Expense {
          */
         public Builder userOid(String userOid) {
             this.userOid = userOid;
+            return this;
+        }
+
+        /**
+         * Sets the owning company identifier.
+         *
+         * @param companyOid Company identifier.
+         * @return This builder.
+         */
+        public Builder companyOid(CompanyOid companyOid) {
+            this.companyOid = companyOid;
             return this;
         }
 

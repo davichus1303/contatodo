@@ -35,14 +35,4 @@ public interface SaleRepository {
      * @return List of sales.
      */
     List<Sale> findBySaleDateBetween(LocalDateTime startOfDay, LocalDateTime endOfDay);
-
-    /**
-     * Finds sales of a user within a date range.
-     *
-     * @param userOid User identifier.
-     * @param startOfDay Start of the range.
-     * @param endOfDay End of the range.
-     * @return List of sales.
-     */
-    List<Sale> findByUserOidAndSaleDateBetween(String userOid, LocalDateTime startOfDay, LocalDateTime endOfDay);
 }

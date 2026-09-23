@@ -10,7 +10,7 @@ import com.contatodo.domain.repositories.AcquisitionTypeRepository;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import org.springframework.stereotype.Service;
 import com.contatodo.shared.constants.AcquisitionTypeConstants;
-import com.contatodo.shared.exceptions.AcquisitionTypeNotFoundException;
+import com.contatodo.shared.exceptions.ResourceNotFoundException;
 
 import java.util.List;
 
@@ -99,11 +99,11 @@ public class AcquisitionTypeService {
             .orElse(null);
 
         if (existingAcquisitionType == null) {
-            throw new AcquisitionTypeNotFoundException(AcquisitionTypeConstants.NOT_FOUND_ERROR);
+            throw new ResourceNotFoundException(AcquisitionTypeConstants.NOT_FOUND_ERROR);
         }
 
         if (Boolean.TRUE.equals(existingAcquisitionType.getIsDeleted())) {
-            throw new AcquisitionTypeNotFoundException(AcquisitionTypeConstants.ALREADY_DELETED_ERROR);
+            throw new ResourceNotFoundException(AcquisitionTypeConstants.ALREADY_DELETED_ERROR);
         }
 
         AcquisitionType deletedAcquisitionType = acquisitionTypeRepository.save(existingAcquisitionType.markDeleted());

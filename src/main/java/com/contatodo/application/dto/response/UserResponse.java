@@ -3,7 +3,7 @@ package com.contatodo.application.dto.response;
 import java.time.LocalDateTime;
 
 /**
- * Response DTO for user data.
+ * Response DTO for a user.
  */
 public class UserResponse {
 
@@ -11,7 +11,10 @@ public class UserResponse {
     private String userName;
     private String email;
     private String name;
+    private String phoneNumber;
     private RoleResponse role;
+    private CompanyResponse company;
+    private String companyOid;
     private String createdByUserOid;
     private boolean isActive;
     private LocalDateTime createdDate;
@@ -49,12 +52,36 @@ public class UserResponse {
         this.name = name;
     }
 
+    public String getPhoneNumber() {
+        return phoneNumber;
+    }
+
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
+    }
+
     public RoleResponse getRole() {
         return role;
     }
 
     public void setRole(RoleResponse role) {
         this.role = role;
+    }
+
+    public CompanyResponse getCompany() {
+        return company;
+    }
+
+    public void setCompany(CompanyResponse company) {
+        this.company = company;
+    }
+
+    public String getCompanyOid() {
+        return companyOid;
+    }
+
+    public void setCompanyOid(String companyOid) {
+        this.companyOid = companyOid;
     }
 
     public String getCreatedByUserOid() {

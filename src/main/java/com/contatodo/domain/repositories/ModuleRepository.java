@@ -32,4 +32,11 @@ public interface ModuleRepository {
      * @return List of active modules.
      */
     List<Module> findAllActive();
+/**
+     * Finds all modules by their identifiers.
+     *
+     * @param ids Module identifiers.
+     * @return List of modules.
+     */
+    List<Module> findAllById(Iterable<String> ids);
 }

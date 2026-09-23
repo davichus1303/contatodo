@@ -4,6 +4,7 @@ import com.contatodo.application.dto.request.CreateSaleRequest;
 import com.contatodo.application.dto.response.SaleResponse;
 import com.contatodo.application.mapper.SaleMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
+import com.contatodo.application.port.CompanyContextProvider;
 import com.contatodo.application.validators.SaleValidator;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.entities.User;
@@ -12,7 +13,7 @@ import com.contatodo.domain.repositories.SaleRepository;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.shared.constants.SaleConstants;
 import com.contatodo.shared.exceptions.InsufficientStockException;
-import com.contatodo.shared.exceptions.ProductNotFoundException;
+import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -52,13 +53,16 @@ class SaleServiceTest {
     @Mock
     private AuthenticatedUserProvider authenticatedUserProvider;
 
+    @Mock
+    private CompanyContextProvider companyContextProvider;
+
     private SaleService saleService;
 
     @BeforeEach
     void setUp() {
         saleService = new SaleService(
                 saleRepository, productRepository, userRepository,
-                saleValidator, saleMapper, authenticatedUserProvider
+                saleValidator, saleMapper, authenticatedUserProvider, companyContextProvider
         );
     }
 
@@ -110,7 +114,7 @@ class SaleServiceTest {
         stubAuthenticatedContext();
         when(productRepository.findById("product-1")).thenReturn(Optional.empty());
 
-        assertThrows(ProductNotFoundException.class, () -> saleService.createSale(saleRequest(40.0)));
+        assertThrows(ResourceNotFoundException.class, () -> saleService.createSale(saleRequest(40.0)));
         verify(saleRepository, never()).save(any());
     }
 
@@ -118,7 +122,8 @@ class SaleServiceTest {
     void createSalePlacesSaleAndDecreasesStock() {
         stubAuthenticatedContext();
         when(productRepository.findById("product-1")).thenReturn(Optional.of(productWithStock(5)));
-        when(saleRepository.findByUserOidAndSaleDateBetween(any(), any(), any())).thenReturn(java.util.List.of());
+        when(companyContextProvider.isRoot()).thenReturn(true);
+        when(saleRepository.findBySaleDateBetween(any(), any())).thenReturn(java.util.List.of());
         when(saleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         SaleResponse expected = new SaleResponse();
         when(saleMapper.toResponse(any())).thenReturn(expected);
