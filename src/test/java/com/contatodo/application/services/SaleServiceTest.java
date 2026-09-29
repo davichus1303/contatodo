@@ -75,7 +75,7 @@ class SaleServiceTest {
                 .unitRealCost(10.0)
                 .unitPublicCost(15.0)
                 .isActive(true)
-                .userOid("user-1")
+                .byUserOid("user-1")
                 .build();
     }
 

@@ -26,7 +26,7 @@ public final class Acquisition {
     private final String invoiceNumber;
     private final LocalDateTime acquisitionDate;
     private final String observations;
-    private final String userOid;
+    private final String byUserOid;
     private final CompanyOid companyOid;
     private final Boolean isDeleted;
     private final LocalDateTime createdDate;
@@ -51,7 +51,7 @@ public final class Acquisition {
         this.invoiceNumber = builder.invoiceNumber;
         this.acquisitionDate = builder.acquisitionDate;
         this.observations = builder.observations;
-        this.userOid = builder.userOid;
+        this.byUserOid = builder.byUserOid;
         this.companyOid = builder.companyOid;
         this.isDeleted = builder.isDeleted;
         this.createdDate = builder.createdDate;
@@ -119,8 +119,8 @@ public final class Acquisition {
         return observations;
     }
 
-    public String getUserOid() {
-        return userOid;
+    public String getByUserOid() {
+        return byUserOid;
     }
 
     public CompanyOid getCompanyOid() {
@@ -157,7 +157,7 @@ public final class Acquisition {
         private String invoiceNumber;
         private LocalDateTime acquisitionDate;
         private String observations;
-        private String userOid;
+        private String byUserOid;
         private CompanyOid companyOid;
         private Boolean isDeleted;
         private LocalDateTime createdDate;
@@ -309,11 +309,11 @@ public final class Acquisition {
         /**
          * Sets the owning user identifier.
          *
-         * @param userOid User identifier.
+         * @param byUserOid User identifier.
          * @return This builder.
          */
-        public Builder userOid(String userOid) {
-            this.userOid = userOid;
+        public Builder byUserOid(String byUserOid) {
+            this.byUserOid = byUserOid;
             return this;
         }
 
@@ -369,7 +369,7 @@ public final class Acquisition {
          */
         public Acquisition build() {
             EntityValidation.requireNotBlank(acquisitionTypeOid, ValidationConstants.FIELD_REQUIRED);
-            EntityValidation.requireNotBlank(userOid, ValidationConstants.FIELD_REQUIRED);
+            EntityValidation.requireNotBlank(byUserOid, ValidationConstants.FIELD_REQUIRED);
             EntityValidation.requirePositive(quantity, ValidationConstants.FIELD_INVALID_TYPE);
             EntityValidation.requireNonNegative(realCost, ValidationConstants.FIELD_INVALID_RANGE);
             return new Acquisition(this);

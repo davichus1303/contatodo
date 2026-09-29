@@ -27,6 +27,7 @@ public class ModulePersistenceMapper implements PersistenceMapper<ModuleDocument
         document.setIsDelete(module.getIsDeleted());
         document.setCreatedDate(module.getCreatedDate());
         document.setUpdatedDate(module.getUpdatedDate());
+        document.setByUserOid(module.getByUserOid());
         return document;
     }
 
@@ -45,6 +46,7 @@ public class ModulePersistenceMapper implements PersistenceMapper<ModuleDocument
                 .isDeleted(document.getIsDelete())
                 .createdDate(document.getCreatedDate())
                 .updatedDate(document.getUpdatedDate())
+                .byUserOid(document.getByUserOid())
                 .build();
     }
 }

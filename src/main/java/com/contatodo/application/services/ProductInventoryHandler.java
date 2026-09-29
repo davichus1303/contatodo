@@ -175,7 +175,7 @@ public class ProductInventoryHandler {
                 .unitRealCost(averageUnitRealCost)
                 .unitPublicCost(request.getUnitPublicCost())
                 .isActive(true)
-                .userOid(userOid)
+                .byUserOid(userOid)
                 .companyOid(companyOid)
                 .createdDate(now)
                 .updatedDate(now)
@@ -206,7 +206,7 @@ public class ProductInventoryHandler {
                 .unitRealCost(averageUnitRealCost)
                 .unitPublicCostAtPurchase(request.getUnitPublicCost())
                 .acquisitionDate(savedAcquisition.getAcquisitionDate())
-                .userOid(savedAcquisition.getUserOid())
+                .byUserOid(savedAcquisition.getByUserOid())
                 .companyOid(savedAcquisition.getCompanyOid())
                 .createdDate(LocalDateTime.now())
                 .build();

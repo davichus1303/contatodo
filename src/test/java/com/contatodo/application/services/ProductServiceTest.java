@@ -134,7 +134,7 @@ class ProductServiceTest {
                 .unitRealCost(10.0)
                 .unitPublicCost(15.0)
                 .isActive(true)
-                .userOid("user-1")
+                .byUserOid("user-1")
                 .build();
         when(productRepository.findByCode("42")).thenReturn(Optional.of(product));
         when(productMapper.toResponse(product)).thenReturn(new com.contatodo.application.dto.response.ProductResponse());
@@ -154,5 +154,25 @@ class ProductServiceTest {
                 () -> productService.getProductByCode("999")
         );
         assertEquals(ProductConstants.PRODUCT_NOT_FOUND, exception.getMessage());
+    }
+
+    @Test
+    void updateProductPassesTheAuthenticatedUserAsEditor() {
+        Product existing = Product.builder()
+                .id("p-1")
+                .name("Cafe")
+                .stock(5)
+                .code("42")
+                .byUserOid("creator-1")
+                .build();
+        when(productRepository.findById("p-1")).thenReturn(Optional.of(existing));
+        when(authenticatedUserProvider.getCurrentUserOid()).thenReturn("editor-1");
+        when(productMapper.applyUpdate(any(), any(), eq("editor-1"))).thenReturn(existing);
+        when(productRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(productMapper.toResponse(any())).thenReturn(new com.contatodo.application.dto.response.ProductResponse());
+
+        productService.updateProduct("p-1", new com.contatodo.application.dto.request.UpdateProductRequest());
+
+        verify(productMapper).applyUpdate(eq(existing), any(), eq("editor-1"));
     }
 }

@@ -19,6 +19,7 @@ public class ModuleDocument {
     private Boolean isDelete;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
+    private String byUserOid;
 
     /**
      * Creates an empty module document.
@@ -36,9 +37,10 @@ public class ModuleDocument {
      * @param isDelete Deletion status.
      * @param createdDate Creation date.
      * @param updatedDate Last update date.
+     * @param byUserOid User who created the module.
      */
     public ModuleDocument(String id, String name, String link, Boolean isActive, Boolean isDelete,
-                          LocalDateTime createdDate, LocalDateTime updatedDate) {
+                          LocalDateTime createdDate, LocalDateTime updatedDate, String byUserOid) {
         this.id = id;
         this.name = name;
         this.link = link;
@@ -46,6 +48,7 @@ public class ModuleDocument {
         this.isDelete = isDelete;
         this.createdDate = createdDate;
         this.updatedDate = updatedDate;
+        this.byUserOid = byUserOid;
     }
 
     public String getId() {
@@ -102,5 +105,13 @@ public class ModuleDocument {
 
     public void setUpdatedDate(LocalDateTime updatedDate) {
         this.updatedDate = updatedDate;
+    }
+
+    public String getByUserOid() {
+        return byUserOid;
+    }
+
+    public void setByUserOid(String byUserOid) {
+        this.byUserOid = byUserOid;
     }
 }

@@ -21,10 +21,10 @@ public class CompanyMapper implements ResponseMapper<Company, CompanyResponse> {
      * Maps a create request to a domain entity.
      *
      * @param request Create company request.
-     * @param createdBy Identifier of the user that creates it.
+     * @param byUserOid Identifier of the user that creates it.
      * @return Company entity.
      */
-    public Company toEntity(CreateCompanyRequest request, String createdBy) {
+    public Company toEntity(CreateCompanyRequest request, String byUserOid) {
         LocalDateTime now = LocalDateTime.now();
         return Company.builder()
                 .name(request.getName())
@@ -36,7 +36,7 @@ public class CompanyMapper implements ResponseMapper<Company, CompanyResponse> {
                 .isDeleted(false)
                 .createdDate(now)
                 .updatedDate(now)
-                .createdBy(createdBy)
+                .byUserOid(byUserOid)
                 .build();
     }
 
@@ -44,12 +44,12 @@ public class CompanyMapper implements ResponseMapper<Company, CompanyResponse> {
      * Maps a list of create requests to domain entities.
      *
      * @param requests Create company requests.
-     * @param createdBy Identifier of the user that creates them.
+     * @param byUserOid Identifier of the user that creates them.
      * @return Company entities.
      */
-    public List<Company> toEntityList(List<CreateCompanyRequest> requests, String createdBy) {
+    public List<Company> toEntityList(List<CreateCompanyRequest> requests, String byUserOid) {
         return requests.stream()
-                .map(request -> toEntity(request, createdBy))
+                .map(request -> toEntity(request, byUserOid))
                 .toList();
     }
 
@@ -62,9 +62,10 @@ public class CompanyMapper implements ResponseMapper<Company, CompanyResponse> {
      *
      * @param existing Current persisted company.
      * @param request Update company request.
+     * @param updatedByUserOid Identifier of the user that last updated it.
      * @return New immutable company instance with the changes applied.
      */
-    public Company applyUpdate(Company existing, UpdateCompanyRequest request) {
+    public Company applyUpdate(Company existing, UpdateCompanyRequest request, String updatedByUserOid) {
         return Company.builder()
                 .id(existing.getId())
                 .name(request.getName() != null ? request.getName() : existing.getName())
@@ -76,7 +77,8 @@ public class CompanyMapper implements ResponseMapper<Company, CompanyResponse> {
                 .isDeleted(existing.getIsDeleted())
                 .createdDate(existing.getCreatedDate())
                 .updatedDate(LocalDateTime.now())
-                .createdBy(existing.getCreatedBy())
+                .byUserOid(existing.getByUserOid())
+                .updatedByUserOid(updatedByUserOid)
                 .build();
     }
 
@@ -105,6 +107,8 @@ public class CompanyMapper implements ResponseMapper<Company, CompanyResponse> {
         response.setWebSite(company.getWebSite());
         response.setUbication(company.getUbication());
         response.setContactUserOId(company.getContactUserOId());
+        response.setByUserOid(company.getByUserOid());
+        response.setUpdatedByUserOid(company.getUpdatedByUserOid());
         response.setIsActive(company.getIsActive());
         response.setIsDeleted(company.getIsDeleted());
         if (contact != null) {

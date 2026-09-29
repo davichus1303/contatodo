@@ -27,7 +27,7 @@ class CompanyPersistenceMapperTest {
                 .isDeleted(false)
                 .createdDate(LocalDateTime.of(2026, 1, 1, 0, 0))
                 .updatedDate(LocalDateTime.of(2026, 1, 2, 0, 0))
-                .createdBy("creator-1")
+                .byUserOid("creator-1")
                 .build();
     }
 
@@ -45,7 +45,7 @@ class CompanyPersistenceMapperTest {
         assertEquals(Boolean.FALSE, document.getIsDeleted());
         assertEquals(LocalDateTime.of(2026, 1, 1, 0, 0), document.getCreatedDate());
         assertEquals(LocalDateTime.of(2026, 1, 2, 0, 0), document.getUpdatedDate());
-        assertEquals("creator-1", document.getCreatedBy());
+        assertEquals("creator-1", document.getByUserOid());
     }
 
     @Test
@@ -60,6 +60,6 @@ class CompanyPersistenceMapperTest {
         assertEquals("user-1", reloaded.getContactUserOId());
         assertEquals(Boolean.TRUE, reloaded.getIsActive());
         assertEquals(Boolean.FALSE, reloaded.getIsDeleted());
-        assertEquals("creator-1", reloaded.getCreatedBy());
+        assertEquals("creator-1", reloaded.getByUserOid());
     }
 }

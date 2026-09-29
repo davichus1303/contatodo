@@ -1,5 +1,6 @@
 package com.contatodo.application.services;
 
+import com.contatodo.application.dto.request.UpdateAcquisitionTypeRequest;
 import com.contatodo.application.dto.response.AcquisitionTypeResponse;
 import com.contatodo.application.mapper.AcquisitionTypeMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
@@ -11,6 +12,7 @@ import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -55,7 +57,7 @@ class AcquisitionTypeServiceTest {
         return AcquisitionType.builder()
                 .id("t-1")
                 .name("Compra")
-                .userOid("user-1")
+                .byUserOid("user-1")
                 .isActive(true)
                 .isDeleted(false)
                 .affectsInventory(true)
@@ -113,5 +115,29 @@ class AcquisitionTypeServiceTest {
             org.junit.jupiter.api.Assertions.assertEquals(Boolean.TRUE, captor.getValue().getIsDeleted());
             org.junit.jupiter.api.Assertions.assertEquals(Boolean.FALSE, captor.getValue().getIsActive());
         }
+    }
+
+    @Test
+    void updateAcquisitionTypeSetsUpdatedByUserOidAndKeepsCreator() {
+        service = new AcquisitionTypeService(
+                acquisitionTypeRepository, acquisitionTypeValidator,
+                new AcquisitionTypeMapper(), authenticatedUserProvider
+        );
+
+        UpdateAcquisitionTypeRequest request = new UpdateAcquisitionTypeRequest();
+        request.setName("Adquisición");
+
+        when(acquisitionTypeRepository.findById("t-1")).thenReturn(Optional.of(activeType()));
+        when(acquisitionTypeRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(authenticatedUserProvider.getCurrentUserOid()).thenReturn("editor-t");
+
+        service.updateAcquisitionType("t-1", request);
+
+        ArgumentCaptor<AcquisitionType> captor = ArgumentCaptor.forClass(AcquisitionType.class);
+        verify(acquisitionTypeRepository).save(captor.capture());
+        AcquisitionType saved = captor.getValue();
+        assertEquals("user-1", saved.getByUserOid());
+        assertEquals("editor-t", saved.getUpdatedByUserOid());
+        assertEquals("Adquisición", saved.getName());
     }
 }

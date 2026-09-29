@@ -25,13 +25,12 @@ public final class User {
     private final String phoneNumber;
     private final String roleId;
     private final String companyOid;
-    private final String createdByUserOid;
+    private final String byUserOid;
     private final boolean isActive;
     private final boolean isDelete;
     private final LocalDateTime createdDate;
     private final LocalDateTime updatedDate;
-    private final String createdBy;
-    private final String updatedBy;
+    private final String updatedByUserOid;
 
     /**
      * Creates a user from its builder.
@@ -47,13 +46,12 @@ public final class User {
         this.phoneNumber = builder.phoneNumber;
         this.roleId = builder.roleId;
         this.companyOid = builder.companyOid;
-        this.createdByUserOid = builder.createdByUserOid;
+        this.byUserOid = builder.byUserOid;
         this.isActive = builder.isActive;
         this.isDelete = builder.isDelete;
         this.createdDate = builder.createdDate;
         this.updatedDate = builder.updatedDate;
-        this.createdBy = builder.createdBy;
-        this.updatedBy = builder.updatedBy;
+        this.updatedByUserOid = builder.updatedByUserOid;
     }
 
     /**
@@ -97,8 +95,8 @@ public final class User {
         return companyOid;
     }
 
-    public String getCreatedByUserOid() {
-        return createdByUserOid;
+    public String getByUserOid() {
+        return byUserOid;
     }
 
     public boolean isActive() {
@@ -117,12 +115,8 @@ public final class User {
         return updatedDate;
     }
 
-    public String getCreatedBy() {
-        return createdBy;
-    }
-
-    public String getUpdatedBy() {
-        return updatedBy;
+    public String getUpdatedByUserOid() {
+        return updatedByUserOid;
     }
 
     /**
@@ -153,13 +147,12 @@ public final class User {
                 .phoneNumber(phoneNumber)
                 .roleId(roleId)
                 .companyOid(companyOid)
-                .createdByUserOid(createdByUserOid)
+                .byUserOid(byUserOid)
                 .isActive(isActive)
                 .isDelete(isDelete)
                 .createdDate(createdDate)
                 .updatedDate(updatedDate)
-                .createdBy(createdBy)
-                .updatedBy(updatedBy);
+                .updatedByUserOid(updatedByUserOid);
     }
 
     /**
@@ -175,13 +168,12 @@ public final class User {
         private String phoneNumber;
         private String roleId;
         private String companyOid;
-        private String createdByUserOid;
+        private String byUserOid;
         private boolean isActive = true;
         private boolean isDelete;
         private LocalDateTime createdDate;
         private LocalDateTime updatedDate;
-        private String createdBy;
-        private String updatedBy;
+        private String updatedByUserOid;
 
         /**
          * Sets the identifier.
@@ -274,11 +266,11 @@ public final class User {
         /**
          * Sets the identifier of the user that created this user.
          *
-         * @param createdByUserOid Creating user identifier.
+         * @param byUserOid Creating user identifier.
          * @return This builder.
          */
-        public Builder createdByUserOid(String createdByUserOid) {
-            this.createdByUserOid = createdByUserOid;
+        public Builder byUserOid(String byUserOid) {
+            this.byUserOid = byUserOid;
             return this;
         }
 
@@ -327,24 +319,13 @@ public final class User {
         }
 
         /**
-         * Sets the creator identifier.
-         *
-         * @param createdBy Creator identifier.
-         * @return This builder.
-         */
-        public Builder createdBy(String createdBy) {
-            this.createdBy = createdBy;
-            return this;
-        }
-
-        /**
          * Sets the last updater identifier.
          *
-         * @param updatedBy Updater identifier.
+         * @param updatedByUserOid Updater identifier.
          * @return This builder.
          */
-        public Builder updatedBy(String updatedBy) {
-            this.updatedBy = updatedBy;
+        public Builder updatedByUserOid(String updatedByUserOid) {
+            this.updatedByUserOid = updatedByUserOid;
             return this;
         }
 

@@ -10,7 +10,8 @@ public class AcquisitionTypeResponse {
     private String id;
     private String name;
     private String description;
-    private String userOid;
+    private String byUserOid;
+    private String updatedByUserOid;
     private Boolean isActive;
     private Boolean isDeleted;
     private Boolean affectsInventory;
@@ -44,12 +45,20 @@ public class AcquisitionTypeResponse {
         this.description = description;
     }
 
-    public String getUserOid() {
-        return userOid;
+    public String getByUserOid() {
+        return byUserOid;
     }
 
-    public void setUserOid(String userOid) {
-        this.userOid = userOid;
+    public void setByUserOid(String byUserOid) {
+        this.byUserOid = byUserOid;
+    }
+
+    public String getUpdatedByUserOid() {
+        return updatedByUserOid;
+    }
+
+    public void setUpdatedByUserOid(String updatedByUserOid) {
+        this.updatedByUserOid = updatedByUserOid;
     }
 
     public Boolean getIsActive() {

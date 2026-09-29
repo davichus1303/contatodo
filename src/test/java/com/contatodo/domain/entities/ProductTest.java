@@ -22,7 +22,7 @@ class ProductTest {
                 .unitRealCost(10.0)
                 .unitPublicCost(15.0)
                 .isActive(true)
-                .userOid("user-1")
+                .byUserOid("user-1")
                 .build();
     }
 
@@ -72,7 +72,7 @@ class ProductTest {
                 .stock(null)
                 .code("2")
                 .realCost(1.0)
-                .userOid("user-1")
+                .byUserOid("user-1")
                 .build();
         assertEquals(5, base.replenish(5).getStock());
     }

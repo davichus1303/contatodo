@@ -89,7 +89,9 @@ public class CompanyService {
                 .filter(existingCompany -> !Boolean.TRUE.equals(existingCompany.getIsDeleted()))
                 .orElseThrow(() -> new ResourceNotFoundException(CompanyConstants.COMPANY_NOT_FOUND));
 
-        Company updatedCompany = companyRepository.save(companyMapper.applyUpdate(company, request));
+        Company updatedCompany = companyRepository.save(
+                companyMapper.applyUpdate(company, request, authenticatedUserProvider.getCurrentUserOid())
+        );
         return companyMapper.toResponse(updatedCompany, resolveContact(updatedCompany.getContactUserOId()));
     }
 

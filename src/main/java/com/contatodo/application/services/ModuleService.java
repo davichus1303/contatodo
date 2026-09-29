@@ -3,6 +3,7 @@ package com.contatodo.application.services;
 import com.contatodo.application.dto.request.CreateModuleRequest;
 import com.contatodo.application.dto.response.ModuleResponse;
 import com.contatodo.application.mapper.ModuleMapper;
+import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.domain.entities.Module;
 import com.contatodo.domain.repositories.ModuleRepository;
 import org.springframework.stereotype.Service;
@@ -17,19 +18,23 @@ public class ModuleService {
 
     private final ModuleRepository moduleRepository;
     private final ModuleMapper moduleMapper;
+    private final AuthenticatedUserProvider authenticatedUserProvider;
 
     /**
      * Creates a module service.
      *
      * @param moduleRepository Module repository port.
      * @param moduleMapper Module mapper.
+     * @param authenticatedUserProvider Authenticated user provider.
      */
     public ModuleService(
             ModuleRepository moduleRepository,
-            ModuleMapper moduleMapper
+            ModuleMapper moduleMapper,
+            AuthenticatedUserProvider authenticatedUserProvider
     ) {
         this.moduleRepository = moduleRepository;
         this.moduleMapper = moduleMapper;
+        this.authenticatedUserProvider = authenticatedUserProvider;
     }
 
     /**
@@ -39,7 +44,8 @@ public class ModuleService {
      * @return Created module response.
      */
     public ModuleResponse createModule(CreateModuleRequest request) {
-        Module savedModule = moduleRepository.save(moduleMapper.toEntity(request));
+        String byUserOid = authenticatedUserProvider.getCurrentUserOid();
+        Module savedModule = moduleRepository.save(moduleMapper.toEntity(request, byUserOid));
         return moduleMapper.toResponse(savedModule);
     }
 

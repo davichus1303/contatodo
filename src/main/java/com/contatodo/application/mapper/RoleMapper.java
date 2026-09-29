@@ -37,10 +37,10 @@ public class RoleMapper implements ResponseMapper<Role, RoleResponse> {
      * Maps a create request to a domain entity.
      *
      * @param request Create role request.
-     * @param userOid Authenticated user identifier.
+     * @param byUserOid Authenticated user identifier.
      * @return Role entity.
      */
-    public Role toEntity(CreateRoleRequest request, String userOid) {
+    public Role toEntity(CreateRoleRequest request, String byUserOid) {
         LocalDateTime now = LocalDateTime.now();
         return Role.builder()
                 .name(request.getName())
@@ -49,7 +49,7 @@ public class RoleMapper implements ResponseMapper<Role, RoleResponse> {
                 .isActive(true)
                 .createdDate(now)
                 .updatedDate(now)
-                .createdBy(userOid)
+                .byUserOid(byUserOid)
                 .build();
     }
 
@@ -58,9 +58,10 @@ public class RoleMapper implements ResponseMapper<Role, RoleResponse> {
      *
      * @param existing Current persisted role.
      * @param request Update role request.
+     * @param updatedByUserOid Identifier of the user that last updated it.
      * @return New immutable role instance with the changes applied.
      */
-    public Role updateEntity(Role existing, UpdateRoleRequest request) {
+    public Role updateEntity(Role existing, UpdateRoleRequest request, String updatedByUserOid) {
         return Role.builder()
                 .id(existing.getId())
                 .name(request.getName() != null ? request.getName() : existing.getName())
@@ -71,7 +72,8 @@ public class RoleMapper implements ResponseMapper<Role, RoleResponse> {
                 .isActive(request.getIsActive() != null ? request.getIsActive() : existing.getIsActive())
                 .createdDate(existing.getCreatedDate())
                 .updatedDate(LocalDateTime.now())
-                .createdBy(existing.getCreatedBy())
+                .byUserOid(existing.getByUserOid())
+                .updatedByUserOid(updatedByUserOid)
                 .build();
     }
 
@@ -90,7 +92,8 @@ public class RoleMapper implements ResponseMapper<Role, RoleResponse> {
         response.setIsActive(role.getIsActive());
         response.setCreatedDate(role.getCreatedDate());
         response.setUpdatedDate(role.getUpdatedDate());
-        response.setCreatedBy(role.getCreatedBy());
+        response.setByUserOid(role.getByUserOid());
+        response.setUpdatedByUserOid(role.getUpdatedByUserOid());
         return response;
     }
 

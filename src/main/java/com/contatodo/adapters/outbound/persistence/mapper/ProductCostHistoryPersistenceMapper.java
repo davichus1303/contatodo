@@ -31,7 +31,7 @@ public class ProductCostHistoryPersistenceMapper implements PersistenceMapper<Pr
         document.setUnitRealCost(productCostHistory.getUnitRealCost());
         document.setUnitPublicCostAtPurchase(productCostHistory.getUnitPublicCostAtPurchase());
         document.setAcquisitionDate(productCostHistory.getAcquisitionDate());
-        document.setUserOid(productCostHistory.getUserOid());
+        document.setByUserOid(productCostHistory.getByUserOid());
         document.setCompanyOid(productCostHistory.getCompanyOid() != null
                 ? productCostHistory.getCompanyOid().value()
                 : null);
@@ -56,7 +56,7 @@ public class ProductCostHistoryPersistenceMapper implements PersistenceMapper<Pr
                 .unitRealCost(document.getUnitRealCost())
                 .unitPublicCostAtPurchase(document.getUnitPublicCostAtPurchase())
                 .acquisitionDate(document.getAcquisitionDate())
-                .userOid(document.getUserOid())
+                .byUserOid(document.getByUserOid())
                 .companyOid(document.getCompanyOid() != null
                         ? CompanyOid.of(document.getCompanyOid())
                         : null)

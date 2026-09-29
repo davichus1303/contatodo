@@ -28,13 +28,12 @@ public class UserPersistenceMapper implements PersistenceMapper<UserDocument, Us
         document.setPhoneNumber(user.getPhoneNumber());
         document.setRoleId(user.getRoleId());
         document.setCompanyOid(user.getCompanyOid());
-        document.setCreatedByUserOid(user.getCreatedByUserOid());
+        document.setByUserOid(user.getByUserOid());
         document.setActive(user.isActive());
         document.setIsDeleted(user.isDelete());
         document.setCreatedDate(user.getCreatedDate());
         document.setUpdatedDate(user.getUpdatedDate());
-        document.setCreatedBy(user.getCreatedBy());
-        document.setUpdatedBy(user.getUpdatedBy());
+        document.setUpdatedByUserOid(user.getUpdatedByUserOid());
         return document;
     }
 
@@ -54,13 +53,12 @@ public class UserPersistenceMapper implements PersistenceMapper<UserDocument, Us
                 .phoneNumber(document.getPhoneNumber())
                 .roleId(document.getRoleId())
                 .companyOid(document.getCompanyOid())
-                .createdByUserOid(document.getCreatedByUserOid())
+                .byUserOid(document.getByUserOid())
                 .isActive(document.isActive())
                 .isDelete(document.getIsDeleted())
                 .createdDate(document.getCreatedDate())
                 .updatedDate(document.getUpdatedDate())
-                .createdBy(document.getCreatedBy())
-                .updatedBy(document.getUpdatedBy())
+                .updatedByUserOid(document.getUpdatedByUserOid())
                 .build();
     }
 }

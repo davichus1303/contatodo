@@ -11,6 +11,7 @@ import com.contatodo.application.dto.response.UserResponse;
 import com.contatodo.application.mapper.CompanyMapper;
 import com.contatodo.application.mapper.RoleMapper;
 import com.contatodo.application.mapper.UserMapper;
+import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.port.CompanyContextProvider;
 import com.contatodo.application.port.TokenProvider;
 import com.contatodo.application.validators.UserValidator;
@@ -49,6 +50,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final TokenProvider tokenProvider;
     private final CompanyContextProvider companyContextProvider;
+    private final AuthenticatedUserProvider authenticatedUserProvider;
 
     /**
      * Creates a user service.
@@ -63,6 +65,7 @@ public class UserService {
      * @param passwordEncoder Password encoder.
      * @param tokenProvider Security token provider.
      * @param companyContextProvider Company context provider.
+     * @param authenticatedUserProvider Authenticated user provider.
      */
     public UserService(
             UserRepository userRepository,
@@ -74,7 +77,8 @@ public class UserService {
             CompanyMapper companyMapper,
             PasswordEncoder passwordEncoder,
             TokenProvider tokenProvider,
-            CompanyContextProvider companyContextProvider
+            CompanyContextProvider companyContextProvider,
+            AuthenticatedUserProvider authenticatedUserProvider
     ) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -86,6 +90,7 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
         this.tokenProvider = tokenProvider;
         this.companyContextProvider = companyContextProvider;
+        this.authenticatedUserProvider = authenticatedUserProvider;
     }
 
     /**
@@ -119,13 +124,13 @@ public class UserService {
         String hashedPassword = passwordEncoder.encode(request.getPassword());
 
         String roleId = request.getRoleId();
-        String createdByUserOid = null;
+        String byUserOid = null;
         boolean isActive = true;
 
         if (sessionEmail.isPresent()) {
             Optional<User> sessionUser = userRepository.findActiveUserByEmail(sessionEmail.get(), false);
             if (sessionUser.isPresent()) {
-                createdByUserOid = sessionUser.get().getId();
+                byUserOid = sessionUser.get().getId();
             } else {
                 roleId = null;
                 isActive = false;
@@ -135,7 +140,7 @@ public class UserService {
             isActive = false;
         }
 
-        User user = userMapper.toEntity(request, hashedPassword, roleId, createdByUserOid, isActive);
+        User user = userMapper.toEntity(request, hashedPassword, roleId, byUserOid, isActive);
         User savedUser = userRepository.save(user);
         return userMapper.toResponse(savedUser);
     }
@@ -173,7 +178,10 @@ public class UserService {
                 ? passwordEncoder.encode(request.getPassword())
                 : null;
 
-        User updatedUser = userRepository.save(userMapper.applyUpdate(user, request, hashedPassword));
+        String updatedByUserOid = resolveSessionUserOid();
+        User updatedUser = userRepository.save(
+                userMapper.applyUpdate(user, request, hashedPassword, updatedByUserOid)
+        );
         return userMapper.toResponse(updatedUser);
     }
 
@@ -200,6 +208,22 @@ public class UserService {
         Map<String, RoleResponse> roles = resolveRoles(users);
         Map<String, CompanyResponse> companies = resolveCompanies(users);
         return userMapper.toResponseList(users, roles, companies);
+    }
+
+    /**
+     * Resolves the identifier of the user in session to record as the last updater.
+     *
+     * <p>Returns {@code null} when there is no resolvable session user so an
+     * update never fails solely because of the missing audit attribution.</p>
+     *
+     * @return Session user identifier, or null when it cannot be resolved.
+     */
+    private String resolveSessionUserOid() {
+        try {
+            return authenticatedUserProvider.getCurrentUserOid();
+        } catch (ResourceNotFoundException exception) {
+            return null;
+        }
     }
 
     /**

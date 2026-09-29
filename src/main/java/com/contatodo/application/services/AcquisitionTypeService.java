@@ -83,8 +83,13 @@ public class AcquisitionTypeService {
         
         acquisitionTypeValidator.validateUpdateRequest(request, existingAcquisitionType);
 
-        AcquisitionType updatedAcquisitionType =
-                acquisitionTypeRepository.save(acquisitionTypeMapper.updateEntityFromRequest(existingAcquisitionType, request));
+        AcquisitionType updatedAcquisitionType = acquisitionTypeRepository.save(
+                acquisitionTypeMapper.updateEntityFromRequest(
+                        existingAcquisitionType,
+                        request,
+                        authenticatedUserProvider.getCurrentUserOid()
+                )
+        );
         return acquisitionTypeMapper.toResponse(updatedAcquisitionType);
     }
 
