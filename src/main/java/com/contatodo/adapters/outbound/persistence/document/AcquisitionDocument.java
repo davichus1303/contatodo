@@ -25,7 +25,7 @@ public class AcquisitionDocument {
     private String invoiceNumber;
     private LocalDateTime acquisitionDate;
     private String observations;
-    private String userOid;
+    private String byUserOid;
     private String companyOid;
     private Boolean isDeleted;
     private LocalDateTime createdDate;
@@ -135,12 +135,12 @@ public class AcquisitionDocument {
         this.observations = observations;
     }
 
-    public String getUserOid() {
-        return userOid;
+    public String getByUserOid() {
+        return byUserOid;
     }
 
-    public void setUserOid(String userOid) {
-        this.userOid = userOid;
+    public void setByUserOid(String byUserOid) {
+        this.byUserOid = byUserOid;
     }
 
     public String getCompanyOid() {

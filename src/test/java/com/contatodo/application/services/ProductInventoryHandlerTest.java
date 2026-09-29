@@ -67,7 +67,7 @@ class ProductInventoryHandlerTest {
                 .unitRealCost(10.0)
                 .unitPublicCost(15.0)
                 .isActive(true)
-                .userOid("user-1")
+                .byUserOid("user-1")
                 .build();
     }
 
@@ -87,7 +87,7 @@ class ProductInventoryHandlerTest {
                     .unitRealCost(toSave.getUnitRealCost())
                     .unitPublicCost(toSave.getUnitPublicCost())
                     .isActive(true)
-                    .userOid(toSave.getUserOid())
+                    .byUserOid(toSave.getByUserOid())
                     .companyOid(toSave.getCompanyOid())
                     .build();
         });
@@ -139,7 +139,7 @@ class ProductInventoryHandlerTest {
                 .realCost(50.0)
                 .unitRealCost(10.0)
                 .acquisitionDate(LocalDateTime.of(2026, 8, 21, 10, 0))
-                .userOid("user-1")
+                .byUserOid("user-1")
                 .build();
 
         handler.recordCostHistory("p-1", request, saved, 10.0);
@@ -162,7 +162,7 @@ class ProductInventoryHandlerTest {
                 .realCost(realCost)
                 .unitRealCost(realCost / quantity)
                 .acquisitionDate(LocalDateTime.now().minusDays(1))
-                .userOid("user-1")
+                .byUserOid("user-1")
                 .build();
     }
 }

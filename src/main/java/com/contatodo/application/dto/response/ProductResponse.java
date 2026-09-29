@@ -19,6 +19,8 @@ public class ProductResponse {
     private Boolean isActive;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
+    private String byUserOid;
+    private String updatedByUserOid;
 
     public String getId() {
         return id;
@@ -114,5 +116,21 @@ public class ProductResponse {
 
     public void setUpdatedDate(LocalDateTime updatedDate) {
         this.updatedDate = updatedDate;
+    }
+
+    public String getByUserOid() {
+        return byUserOid;
+    }
+
+    public void setByUserOid(String byUserOid) {
+        this.byUserOid = byUserOid;
+    }
+
+    public String getUpdatedByUserOid() {
+        return updatedByUserOid;
+    }
+
+    public void setUpdatedByUserOid(String updatedByUserOid) {
+        this.updatedByUserOid = updatedByUserOid;
     }
 }

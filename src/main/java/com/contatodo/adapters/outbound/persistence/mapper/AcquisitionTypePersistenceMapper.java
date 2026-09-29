@@ -24,7 +24,8 @@ public class AcquisitionTypePersistenceMapper implements PersistenceMapper<Acqui
         document.setId(acquisitionType.getId());
         document.setName(acquisitionType.getName());
         document.setDescription(acquisitionType.getDescription());
-        document.setUserOid(acquisitionType.getUserOid());
+        document.setByUserOid(acquisitionType.getByUserOid());
+        document.setUpdatedByUserOid(acquisitionType.getUpdatedByUserOid());
         document.setIsActive(acquisitionType.getIsActive());
         document.setIsDeleted(acquisitionType.getIsDeleted());
         document.setAffectsInventory(acquisitionType.getAffectsInventory());
@@ -44,7 +45,8 @@ public class AcquisitionTypePersistenceMapper implements PersistenceMapper<Acqui
                 .id(document.getId())
                 .name(document.getName())
                 .description(document.getDescription())
-                .userOid(document.getUserOid())
+                .byUserOid(document.getByUserOid())
+                .updatedByUserOid(document.getUpdatedByUserOid())
                 .isActive(document.getIsActive())
                 .isDeleted(document.getIsDeleted())
                 .affectsInventory(document.getAffectsInventory())

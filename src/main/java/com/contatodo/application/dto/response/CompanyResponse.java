@@ -15,6 +15,8 @@ public class CompanyResponse {
     private String contactPhone;
     private Boolean isActive;
     private Boolean isDeleted;
+    private String byUserOid;
+    private String updatedByUserOid;
 
     public String getId() {
         return id;
@@ -94,5 +96,21 @@ public class CompanyResponse {
 
     public void setIsDeleted(Boolean isDeleted) {
         this.isDeleted = isDeleted;
+    }
+
+    public String getByUserOid() {
+        return byUserOid;
+    }
+
+    public void setByUserOid(String byUserOid) {
+        this.byUserOid = byUserOid;
+    }
+
+    public String getUpdatedByUserOid() {
+        return updatedByUserOid;
+    }
+
+    public void setUpdatedByUserOid(String updatedByUserOid) {
+        this.updatedByUserOid = updatedByUserOid;
     }
 }

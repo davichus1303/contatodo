@@ -16,7 +16,8 @@ public final class AcquisitionType {
     private final String id;
     private final String name;
     private final String description;
-    private final String userOid;
+    private final String byUserOid;
+    private final String updatedByUserOid;
     private final Boolean isActive;
     private final Boolean isDeleted;
     private final Boolean affectsInventory;
@@ -32,7 +33,8 @@ public final class AcquisitionType {
         this.id = builder.id;
         this.name = builder.name;
         this.description = builder.description;
-        this.userOid = builder.userOid;
+        this.byUserOid = builder.byUserOid;
+        this.updatedByUserOid = builder.updatedByUserOid;
         this.isActive = builder.isActive;
         this.isDeleted = builder.isDeleted;
         this.affectsInventory = builder.affectsInventory;
@@ -84,8 +86,12 @@ public final class AcquisitionType {
         return description;
     }
 
-    public String getUserOid() {
-        return userOid;
+    public String getByUserOid() {
+        return byUserOid;
+    }
+
+    public String getUpdatedByUserOid() {
+        return updatedByUserOid;
     }
 
     public Boolean getIsActive() {
@@ -118,7 +124,8 @@ public final class AcquisitionType {
                 .id(id)
                 .name(name)
                 .description(description)
-                .userOid(userOid)
+                .byUserOid(byUserOid)
+                .updatedByUserOid(updatedByUserOid)
                 .isActive(isActive)
                 .isDeleted(isDeleted)
                 .affectsInventory(affectsInventory)
@@ -134,7 +141,8 @@ public final class AcquisitionType {
         private String id;
         private String name;
         private String description;
-        private String userOid;
+        private String byUserOid;
+        private String updatedByUserOid;
         private Boolean isActive;
         private Boolean isDeleted;
         private Boolean affectsInventory;
@@ -177,11 +185,22 @@ public final class AcquisitionType {
         /**
          * Sets the owning user identifier.
          *
-         * @param userOid User identifier.
+         * @param byUserOid User identifier.
          * @return This builder.
          */
-        public Builder userOid(String userOid) {
-            this.userOid = userOid;
+        public Builder byUserOid(String byUserOid) {
+            this.byUserOid = byUserOid;
+            return this;
+        }
+
+        /**
+         * Sets the identifier of the user that last updated the entity.
+         *
+         * @param updatedByUserOid Last updater identifier.
+         * @return This builder.
+         */
+        public Builder updatedByUserOid(String updatedByUserOid) {
+            this.updatedByUserOid = updatedByUserOid;
             return this;
         }
 
@@ -248,7 +267,7 @@ public final class AcquisitionType {
          */
         public AcquisitionType build() {
             EntityValidation.requireNotBlank(name, ValidationConstants.FIELD_REQUIRED);
-            EntityValidation.requireNotBlank(userOid, ValidationConstants.FIELD_REQUIRED);
+            EntityValidation.requireNotBlank(byUserOid, ValidationConstants.FIELD_REQUIRED);
             return new AcquisitionType(this);
         }
     }

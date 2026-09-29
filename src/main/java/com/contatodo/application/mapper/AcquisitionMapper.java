@@ -20,12 +20,12 @@ public class AcquisitionMapper {
      *
      * @param request Create acquisition request.
      * @param productOid Product OID.
-     * @param userOid User OID.
+     * @param byUserOid User OID.
      * @param unitRealCost Calculated unit real cost.
      * @param companyOid Owning company identifier (null for root).
      * @return Acquisition entity.
      */
-    public Acquisition toEntity(CreateAcquisitionRequest request, String productOid, String userOid, Double unitRealCost, CompanyOid companyOid) {
+    public Acquisition toEntity(CreateAcquisitionRequest request, String productOid, String byUserOid, Double unitRealCost, CompanyOid companyOid) {
         LocalDateTime now = LocalDateTime.now();
         return Acquisition.builder()
                 .acquisitionTypeOid(request.getAcquisitionTypeOid())
@@ -39,7 +39,7 @@ public class AcquisitionMapper {
                 .supplierName(request.getSupplierName())
                 .invoiceNumber(request.getInvoiceNumber())
                 .observations(request.getObservations())
-                .userOid(userOid)
+                .byUserOid(byUserOid)
                 .companyOid(companyOid)
                 .acquisitionDate(now)
                 .isDeleted(false)

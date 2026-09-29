@@ -24,20 +24,20 @@ public class UserMapper implements ResponseMapper<User, UserResponse> {
      * @param request Create user request.
      * @param hashedPassword Hashed password.
      * @param roleId Role assigned to the new user.
-     * @param createdByUserOid Identifier of the user that creates it.
+     * @param byUserOid Identifier of the user that creates it.
      * @param isActive Active flag.
      * @return User entity.
      */
-    public User toEntity(CreateUserRequest request, String hashedPassword, String roleId, String createdByUserOid, boolean isActive) {
+    public User toEntity(CreateUserRequest request, String hashedPassword, String roleId, String byUserOid, boolean isActive) {
         return User.builder()
                 .userName(request.getUserName())
                 .email(request.getEmail())
                 .password(hashedPassword)
                 .name(request.getName())
                 .phoneNumber(request.getPhoneNumber())
-                .roleId(request.getRoleId())
+                .roleId(roleId)
                 .companyOid(request.getCompanyOid())
-                .createdByUserOid(request.getCreatedByUserOid())
+                .byUserOid(byUserOid)
                 .isActive(isActive)
                 .isDelete(false)
                 .createdDate(LocalDateTime.now())
@@ -51,9 +51,10 @@ public class UserMapper implements ResponseMapper<User, UserResponse> {
      * @param existing Current persisted user.
      * @param request Update user request.
      * @param hashedPassword Newly hashed password when provided; null keeps the current one.
+     * @param updatedByUserOid Identifier of the user that last updated it.
      * @return New immutable user instance with the changes applied.
      */
-    public User applyUpdate(User existing, UpdateUserRequest request, String hashedPassword) {
+    public User applyUpdate(User existing, UpdateUserRequest request, String hashedPassword, String updatedByUserOid) {
         return User.builder()
                 .id(existing.getId())
                 .userName(request.getUserName() != null ? request.getUserName() : existing.getUserName())
@@ -63,13 +64,12 @@ public class UserMapper implements ResponseMapper<User, UserResponse> {
                 .phoneNumber(request.getPhoneNumber() != null ? request.getPhoneNumber() : existing.getPhoneNumber())
                 .roleId(request.getRoleId() != null ? request.getRoleId() : existing.getRoleId())
                 .companyOid(request.getCompanyOid() != null ? request.getCompanyOid() : existing.getCompanyOid())
-                .createdByUserOid(existing.getCreatedByUserOid())
+                .byUserOid(existing.getByUserOid())
                 .isActive(request.getIsActive() != null ? request.getIsActive() : existing.isActive())
                 .isDelete(existing.isDelete())
                 .createdDate(existing.getCreatedDate())
                 .updatedDate(LocalDateTime.now())
-                .createdBy(existing.getCreatedBy())
-                .updatedBy(existing.getUpdatedBy())
+                .updatedByUserOid(updatedByUserOid)
                 .build();
     }
 
@@ -91,7 +91,7 @@ public class UserMapper implements ResponseMapper<User, UserResponse> {
         response.setRole(role);
         response.setCompany(company);
         response.setCompanyOid(user.getCompanyOid());
-        response.setCreatedByUserOid(user.getCreatedByUserOid());
+        response.setByUserOid(user.getByUserOid());
         response.setActive(user.isActive());
         response.setCreatedDate(user.getCreatedDate());
         response.setUpdatedDate(user.getUpdatedDate());
@@ -112,7 +112,7 @@ public class UserMapper implements ResponseMapper<User, UserResponse> {
         response.setName(user.getName());
         response.setPhoneNumber(user.getPhoneNumber());
         response.setCompanyOid(user.getCompanyOid());
-        response.setCreatedByUserOid(user.getCreatedByUserOid());
+        response.setByUserOid(user.getByUserOid());
         response.setActive(user.isActive());
         response.setCreatedDate(user.getCreatedDate());
         response.setUpdatedDate(user.getUpdatedDate());

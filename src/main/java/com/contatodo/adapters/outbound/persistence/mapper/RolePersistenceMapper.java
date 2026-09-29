@@ -28,7 +28,8 @@ public class RolePersistenceMapper implements PersistenceMapper<RoleDocument, Ro
         document.setIsActive(role.getIsActive());
         document.setCreatedDate(role.getCreatedDate());
         document.setUpdatedDate(role.getUpdatedDate());
-        document.setCreatedBy(role.getCreatedBy());
+        document.setByUserOid(role.getByUserOid());
+        document.setUpdatedByUserOid(role.getUpdatedByUserOid());
 
         List<RolePermissionDocument> permissionDocuments = role.getPermissions().stream()
                 .map(RolePersistenceMapper::toPermissionDocument)
@@ -57,7 +58,8 @@ public class RolePersistenceMapper implements PersistenceMapper<RoleDocument, Ro
                 .isActive(document.getIsActive())
                 .createdDate(document.getCreatedDate())
                 .updatedDate(document.getUpdatedDate())
-                .createdBy(document.getCreatedBy())
+                .byUserOid(document.getByUserOid())
+                .updatedByUserOid(document.getUpdatedByUserOid())
                 .build();
     }
 

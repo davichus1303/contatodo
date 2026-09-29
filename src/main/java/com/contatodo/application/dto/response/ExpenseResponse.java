@@ -15,7 +15,7 @@ public class ExpenseResponse {
     private Double amount;
     private String currency;
     private LocalDateTime expenseDate;
-    private String userOid;
+    private String byUserOid;
     private Boolean isActive;
     private Boolean isDeleted;
     private LocalDateTime createdDate;
@@ -88,12 +88,12 @@ public class ExpenseResponse {
         this.expenseDate = expenseDate;
     }
 
-    public String getUserOid() {
-        return userOid;
+    public String getByUserOid() {
+        return byUserOid;
     }
 
-    public void setUserOid(String userOid) {
-        this.userOid = userOid;
+    public void setByUserOid(String byUserOid) {
+        this.byUserOid = byUserOid;
     }
 
     public Boolean getIsActive() {

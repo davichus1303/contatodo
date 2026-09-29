@@ -22,7 +22,8 @@ public final class Role {
     private final Boolean isActive;
     private final LocalDateTime createdDate;
     private final LocalDateTime updatedDate;
-    private final String createdBy;
+    private final String byUserOid;
+    private final String updatedByUserOid;
 
     /**
      * Creates a role from its builder.
@@ -37,7 +38,8 @@ public final class Role {
         this.isActive = builder.isActive;
         this.createdDate = builder.createdDate;
         this.updatedDate = builder.updatedDate;
-        this.createdBy = builder.createdBy;
+        this.byUserOid = builder.byUserOid;
+        this.updatedByUserOid = builder.updatedByUserOid;
     }
 
     /**
@@ -94,8 +96,12 @@ public final class Role {
         return updatedDate;
     }
 
-    public String getCreatedBy() {
-        return createdBy;
+    public String getByUserOid() {
+        return byUserOid;
+    }
+
+    public String getUpdatedByUserOid() {
+        return updatedByUserOid;
     }
 
     /**
@@ -112,7 +118,8 @@ public final class Role {
                 .isActive(isActive)
                 .createdDate(createdDate)
                 .updatedDate(updatedDate)
-                .createdBy(createdBy);
+                .byUserOid(byUserOid)
+                .updatedByUserOid(updatedByUserOid);
     }
 
     /**
@@ -127,7 +134,8 @@ public final class Role {
         private Boolean isActive;
         private LocalDateTime createdDate;
         private LocalDateTime updatedDate;
-        private String createdBy;
+        private String byUserOid;
+        private String updatedByUserOid;
 
         /**
          * Sets the identifier.
@@ -209,11 +217,22 @@ public final class Role {
         /**
          * Sets the creator identifier.
          *
-         * @param createdBy Creator identifier.
+         * @param byUserOid Creator identifier.
          * @return This builder.
          */
-        public Builder createdBy(String createdBy) {
-            this.createdBy = createdBy;
+        public Builder byUserOid(String byUserOid) {
+            this.byUserOid = byUserOid;
+            return this;
+        }
+
+        /**
+         * Sets the identifier of the user that last updated the role.
+         *
+         * @param updatedByUserOid Last updater identifier.
+         * @return This builder.
+         */
+        public Builder updatedByUserOid(String updatedByUserOid) {
+            this.updatedByUserOid = updatedByUserOid;
             return this;
         }
 

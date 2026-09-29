@@ -9,6 +9,7 @@ import com.contatodo.application.dto.response.UserResponse;
 import com.contatodo.application.mapper.CompanyMapper;
 import com.contatodo.application.mapper.RoleMapper;
 import com.contatodo.application.mapper.UserMapper;
+import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.port.CompanyContextProvider;
 import com.contatodo.application.port.TokenProvider;
 import com.contatodo.application.validators.UserValidator;
@@ -82,12 +83,15 @@ class UserServiceTest {
     @Mock
     private CompanyContextProvider companyContextProvider;
 
+    @Mock
+    private AuthenticatedUserProvider authenticatedUserProvider;
+
     private UserService userService;
 
     @BeforeEach
     void setUp() {
         userService = new UserService(
-                userRepository, roleRepository, companyRepository, userValidator, userMapper, roleMapper, companyMapper, passwordEncoder, tokenProvider, companyContextProvider);
+                userRepository, roleRepository, companyRepository, userValidator, userMapper, roleMapper, companyMapper, passwordEncoder, tokenProvider, companyContextProvider, authenticatedUserProvider);
     }
 
     private CreateUserRequest createRequest(String email) {

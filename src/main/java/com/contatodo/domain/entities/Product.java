@@ -30,7 +30,8 @@ public final class Product {
     private final Double unitPublicCost;
     private final String urlPhoto;
     private final Boolean isActive;
-    private final String userOid;
+    private final String byUserOid;
+    private final String updatedByUserOid;
     private final CompanyOid companyOid;
     private final LocalDateTime createdDate;
     private final LocalDateTime updatedDate;
@@ -51,7 +52,8 @@ public final class Product {
         this.unitPublicCost = builder.unitPublicCost;
         this.urlPhoto = builder.urlPhoto;
         this.isActive = builder.isActive;
-        this.userOid = builder.userOid;
+        this.byUserOid = builder.byUserOid;
+        this.updatedByUserOid = builder.updatedByUserOid;
         this.companyOid = builder.companyOid;
         this.createdDate = builder.createdDate;
         this.updatedDate = builder.updatedDate;
@@ -106,8 +108,12 @@ public final class Product {
         return isActive;
     }
 
-    public String getUserOid() {
-        return userOid;
+    public String getByUserOid() {
+        return byUserOid;
+    }
+
+    public String getUpdatedByUserOid() {
+        return updatedByUserOid;
     }
 
     public CompanyOid getCompanyOid() {
@@ -213,7 +219,8 @@ public final class Product {
                 .unitPublicCost(unitPublicCost)
                 .urlPhoto(urlPhoto)
                 .isActive(isActive)
-                .userOid(userOid)
+                .byUserOid(byUserOid)
+                .updatedByUserOid(updatedByUserOid)
                 .companyOid(companyOid)
                 .createdDate(createdDate)
                 .updatedDate(updatedDate);
@@ -234,7 +241,8 @@ public final class Product {
         private Double unitPublicCost;
         private String urlPhoto;
         private Boolean isActive;
-        private String userOid;
+        private String byUserOid;
+        private String updatedByUserOid;
         private CompanyOid companyOid;
         private LocalDateTime createdDate;
         private LocalDateTime updatedDate;
@@ -352,11 +360,22 @@ public final class Product {
         /**
          * Sets the owning user identifier.
          *
-         * @param userOid User identifier.
+         * @param byUserOid User identifier.
          * @return This builder.
          */
-        public Builder userOid(String userOid) {
-            this.userOid = userOid;
+        public Builder byUserOid(String byUserOid) {
+            this.byUserOid = byUserOid;
+            return this;
+        }
+
+        /**
+         * Sets the identifier of the user that last updated the entity.
+         *
+         * @param updatedByUserOid Last updater identifier.
+         * @return This builder.
+         */
+        public Builder updatedByUserOid(String updatedByUserOid) {
+            this.updatedByUserOid = updatedByUserOid;
             return this;
         }
 

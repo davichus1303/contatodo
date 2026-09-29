@@ -55,12 +55,12 @@ class SaleTest {
     @Test
     void builderRejectsMissingProduct() {
         assertThrows(com.contatodo.domain.exception.InvalidEntityStateException.class,
-                () -> Sale.builder().quantity(1).userOid("u").build());
+                () -> Sale.builder().quantity(1).byUserOid("u").build());
     }
 
     @Test
     void builderRejectsNonPositiveQuantity() {
         assertThrows(com.contatodo.domain.exception.InvalidEntityStateException.class,
-                () -> Sale.builder().productOid("p").quantity(0).userOid("u").build());
+                () -> Sale.builder().productOid("p").quantity(0).byUserOid("u").build());
     }
 }

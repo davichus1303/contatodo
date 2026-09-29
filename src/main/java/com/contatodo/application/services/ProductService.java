@@ -93,7 +93,9 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ProductConstants.PRODUCT_NOT_FOUND));
 
-        Product updatedProduct = productRepository.save(productMapper.applyUpdate(product, request));
+        Product updatedProduct = productRepository.save(
+                productMapper.applyUpdate(product, request, authenticatedUserProvider.getCurrentUserOid())
+        );
         return productMapper.toResponse(updatedProduct);
     }
 

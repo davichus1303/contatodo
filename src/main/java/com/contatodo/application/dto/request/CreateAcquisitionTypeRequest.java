@@ -7,7 +7,6 @@ public class CreateAcquisitionTypeRequest {
 
     private String name;
     private String description;
-    private String userOid;
     private Boolean affectsInventory;
 
     public CreateAcquisitionTypeRequest() {
@@ -27,14 +26,6 @@ public class CreateAcquisitionTypeRequest {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public String getUserOid() {
-        return userOid;
-    }
-
-    public void setUserOid(String userOid) {
-        this.userOid = userOid;
     }
 
     public Boolean getAffectsInventory() {

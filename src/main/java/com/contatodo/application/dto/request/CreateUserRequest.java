@@ -11,7 +11,6 @@ public class CreateUserRequest {
     private String name;
     private String phoneNumber;
     private String roleId;
-    private String createdByUserOid;
     private String companyOid;
 
     public String getUserName() {
@@ -60,14 +59,6 @@ public class CreateUserRequest {
 
     public void setRoleId(String roleId) {
         this.roleId = roleId;
-    }
-
-    public String getCreatedByUserOid() {
-        return createdByUserOid;
-    }
-
-    public void setCreatedByUserOid(String createdByUserOid) {
-        this.createdByUserOid = createdByUserOid;
     }
 
     public String getCompanyOid() {

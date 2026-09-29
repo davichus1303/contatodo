@@ -27,7 +27,7 @@ class UserMapperTest {
                 .name("David")
                 .phoneNumber("987654321")
                 .roleId("role-1")
-                .createdByUserOid("creator-1")
+                .byUserOid("creator-1")
                 .isActive(true)
                 .isDelete(false)
                 .createdDate(LocalDateTime.of(2026, 1, 1, 0, 0))
@@ -72,7 +72,7 @@ class UserMapperTest {
         UpdateUserRequest request = new UpdateUserRequest();
         request.setRoleId("role-2");
 
-        User updated = userMapper.applyUpdate(existingUser(), request, null);
+        User updated = userMapper.applyUpdate(existingUser(), request, null, "editor-1");
 
         assertEquals("role-2", updated.getRoleId());
     }
@@ -81,7 +81,7 @@ class UserMapperTest {
     void applyUpdateKeepsTheCurrentRoleWhenTheRequestRoleIsNull() {
         UpdateUserRequest request = new UpdateUserRequest();
 
-        User updated = userMapper.applyUpdate(existingUser(), request, null);
+        User updated = userMapper.applyUpdate(existingUser(), request, null, "editor-1");
 
         assertEquals("role-1", updated.getRoleId());
     }
@@ -90,7 +90,7 @@ class UserMapperTest {
     void applyUpdateKeepsTheCurrentPasswordWhenNoHashedPasswordIsProvided() {
         UpdateUserRequest request = new UpdateUserRequest();
 
-        User updated = userMapper.applyUpdate(existingUser(), request, null);
+        User updated = userMapper.applyUpdate(existingUser(), request, null, "editor-1");
 
         assertEquals("hashed", updated.getPassword());
     }
@@ -99,7 +99,7 @@ class UserMapperTest {
     void applyUpdateKeepsTheCurrentPhoneNumberWhenTheRequestPhoneNumberIsNull() {
         UpdateUserRequest request = new UpdateUserRequest();
 
-        User updated = userMapper.applyUpdate(existingUser(), request, null);
+        User updated = userMapper.applyUpdate(existingUser(), request, null, "editor-1");
 
         assertEquals("987654321", updated.getPhoneNumber());
     }
@@ -113,7 +113,7 @@ class UserMapperTest {
         request.setPhoneNumber("999888777");
         request.setIsActive(false);
 
-        User updated = userMapper.applyUpdate(existingUser(), request, "new-hash");
+        User updated = userMapper.applyUpdate(existingUser(), request, "new-hash", "editor-1");
 
         assertEquals("david-new", updated.getUserName());
         assertEquals("david-new@example.com", updated.getEmail());
@@ -122,5 +122,70 @@ class UserMapperTest {
         assertEquals("new-hash", updated.getPassword());
         assertEquals(false, updated.isActive());
         assertEquals("role-1", updated.getRoleId());
+    }
+
+    @Test
+    void toEntityRecordsTheCreatorFromTheProvidedParameter() {
+        CreateUserRequest request = new CreateUserRequest();
+        request.setUserName("david");
+        request.setEmail("david@example.com");
+        request.setName("David");
+
+        User user = userMapper.toEntity(request, "hashed", "role-1", "creator-1", true);
+
+        assertEquals("creator-1", user.getByUserOid());
+    }
+
+    @Test
+    void toEntityUsesTheResolvedRoleAndNotTheOneSentInTheRequest() {
+        CreateUserRequest request = new CreateUserRequest();
+        request.setUserName("david");
+        request.setEmail("david@example.com");
+        request.setName("David");
+        request.setRoleId("role-root");
+
+        User user = userMapper.toEntity(request, "hashed", null, null, false);
+
+        assertNull(user.getRoleId());
+    }
+
+    @Test
+    void applyUpdateKeepsTheOriginalCreatorAndRecordsTheEditor() {
+        UpdateUserRequest request = new UpdateUserRequest();
+        request.setName("David New");
+
+        User updated = userMapper.applyUpdate(existingUser(), request, null, "editor-9");
+
+        assertEquals("creator-1", updated.getByUserOid());
+        assertEquals("editor-9", updated.getUpdatedByUserOid());
+    }
+
+    @Test
+    void applyUpdateOverwritesThePreviousEditorWithTheCurrentOne() {
+        User previouslyEdited = User.builder()
+                .id("user-1")
+                .userName("david")
+                .email("david@example.com")
+                .password("hashed")
+                .name("David")
+                .byUserOid("creator-1")
+                .updatedByUserOid("editor-1")
+                .createdDate(LocalDateTime.of(2026, 1, 1, 0, 0))
+                .updatedDate(LocalDateTime.of(2026, 1, 1, 0, 0))
+                .build();
+
+        User updated = userMapper.applyUpdate(previouslyEdited, new UpdateUserRequest(), null, "editor-2");
+
+        assertEquals("editor-2", updated.getUpdatedByUserOid());
+    }
+
+    @Test
+    void createRequestCarriesNoAuthorFieldSoTheClientCannotForgeIt() {
+        assertEquals(
+                0,
+                java.util.Arrays.stream(CreateUserRequest.class.getMethods())
+                        .filter(method -> method.getName().toLowerCase().contains("byuseroid"))
+                        .count()
+        );
     }
 }

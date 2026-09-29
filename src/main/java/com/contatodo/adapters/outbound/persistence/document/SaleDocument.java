@@ -16,7 +16,7 @@ public class SaleDocument {
     private Long saleNumber;
     private String productOid;
     private String productName;
-    private String userOid;
+    private String byUserOid;
     private String companyOid;
     private Integer quantity;
     private Double totalCost;
@@ -60,12 +60,12 @@ public class SaleDocument {
         this.productName = productName;
     }
 
-    public String getUserOid() {
-        return userOid;
+    public String getByUserOid() {
+        return byUserOid;
     }
 
-    public void setUserOid(String userOid) {
-        this.userOid = userOid;
+    public void setByUserOid(String byUserOid) {
+        this.byUserOid = byUserOid;
     }
 
     public String getCompanyOid() {

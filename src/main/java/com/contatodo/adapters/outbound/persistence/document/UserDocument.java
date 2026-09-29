@@ -20,13 +20,12 @@ public class UserDocument {
     private String phoneNumber;
     private String roleId;
     private String companyOid;
-    private String createdByUserOid;
+    private String byUserOid;
     private boolean isActive;
     private boolean isDeleted;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
-    private String createdBy;
-    private String updatedBy;
+    private String updatedByUserOid;
 
     public String getId() {
         return id;
@@ -92,12 +91,12 @@ public class UserDocument {
         this.companyOid = companyOid;
     }
 
-    public String getCreatedByUserOid() {
-        return createdByUserOid;
+    public String getByUserOid() {
+        return byUserOid;
     }
 
-    public void setCreatedByUserOid(String createdByUserOid) {
-        this.createdByUserOid = createdByUserOid;
+    public void setByUserOid(String byUserOid) {
+        this.byUserOid = byUserOid;
     }
 
     public boolean isActive() {
@@ -132,19 +131,11 @@ public class UserDocument {
         this.updatedDate = updatedDate;
     }
 
-    public String getCreatedBy() {
-        return createdBy;
+    public String getUpdatedByUserOid() {
+        return updatedByUserOid;
     }
 
-    public void setCreatedBy(String createdBy) {
-        this.createdBy = createdBy;
-    }
-
-    public String getUpdatedBy() {
-        return updatedBy;
-    }
-
-    public void setUpdatedBy(String updatedBy) {
-        this.updatedBy = updatedBy;
+    public void setUpdatedByUserOid(String updatedByUserOid) {
+        this.updatedByUserOid = updatedByUserOid;
     }
 }

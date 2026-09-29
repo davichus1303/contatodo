@@ -27,13 +27,13 @@ class UserPersistenceMapperTest {
                 .name("John Doe")
                 .phoneNumber("+1234567890")
                 .roleId("role-1")
-                .createdByUserOid("creator-1")
+                .byUserOid("creator-1")
                 .isActive(true)
                 .isDelete(false)
                 .createdDate(now)
                 .updatedDate(now)
-                .createdBy("creator-1")
-                .updatedBy("updater-1")
+                .byUserOid("creator-1")
+                .updatedByUserOid("updater-1")
                 .build();
 
         UserDocument document = mapper.toDocument(user);
@@ -45,13 +45,13 @@ class UserPersistenceMapperTest {
         assertEquals("John Doe", document.getName());
         assertEquals("+1234567890", document.getPhoneNumber());
         assertEquals("role-1", document.getRoleId());
-        assertEquals("creator-1", document.getCreatedByUserOid());
+        assertEquals("creator-1", document.getByUserOid());
         assertEquals(true, document.isActive());
         assertEquals(false, document.getIsDeleted());
         assertEquals(now, document.getCreatedDate());
         assertEquals(now, document.getUpdatedDate());
-        assertEquals("creator-1", document.getCreatedBy());
-        assertEquals("updater-1", document.getUpdatedBy());
+        assertEquals("creator-1", document.getByUserOid());
+        assertEquals("updater-1", document.getUpdatedByUserOid());
     }
 
     @Test
@@ -65,13 +65,13 @@ class UserPersistenceMapperTest {
         document.setName("John Doe");
         document.setPhoneNumber("+1234567890");
         document.setRoleId("role-1");
-        document.setCreatedByUserOid("creator-1");
+        document.setByUserOid("creator-1");
         document.setActive(true);
         document.setIsDeleted(false);
         document.setCreatedDate(now);
         document.setUpdatedDate(now);
-        document.setCreatedBy("creator-1");
-        document.setUpdatedBy("updater-1");
+        document.setByUserOid("creator-1");
+        document.setUpdatedByUserOid("updater-1");
 
         User user = mapper.toEntity(document);
 
@@ -82,13 +82,13 @@ class UserPersistenceMapperTest {
         assertEquals("John Doe", user.getName());
         assertEquals("+1234567890", user.getPhoneNumber());
         assertEquals("role-1", user.getRoleId());
-        assertEquals("creator-1", user.getCreatedByUserOid());
+        assertEquals("creator-1", user.getByUserOid());
         assertEquals(true, user.isActive());
         assertEquals(false, user.isDelete());
         assertEquals(now, user.getCreatedDate());
         assertEquals(now, user.getUpdatedDate());
-        assertEquals("creator-1", user.getCreatedBy());
-        assertEquals("updater-1", user.getUpdatedBy());
+        assertEquals("creator-1", user.getByUserOid());
+        assertEquals("updater-1", user.getUpdatedByUserOid());
     }
 
     @Test
@@ -101,7 +101,7 @@ class UserPersistenceMapperTest {
         document.setName("John Doe");
         document.setPhoneNumber(null);
         document.setRoleId("role-1");
-        document.setCreatedByUserOid("creator-1");
+        document.setByUserOid("creator-1");
         document.setActive(true);
         document.setIsDeleted(false);
         document.setCreatedDate(LocalDateTime.now());
@@ -123,13 +123,13 @@ class UserPersistenceMapperTest {
                 .name("John Doe")
                 .phoneNumber("+1234567890")
                 .roleId("role-1")
-                .createdByUserOid("creator-1")
+                .byUserOid("creator-1")
                 .isActive(true)
                 .isDelete(false)
                 .createdDate(now)
                 .updatedDate(now)
-                .createdBy("creator-1")
-                .updatedBy("updater-1")
+                .byUserOid("creator-1")
+                .updatedByUserOid("updater-1")
                 .build();
 
         UserDocument document = mapper.toDocument(original);
@@ -142,7 +142,7 @@ class UserPersistenceMapperTest {
         assertEquals(original.getName(), roundTripped.getName());
         assertEquals(original.getPhoneNumber(), roundTripped.getPhoneNumber());
         assertEquals(original.getRoleId(), roundTripped.getRoleId());
-        assertEquals(original.getCreatedByUserOid(), roundTripped.getCreatedByUserOid());
+        assertEquals(original.getByUserOid(), roundTripped.getByUserOid());
         assertEquals(original.isActive(), roundTripped.isActive());
         assertEquals(original.isDelete(), roundTripped.isDelete());
     }

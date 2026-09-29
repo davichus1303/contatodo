@@ -15,7 +15,8 @@ public class UserResponse {
     private RoleResponse role;
     private CompanyResponse company;
     private String companyOid;
-    private String createdByUserOid;
+    private String byUserOid;
+    private String updatedByUserOid;
     private boolean isActive;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
@@ -84,12 +85,20 @@ public class UserResponse {
         this.companyOid = companyOid;
     }
 
-    public String getCreatedByUserOid() {
-        return createdByUserOid;
+    public String getByUserOid() {
+        return byUserOid;
     }
 
-    public void setCreatedByUserOid(String createdByUserOid) {
-        this.createdByUserOid = createdByUserOid;
+    public void setByUserOid(String byUserOid) {
+        this.byUserOid = byUserOid;
+    }
+
+    public String getUpdatedByUserOid() {
+        return updatedByUserOid;
+    }
+
+    public void setUpdatedByUserOid(String updatedByUserOid) {
+        this.updatedByUserOid = updatedByUserOid;
     }
 
     public boolean isActive() {

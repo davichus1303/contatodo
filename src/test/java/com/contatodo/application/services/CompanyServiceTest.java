@@ -111,7 +111,7 @@ class CompanyServiceTest {
                 .isDeleted(false)
                 .createdDate(LocalDateTime.of(2026, 1, 1, 0, 0))
                 .updatedDate(LocalDateTime.of(2026, 1, 1, 0, 0))
-                .createdBy("creator-1")
+                .byUserOid("creator-1")
                 .build();
     }
 
@@ -204,7 +204,7 @@ class CompanyServiceTest {
         List<Company> saved = captor.getValue();
         assertEquals(2, saved.size());
         assertEquals("RFC-Acme", saved.get(0).getRfc());
-        assertEquals("creator-1", saved.get(0).getCreatedBy());
+        assertEquals("creator-1", saved.get(0).getByUserOid());
         assertEquals(Boolean.TRUE, saved.get(0).getIsActive());
         assertEquals(Boolean.FALSE, saved.get(0).getIsDeleted());
         assertEquals(saved.get(0).getCreatedDate(), saved.get(0).getUpdatedDate());
@@ -253,6 +253,7 @@ class CompanyServiceTest {
         when(companyRepository.findById("company-1")).thenReturn(Optional.of(persistedCompany()));
         when(companyRepository.save(any(Company.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(userRepository.findById("user-1")).thenReturn(Optional.of(contactUser()));
+        when(authenticatedUserProvider.getCurrentUserOid()).thenReturn("editor-2");
 
         CompanyResponse response = companyService.updateCompany("company-1", request);
 
@@ -269,7 +270,8 @@ class CompanyServiceTest {
         Company saved = captor.getValue();
         assertEquals("company-1", saved.getId());
         assertEquals(Boolean.FALSE, saved.getIsDeleted());
-        assertEquals("creator-1", saved.getCreatedBy());
+        assertEquals("creator-1", saved.getByUserOid());
+        assertEquals("editor-2", saved.getUpdatedByUserOid());
         assertEquals(LocalDateTime.of(2026, 1, 1, 0, 0), saved.getCreatedDate());
         assertTrue(saved.getUpdatedDate().isAfter(LocalDateTime.of(2026, 1, 1, 0, 0)));
     }

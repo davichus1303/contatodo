@@ -68,7 +68,7 @@ class MongoPersistenceRoundTripTest {
                 .unitRealCost(10.0)
                 .unitPublicCost(15.0)
                 .isActive(true)
-                .userOid("user-roundtrip")
+                .byUserOid("user-roundtrip")
                 .createdDate(java.time.LocalDateTime.now())
                 .updatedDate(java.time.LocalDateTime.now())
                 .build();

@@ -23,7 +23,7 @@ public final class ProductCostHistory {
     private final Double unitRealCost;
     private final Double unitPublicCostAtPurchase;
     private final LocalDateTime acquisitionDate;
-    private final String userOid;
+    private final String byUserOid;
     private final CompanyOid companyOid;
     private final LocalDateTime createdDate;
 
@@ -42,7 +42,7 @@ public final class ProductCostHistory {
         this.unitRealCost = builder.unitRealCost;
         this.unitPublicCostAtPurchase = builder.unitPublicCostAtPurchase;
         this.acquisitionDate = builder.acquisitionDate;
-        this.userOid = builder.userOid;
+        this.byUserOid = builder.byUserOid;
         this.companyOid = builder.companyOid;
         this.createdDate = builder.createdDate;
     }
@@ -92,8 +92,8 @@ public final class ProductCostHistory {
         return acquisitionDate;
     }
 
-    public String getUserOid() {
-        return userOid;
+    public String getByUserOid() {
+        return byUserOid;
     }
 
     public CompanyOid getCompanyOid() {
@@ -118,7 +118,7 @@ public final class ProductCostHistory {
         private Double unitRealCost;
         private Double unitPublicCostAtPurchase;
         private LocalDateTime acquisitionDate;
-        private String userOid;
+        private String byUserOid;
         private CompanyOid companyOid;
         private LocalDateTime createdDate;
 
@@ -224,11 +224,11 @@ public final class ProductCostHistory {
         /**
          * Sets the owning user identifier.
          *
-         * @param userOid User identifier.
+         * @param byUserOid User identifier.
          * @return This builder.
          */
-        public Builder userOid(String userOid) {
-            this.userOid = userOid;
+        public Builder byUserOid(String byUserOid) {
+            this.byUserOid = byUserOid;
             return this;
         }
 
@@ -262,7 +262,7 @@ public final class ProductCostHistory {
          */
         public ProductCostHistory build() {
             EntityValidation.requireNotBlank(productOid, ValidationConstants.FIELD_REQUIRED);
-            EntityValidation.requireNotBlank(userOid, ValidationConstants.FIELD_REQUIRED);
+            EntityValidation.requireNotBlank(byUserOid, ValidationConstants.FIELD_REQUIRED);
             if (acquisitionDate == null || createdDate == null) {
                 throw new com.contatodo.domain.exception.InvalidEntityStateException(ValidationConstants.FIELD_REQUIRED);
             }

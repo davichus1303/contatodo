@@ -19,15 +19,15 @@ public class AcquisitionTypeMapper implements ResponseMapper<AcquisitionType, Ac
      * Maps a create request to a domain entity.
      *
      * @param request Create acquisition type request.
-     * @param userOid Authenticated owner identifier.
+     * @param byUserOid Authenticated owner identifier.
      * @return Acquisition type entity.
      */
-    public AcquisitionType toEntity(CreateAcquisitionTypeRequest request, String userOid) {
+    public AcquisitionType toEntity(CreateAcquisitionTypeRequest request, String byUserOid) {
         LocalDateTime now = LocalDateTime.now();
         return AcquisitionType.builder()
                 .name(request.getName())
                 .description(request.getDescription())
-                .userOid(userOid)
+                .byUserOid(byUserOid)
                 .affectsInventory(request.getAffectsInventory() != null ? request.getAffectsInventory() : false)
                 .isActive(true)
                 .isDeleted(false)
@@ -47,7 +47,7 @@ public class AcquisitionTypeMapper implements ResponseMapper<AcquisitionType, Ac
         response.setId(acquisitionType.getId());
         response.setName(acquisitionType.getName());
         response.setDescription(acquisitionType.getDescription());
-        response.setUserOid(acquisitionType.getUserOid());
+        response.setByUserOid(acquisitionType.getByUserOid());
         response.setIsActive(acquisitionType.getIsActive());
         response.setIsDeleted(acquisitionType.getIsDeleted());
         response.setAffectsInventory(acquisitionType.getAffectsInventory());
@@ -62,14 +62,16 @@ public class AcquisitionTypeMapper implements ResponseMapper<AcquisitionType, Ac
      *
      * @param acquisitionType Existing acquisition type entity.
      * @param request Update acquisition type request.
+     * @param updatedByUserOid Identifier of the user that last updated it.
      */
-    public AcquisitionType updateEntityFromRequest(AcquisitionType existing, UpdateAcquisitionTypeRequest request) {
+    public AcquisitionType updateEntityFromRequest(AcquisitionType existing, UpdateAcquisitionTypeRequest request, String updatedByUserOid) {
         LocalDateTime now = LocalDateTime.now();
         return AcquisitionType.builder()
                 .id(existing.getId())
                 .name(request.getName() != null ? request.getName() : existing.getName())
                 .description(request.getDescription() != null ? request.getDescription() : existing.getDescription())
-                .userOid(existing.getUserOid())
+                .byUserOid(existing.getByUserOid())
+                .updatedByUserOid(updatedByUserOid)
                 .isActive(request.getIsActive() != null ? request.getIsActive() : existing.getIsActive())
                 .isDeleted(existing.getIsDeleted())
                 .affectsInventory(request.getAffectsInventory() != null ? request.getAffectsInventory() : existing.getAffectsInventory())

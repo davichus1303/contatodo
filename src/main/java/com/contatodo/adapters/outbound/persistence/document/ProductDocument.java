@@ -22,7 +22,8 @@ public class ProductDocument {
     private Double unitPublicCost;
     private String urlPhoto;
     private Boolean isActive;
-    private String userOid;
+    private String byUserOid;
+    private String updatedByUserOid;
     private String companyOid;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
@@ -123,12 +124,20 @@ public class ProductDocument {
         this.updatedDate = updatedDate;
     }
 
-    public String getUserOid() {
-        return userOid;
+    public String getByUserOid() {
+        return byUserOid;
     }
 
-    public void setUserOid(String userOid) {
-        this.userOid = userOid;
+    public void setByUserOid(String byUserOid) {
+        this.byUserOid = byUserOid;
+    }
+
+    public String getUpdatedByUserOid() {
+        return updatedByUserOid;
+    }
+
+    public void setUpdatedByUserOid(String updatedByUserOid) {
+        this.updatedByUserOid = updatedByUserOid;
     }
 
     public String getCompanyOid() {

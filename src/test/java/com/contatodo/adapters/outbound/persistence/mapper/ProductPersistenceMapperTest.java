@@ -30,7 +30,7 @@ class ProductPersistenceMapperTest {
                 .unitPublicCost(15.0)
                 .urlPhoto("http://example.com/photo.jpg")
                 .isActive(true)
-                .userOid("user-1")
+                .byUserOid("user-1")
                 .createdDate(now)
                 .updatedDate(now)
                 .build();
@@ -47,7 +47,7 @@ class ProductPersistenceMapperTest {
         assertEquals(15.0, document.getUnitPublicCost());
         assertEquals("http://example.com/photo.jpg", document.getUrlPhoto());
         assertEquals(true, document.getIsActive());
-        assertEquals("user-1", document.getUserOid());
+        assertEquals("user-1", document.getByUserOid());
         assertEquals(now, document.getCreatedDate());
         assertEquals(now, document.getUpdatedDate());
     }
@@ -66,7 +66,7 @@ class ProductPersistenceMapperTest {
         document.setUnitPublicCost(15.0);
         document.setUrlPhoto("http://example.com/photo.jpg");
         document.setIsActive(true);
-        document.setUserOid("user-1");
+        document.setByUserOid("user-1");
         document.setCreatedDate(now);
         document.setUpdatedDate(now);
 
@@ -82,7 +82,7 @@ class ProductPersistenceMapperTest {
         assertEquals(15.0, product.getUnitPublicCost());
         assertEquals("http://example.com/photo.jpg", product.getUrlPhoto());
         assertEquals(true, product.getIsActive());
-        assertEquals("user-1", product.getUserOid());
+        assertEquals("user-1", product.getByUserOid());
         assertEquals(now, product.getCreatedDate());
         assertEquals(now, product.getUpdatedDate());
     }
@@ -101,7 +101,7 @@ class ProductPersistenceMapperTest {
         document.setUnitPublicCost(15.0);
         document.setUrlPhoto(null);
         document.setIsActive(true);
-        document.setUserOid("user-1");
+        document.setByUserOid("user-1");
         document.setCreatedDate(now);
         document.setUpdatedDate(now);
 
@@ -124,7 +124,7 @@ class ProductPersistenceMapperTest {
                 .unitPublicCost(15.0)
                 .urlPhoto("http://example.com/photo.jpg")
                 .isActive(true)
-                .userOid("user-1")
+                .byUserOid("user-1")
                 .createdDate(now)
                 .updatedDate(now)
                 .build();
@@ -142,6 +142,6 @@ class ProductPersistenceMapperTest {
         assertEquals(original.getUnitPublicCost(), roundTripped.getUnitPublicCost());
         assertEquals(original.getUrlPhoto(), roundTripped.getUrlPhoto());
         assertEquals(original.getIsActive(), roundTripped.getIsActive());
-        assertEquals(original.getUserOid(), roundTripped.getUserOid());
+        assertEquals(original.getByUserOid(), roundTripped.getByUserOid());
     }
 }

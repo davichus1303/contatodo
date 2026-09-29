@@ -25,7 +25,7 @@ public class SalePersistenceMapper implements PersistenceMapper<SaleDocument, Sa
         document.setSaleNumber(sale.getSaleNumber());
         document.setProductOid(sale.getProductOid());
         document.setProductName(sale.getProductName());
-        document.setUserOid(sale.getUserOid());
+        document.setByUserOid(sale.getByUserOid());
         document.setCompanyOid(sale.getCompanyOid() != null
                 ? sale.getCompanyOid().value()
                 : null);
@@ -53,7 +53,7 @@ public class SalePersistenceMapper implements PersistenceMapper<SaleDocument, Sa
                 .saleNumber(document.getSaleNumber())
                 .productOid(document.getProductOid())
                 .productName(document.getProductName())
-                .userOid(document.getUserOid())
+                .byUserOid(document.getByUserOid())
                 .companyOid(document.getCompanyOid() != null
                         ? CompanyOid.of(document.getCompanyOid())
                         : null)

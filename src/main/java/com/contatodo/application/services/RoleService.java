@@ -83,7 +83,9 @@ public class RoleService {
             throw new InvalidRequestException("Cannot update a deleted role", List.of("Cannot update a deleted role"));
         }
 
-        Role updatedRole = roleRepository.save(roleMapper.updateEntity(role, request));
+        Role updatedRole = roleRepository.save(
+                roleMapper.updateEntity(role, request, authenticatedUserProvider.getCurrentUserOid())
+        );
         return roleMapper.toResponse(updatedRole);
     }
 

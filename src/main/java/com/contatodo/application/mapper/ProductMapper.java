@@ -21,11 +21,11 @@ public class ProductMapper implements ResponseMapper<Product, ProductResponse> {
      *
      * @param request Create product request.
      * @param code Generated product code.
-     * @param userOid Owning user identifier.
+     * @param byUserOid Owning user identifier.
      * @param companyOid Owning company identifier (null for root).
      * @return Product entity.
      */
-    public Product toEntity(CreateProductRequest request, String code, String userOid, CompanyOid companyOid) {
+    public Product toEntity(CreateProductRequest request, String code, String byUserOid, CompanyOid companyOid) {
         LocalDateTime now = LocalDateTime.now();
         return Product.builder()
                 .name(request.getName())
@@ -37,7 +37,7 @@ public class ProductMapper implements ResponseMapper<Product, ProductResponse> {
                 .unitPublicCost(request.getUnitPublicCost())
                 .urlPhoto(request.getUrlPhoto())
                 .isActive(request.getIsActive() != null ? request.getIsActive() : true)
-                .userOid(userOid)
+                .byUserOid(byUserOid)
                 .companyOid(companyOid)
                 .createdDate(now)
                 .updatedDate(now)
@@ -49,8 +49,9 @@ public class ProductMapper implements ResponseMapper<Product, ProductResponse> {
      *
      * @param product Existing product.
      * @param request Update product request.
+     * @param updatedByUserOid Identifier of the user that last updated it.
      */
-    public Product applyUpdate(Product existing, UpdateProductRequest request) {
+    public Product applyUpdate(Product existing, UpdateProductRequest request, String updatedByUserOid) {
         LocalDateTime now = LocalDateTime.now();
         return Product.builder()
                 .id(existing.getId())
@@ -63,7 +64,8 @@ public class ProductMapper implements ResponseMapper<Product, ProductResponse> {
                 .unitPublicCost(request.getUnitPublicCost() != null ? request.getUnitPublicCost() : existing.getUnitPublicCost())
                 .urlPhoto(request.getUrlPhoto() != null ? request.getUrlPhoto() : existing.getUrlPhoto())
                 .isActive(request.getIsActive() != null ? request.getIsActive() : existing.getIsActive())
-                .userOid(existing.getUserOid())
+                .byUserOid(existing.getByUserOid())
+                .updatedByUserOid(updatedByUserOid)
                 .companyOid(existing.getCompanyOid())
                 .createdDate(existing.getCreatedDate())
                 .updatedDate(now)

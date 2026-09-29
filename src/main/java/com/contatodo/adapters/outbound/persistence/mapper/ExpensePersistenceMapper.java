@@ -30,7 +30,7 @@ public class ExpensePersistenceMapper implements PersistenceMapper<ExpenseDocume
         document.setAmount(expense.getAmount());
         document.setCurrency(expense.getCurrency());
         document.setExpenseDate(expense.getExpenseDate());
-        document.setUserOid(expense.getUserOid());
+        document.setByUserOid(expense.getByUserOid());
         document.setCompanyOid(expense.getCompanyOid() != null
                 ? expense.getCompanyOid().value()
                 : null);
@@ -57,7 +57,7 @@ public class ExpensePersistenceMapper implements PersistenceMapper<ExpenseDocume
                 .amount(document.getAmount())
                 .currency(document.getCurrency())
                 .expenseDate(document.getExpenseDate())
-                .userOid(document.getUserOid())
+                .byUserOid(document.getByUserOid())
                 .companyOid(document.getCompanyOid() != null
                         ? CompanyOid.of(document.getCompanyOid())
                         : null)

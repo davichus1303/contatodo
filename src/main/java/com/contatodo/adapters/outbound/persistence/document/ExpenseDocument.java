@@ -20,7 +20,7 @@ public class ExpenseDocument {
     private Double amount;
     private String currency;
     private LocalDateTime expenseDate;
-    private String userOid;
+    private String byUserOid;
     private String companyOid;
     private Boolean isActive;
     private Boolean isDeleted;
@@ -91,12 +91,12 @@ public class ExpenseDocument {
         this.expenseDate = expenseDate;
     }
 
-    public String getUserOid() {
-        return userOid;
+    public String getByUserOid() {
+        return byUserOid;
     }
 
-    public void setUserOid(String userOid) {
-        this.userOid = userOid;
+    public void setByUserOid(String byUserOid) {
+        this.byUserOid = byUserOid;
     }
 
     public String getCompanyOid() {

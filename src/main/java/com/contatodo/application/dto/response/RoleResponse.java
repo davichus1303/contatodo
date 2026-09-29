@@ -17,7 +17,8 @@ public class RoleResponse {
     private Boolean isActive;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
-    private String createdBy;
+    private String byUserOid;
+    private String updatedByUserOid;
 
     /**
      * Creates an empty role response.
@@ -35,10 +36,10 @@ public class RoleResponse {
      * @param isActive Active status.
      * @param createdDate Creation date.
      * @param updatedDate Last update date.
-     * @param createdBy User who created the role.
+     * @param byUserOid User who created the role.
      */
     public RoleResponse(String id, String name, List<RolePermissionResponse> permissions, Boolean isDeleted, Boolean isActive,
-                        LocalDateTime createdDate, LocalDateTime updatedDate, String createdBy) {
+                        LocalDateTime createdDate, LocalDateTime updatedDate, String byUserOid) {
         this.id = id;
         this.name = name;
         this.permissions = permissions;
@@ -46,7 +47,7 @@ public class RoleResponse {
         this.isActive = isActive;
         this.createdDate = createdDate;
         this.updatedDate = updatedDate;
-        this.createdBy = createdBy;
+        this.byUserOid = byUserOid;
     }
 
     public String getId() {
@@ -105,11 +106,19 @@ public class RoleResponse {
         this.updatedDate = updatedDate;
     }
 
-    public String getCreatedBy() {
-        return createdBy;
+    public String getByUserOid() {
+        return byUserOid;
     }
 
-    public void setCreatedBy(String createdBy) {
-        this.createdBy = createdBy;
+    public void setByUserOid(String byUserOid) {
+        this.byUserOid = byUserOid;
+    }
+
+    public String getUpdatedByUserOid() {
+        return updatedByUserOid;
+    }
+
+    public void setUpdatedByUserOid(String updatedByUserOid) {
+        this.updatedByUserOid = updatedByUserOid;
     }
 }

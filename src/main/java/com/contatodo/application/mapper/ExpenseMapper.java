@@ -19,12 +19,12 @@ public class ExpenseMapper implements ResponseMapper<Expense, ExpenseResponse> {
      * Maps a create request to a domain entity.
      *
      * @param request Create expense request.
-     * @param userOid Authenticated user identifier.
+     * @param byUserOid Authenticated user identifier.
      * @param expenseDate Resolved expense date.
      * @param companyOid Owning company identifier (null for root).
      * @return Expense entity.
      */
-    public Expense toEntity(CreateExpenseRequest request, String userOid, LocalDateTime expenseDate, CompanyOid companyOid) {
+    public Expense toEntity(CreateExpenseRequest request, String byUserOid, LocalDateTime expenseDate, CompanyOid companyOid) {
         LocalDateTime now = LocalDateTime.now();
         return Expense.builder()
                 .acquisitionOid(request.getAcquisitionOid())
@@ -34,7 +34,7 @@ public class ExpenseMapper implements ResponseMapper<Expense, ExpenseResponse> {
                 .amount(request.getAmount())
                 .currency(request.getCurrency())
                 .expenseDate(expenseDate)
-                .userOid(userOid)
+                .byUserOid(byUserOid)
                 .companyOid(companyOid)
                 .isActive(true)
                 .isDeleted(false)
@@ -59,7 +59,7 @@ public class ExpenseMapper implements ResponseMapper<Expense, ExpenseResponse> {
         response.setAmount(expense.getAmount());
         response.setCurrency(expense.getCurrency());
         response.setExpenseDate(expense.getExpenseDate());
-        response.setUserOid(expense.getUserOid());
+        response.setByUserOid(expense.getByUserOid());
         response.setIsActive(expense.getIsActive());
         response.setIsDeleted(expense.getIsDeleted());
         response.setCreatedDate(expense.getCreatedDate());

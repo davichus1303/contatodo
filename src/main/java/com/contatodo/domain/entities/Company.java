@@ -24,7 +24,8 @@ public final class Company {
     private final Boolean isDeleted;
     private final LocalDateTime createdDate;
     private final LocalDateTime updatedDate;
-    private final String createdBy;
+    private final String byUserOid;
+    private final String updatedByUserOid;
 
     /**
      * Creates a company from its builder.
@@ -42,7 +43,8 @@ public final class Company {
         this.isDeleted = builder.isDeleted;
         this.createdDate = builder.createdDate;
         this.updatedDate = builder.updatedDate;
-        this.createdBy = builder.createdBy;
+        this.byUserOid = builder.byUserOid;
+        this.updatedByUserOid = builder.updatedByUserOid;
     }
 
     /**
@@ -94,8 +96,12 @@ public final class Company {
         return updatedDate;
     }
 
-    public String getCreatedBy() {
-        return createdBy;
+    public String getByUserOid() {
+        return byUserOid;
+    }
+
+    public String getUpdatedByUserOid() {
+        return updatedByUserOid;
     }
 
     /**
@@ -128,7 +134,8 @@ public final class Company {
                 .isDeleted(isDeleted)
                 .createdDate(createdDate)
                 .updatedDate(updatedDate)
-                .createdBy(createdBy);
+                .byUserOid(byUserOid)
+                .updatedByUserOid(updatedByUserOid);
     }
 
     /**
@@ -146,7 +153,8 @@ public final class Company {
         private Boolean isDeleted;
         private LocalDateTime createdDate;
         private LocalDateTime updatedDate;
-        private String createdBy;
+        private String byUserOid;
+        private String updatedByUserOid;
 
         /**
          * Sets the identifier.
@@ -261,11 +269,22 @@ public final class Company {
         /**
          * Sets the creator identifier.
          *
-         * @param createdBy Creator identifier.
+         * @param byUserOid Creator identifier.
          * @return This builder.
          */
-        public Builder createdBy(String createdBy) {
-            this.createdBy = createdBy;
+        public Builder byUserOid(String byUserOid) {
+            this.byUserOid = byUserOid;
+            return this;
+        }
+
+        /**
+         * Sets the identifier of the user that last updated the company.
+         *
+         * @param updatedByUserOid Last updater identifier.
+         * @return This builder.
+         */
+        public Builder updatedByUserOid(String updatedByUserOid) {
+            this.updatedByUserOid = updatedByUserOid;
             return this;
         }
 
