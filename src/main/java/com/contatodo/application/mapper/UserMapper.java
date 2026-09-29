@@ -92,6 +92,7 @@ public class UserMapper implements ResponseMapper<User, UserResponse> {
         response.setCompany(company);
         response.setCompanyOid(user.getCompanyOid());
         response.setByUserOid(user.getByUserOid());
+        response.setUpdatedByUserOid(user.getUpdatedByUserOid());
         response.setActive(user.isActive());
         response.setCreatedDate(user.getCreatedDate());
         response.setUpdatedDate(user.getUpdatedDate());
@@ -113,6 +114,7 @@ public class UserMapper implements ResponseMapper<User, UserResponse> {
         response.setPhoneNumber(user.getPhoneNumber());
         response.setCompanyOid(user.getCompanyOid());
         response.setByUserOid(user.getByUserOid());
+        response.setUpdatedByUserOid(user.getUpdatedByUserOid());
         response.setActive(user.isActive());
         response.setCreatedDate(user.getCreatedDate());
         response.setUpdatedDate(user.getUpdatedDate());

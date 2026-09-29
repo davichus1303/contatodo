@@ -107,6 +107,8 @@ public class CompanyMapper implements ResponseMapper<Company, CompanyResponse> {
         response.setWebSite(company.getWebSite());
         response.setUbication(company.getUbication());
         response.setContactUserOId(company.getContactUserOId());
+        response.setByUserOid(company.getByUserOid());
+        response.setUpdatedByUserOid(company.getUpdatedByUserOid());
         response.setIsActive(company.getIsActive());
         response.setIsDeleted(company.getIsDeleted());
         if (contact != null) {

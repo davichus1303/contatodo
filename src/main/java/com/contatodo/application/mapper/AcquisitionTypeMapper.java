@@ -48,6 +48,7 @@ public class AcquisitionTypeMapper implements ResponseMapper<AcquisitionType, Ac
         response.setName(acquisitionType.getName());
         response.setDescription(acquisitionType.getDescription());
         response.setByUserOid(acquisitionType.getByUserOid());
+        response.setUpdatedByUserOid(acquisitionType.getUpdatedByUserOid());
         response.setIsActive(acquisitionType.getIsActive());
         response.setIsDeleted(acquisitionType.getIsDeleted());
         response.setAffectsInventory(acquisitionType.getAffectsInventory());

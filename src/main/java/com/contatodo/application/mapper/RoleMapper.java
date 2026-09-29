@@ -93,6 +93,7 @@ public class RoleMapper implements ResponseMapper<Role, RoleResponse> {
         response.setCreatedDate(role.getCreatedDate());
         response.setUpdatedDate(role.getUpdatedDate());
         response.setByUserOid(role.getByUserOid());
+        response.setUpdatedByUserOid(role.getUpdatedByUserOid());
         return response;
     }
 
