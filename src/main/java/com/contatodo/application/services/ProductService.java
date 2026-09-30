@@ -13,6 +13,7 @@ import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.domain.entities.User;
 import com.contatodo.domain.repositories.ProductRepository;
+import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.ProductConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
@@ -109,8 +110,9 @@ public class ProductService {
      *
      * @return List of product responses.
      */
-    public List<ProductResponse> getAllProducts() {
-        return productMapper.toResponseList(productRepository.findAll());
+    public List<ProductResponse> getAllProducts(String requestedCompanyOid) {
+        CompanyOid companyOid = resolveReadCompanyOid(requestedCompanyOid);
+        return productMapper.toResponseList(productRepository.findAll(companyOid));
     }
 
     /**
@@ -119,8 +121,9 @@ public class ProductService {
      * @param code Product code.
      * @return Product response.
      */
-    public ProductResponse getProductByCode(String code) {
-        Product product = productRepository.findByCode(code)
+    public ProductResponse getProductByCode(String requestedCompanyOid, String code) {
+        CompanyOid companyOid = resolveReadCompanyOid(requestedCompanyOid);
+        Product product = productRepository.findByCode(companyOid, code)
                 .orElseThrow(() -> new ResourceNotFoundException(ProductConstants.PRODUCT_NOT_FOUND));
         return productMapper.toResponse(product);
     }
@@ -131,8 +134,9 @@ public class ProductService {
      * @param name Product name.
      * @return List of product responses.
      */
-    public List<ProductResponse> getProductsByName(String name) {
-        return productMapper.toResponseList(productRepository.findByName(name));
+    public List<ProductResponse> getProductsByName(String requestedCompanyOid, String name) {
+        CompanyOid companyOid = resolveReadCompanyOid(requestedCompanyOid);
+        return productMapper.toResponseList(productRepository.findByName(companyOid, name));
     }
 
     /**
@@ -140,8 +144,9 @@ public class ProductService {
      *
      * @return List of product responses.
      */
-    public List<ProductResponse> getAvailableProducts() {
-        return productMapper.toResponseList(productRepository.findByStockGreaterThan(0));
+    public List<ProductResponse> getAvailableProducts(String requestedCompanyOid) {
+        CompanyOid companyOid = resolveReadCompanyOid(requestedCompanyOid);
+        return productMapper.toResponseList(productRepository.findByStockGreaterThan(companyOid, 0));
     }
 
     /**
@@ -189,6 +194,29 @@ public class ProductService {
             return CompanyOid.of(companyOidValidator.validate(requestedCompanyOid));
         }
         return null;
+    }
+
+    /**
+     * Resolves the owning company read by a query.
+     *
+     * <p>The company of the session always wins. Only when the token carries
+     * none, the company identifier supplied in the request is used. A read has
+     * no separate bucket to fall back to, so a missing, blank or invalid value
+     * is rejected.</p>
+     *
+     * @param requestedCompanyOid Company identifier supplied in the request.
+     * @return Company to scope the query to.
+     * @throws ResourceNotFoundException when no company can be resolved.
+     */
+    private CompanyOid resolveReadCompanyOid(String requestedCompanyOid) {
+        Optional<CompanyOid> sessionCompany = companyContextProvider.currentCompanyOid();
+        if (sessionCompany.isPresent()) {
+            return sessionCompany.get();
+        }
+        if (requestedCompanyOid != null && !requestedCompanyOid.isBlank()) {
+            return CompanyOid.of(companyOidValidator.validate(requestedCompanyOid));
+        }
+        throw new ResourceNotFoundException(AuthConstants.COMPANY_CONTEXT_REQUIRED);
     }
 
 }

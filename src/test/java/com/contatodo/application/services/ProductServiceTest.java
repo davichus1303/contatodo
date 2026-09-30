@@ -13,6 +13,7 @@ import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.domain.repositories.ProductRepository;
 import com.contatodo.domain.repositories.UserRepository;
+import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.ProductConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
@@ -212,7 +213,7 @@ class ProductServiceTest {
     }
 
     @Test
-    void getProductByCodeReturnsMappedProduct() {
+    void getProductByCodeUsesTheCompanyFromTheTokenWhenPresent() {
         Product product = Product.builder()
                 .id("p-1")
                 .name("Cafe")
@@ -224,24 +225,118 @@ class ProductServiceTest {
                 .isActive(true)
                 .byUserOid("user-1")
                 .build();
-        when(productRepository.findByCode("42")).thenReturn(Optional.of(product));
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.of(CompanyOid.of("claim-company")));
+        when(productRepository.findByCode(eq(CompanyOid.of("claim-company")), eq("42"))).thenReturn(Optional.of(product));
         when(productMapper.toResponse(product)).thenReturn(new com.contatodo.application.dto.response.ProductResponse());
 
-        productService.getProductByCode("42");
+        productService.getProductByCode("param-company", "42");
 
-        verify(productRepository).findByCode("42");
+        verify(productRepository).findByCode(eq(CompanyOid.of("claim-company")), eq("42"));
+        verify(productRepository, never()).findByCode(eq(CompanyOid.of("param-company")), any());
         verify(productMapper).toResponse(product);
     }
 
     @Test
+    void getProductByCodeUsesTheRequestedCompanyWhenTheTokenHasNone() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+        when(companyRepository.findById("param-company")).thenReturn(Optional.of(
+                Company.builder().id("param-company").name("Acme").isActive(true).isDeleted(false).build()
+        ));
+        when(productRepository.findByCode(eq(CompanyOid.of("param-company")), eq("42"))).thenReturn(Optional.empty());
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> productService.getProductByCode("param-company", "42")
+        );
+
+        verify(productRepository).findByCode(eq(CompanyOid.of("param-company")), eq("42"));
+    }
+
+    @Test
     void getProductByUnknownCodeThrowsNotFound() {
-        when(productRepository.findByCode("999")).thenReturn(Optional.empty());
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.of(CompanyOid.of("claim-company")));
+        when(productRepository.findByCode(eq(CompanyOid.of("claim-company")), eq("999"))).thenReturn(Optional.empty());
 
         ResourceNotFoundException exception = assertThrows(
                 ResourceNotFoundException.class,
-                () -> productService.getProductByCode("999")
+                () -> productService.getProductByCode("param-company", "999")
         );
         assertEquals(ProductConstants.PRODUCT_NOT_FOUND, exception.getMessage());
+    }
+
+    @Test
+    void getAllProductsUsesTheCompanyFromTheTokenWhenPresent() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.of(CompanyOid.of("claim-company")));
+        when(productRepository.findAll(eq(CompanyOid.of("claim-company")))).thenReturn(java.util.List.of());
+        when(productMapper.toResponseList(any())).thenReturn(java.util.List.of());
+
+        productService.getAllProducts("param-company");
+
+        verify(productRepository).findAll(eq(CompanyOid.of("claim-company")));
+        verify(productRepository, never()).findAll(eq(CompanyOid.of("param-company")));
+    }
+
+    @Test
+    void getAllProductsUsesTheRequestedCompanyWhenTheTokenHasNone() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+        when(companyRepository.findById("param-company")).thenReturn(Optional.of(
+                Company.builder().id("param-company").name("Acme").isActive(true).isDeleted(false).build()
+        ));
+        when(productRepository.findAll(eq(CompanyOid.of("param-company")))).thenReturn(java.util.List.of());
+        when(productMapper.toResponseList(any())).thenReturn(java.util.List.of());
+
+        productService.getAllProducts("param-company");
+
+        verify(productRepository).findAll(eq(CompanyOid.of("param-company")));
+    }
+
+    @Test
+    void getAllProductsRejectsABlankCompanyWhenTheTokenHasNone() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> productService.getAllProducts("   ")
+        );
+        assertEquals(AuthConstants.COMPANY_CONTEXT_REQUIRED, exception.getMessage());
+        verify(productRepository, never()).findAll(any());
+    }
+
+    @Test
+    void getAllProductsRejectsAnInactiveCompanyWhenTheTokenHasNone() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+        when(companyRepository.findById("inactive-company")).thenReturn(Optional.of(
+                Company.builder().id("inactive-company").name("Dormant").isActive(false).isDeleted(false).build()
+        ));
+
+        assertThrows(ResourceNotFoundException.class, () -> productService.getAllProducts("inactive-company"));
+        verify(productRepository, never()).findAll(any());
+    }
+
+    @Test
+    void getProductsByNameUsesTheRequestedCompanyWhenTheTokenHasNone() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+        when(companyRepository.findById("param-company")).thenReturn(Optional.of(
+                Company.builder().id("param-company").name("Acme").isActive(true).isDeleted(false).build()
+        ));
+        when(productRepository.findByName(eq(CompanyOid.of("param-company")), eq("Cafe"))).thenReturn(java.util.List.of());
+        when(productMapper.toResponseList(any())).thenReturn(java.util.List.of());
+
+        productService.getProductsByName("param-company", "Cafe");
+
+        verify(productRepository).findByName(eq(CompanyOid.of("param-company")), eq("Cafe"));
+    }
+
+    @Test
+    void getAvailableProductsUsesTheCompanyFromTheTokenWhenPresent() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.of(CompanyOid.of("claim-company")));
+        when(productRepository.findByStockGreaterThan(eq(CompanyOid.of("claim-company")), eq(0)))
+                .thenReturn(java.util.List.of());
+        when(productMapper.toResponseList(any())).thenReturn(java.util.List.of());
+
+        productService.getAvailableProducts("param-company");
+
+        verify(productRepository).findByStockGreaterThan(eq(CompanyOid.of("claim-company")), eq(0));
     }
 
     @Test
