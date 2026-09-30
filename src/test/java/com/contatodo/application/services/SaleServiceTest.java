@@ -7,12 +7,15 @@ import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.port.CompanyContextProvider;
 import com.contatodo.application.validators.CompanyOidValidator;
 import com.contatodo.application.validators.SaleValidator;
+import com.contatodo.domain.entities.Company;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.entities.User;
 import com.contatodo.domain.repositories.ProductRepository;
 import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.domain.repositories.SaleRepository;
 import com.contatodo.domain.repositories.UserRepository;
+import com.contatodo.domain.model.CompanyOid;
+import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.SaleConstants;
 import com.contatodo.shared.exceptions.InsufficientStockException;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
@@ -22,11 +25,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -124,11 +129,76 @@ class SaleServiceTest {
     }
 
     @Test
+    void getTodaySalesUsesTheCompanyFromTheTokenWhenPresent() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.of(CompanyOid.of("claim-company")));
+        when(saleRepository.findBySaleDate(eq(CompanyOid.of("claim-company")), any())).thenReturn(java.util.List.of());
+        when(saleMapper.toResponseList(any())).thenReturn(java.util.List.of());
+
+        saleService.getTodaySales("param-company");
+
+        verify(saleRepository).findBySaleDate(eq(CompanyOid.of("claim-company")), any());
+        verify(saleRepository, never()).findBySaleDate(eq(CompanyOid.of("param-company")), any());
+    }
+
+    @Test
+    void getTodaySalesUsesTheRequestedCompanyWhenTheTokenHasNone() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+        when(companyRepository.findById("param-company")).thenReturn(Optional.of(
+                Company.builder().id("param-company").name("Acme").isActive(true).isDeleted(false).build()
+        ));
+        when(saleRepository.findBySaleDate(eq(CompanyOid.of("param-company")), any())).thenReturn(java.util.List.of());
+        when(saleMapper.toResponseList(any())).thenReturn(java.util.List.of());
+
+        saleService.getTodaySales("param-company");
+
+        verify(saleRepository).findBySaleDate(eq(CompanyOid.of("param-company")), any());
+    }
+
+    @Test
+    void getTodaySalesRejectsABlankCompanyWhenTheTokenHasNone() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> saleService.getTodaySales("   ")
+        );
+
+        assertEquals(AuthConstants.COMPANY_CONTEXT_REQUIRED, exception.getMessage());
+        verify(saleRepository, never()).findBySaleDate(any(), any());
+    }
+
+    @Test
+    void getTodaySalesRejectsAnInactiveCompanyWhenTheTokenHasNone() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+        when(companyRepository.findById("inactive-company")).thenReturn(Optional.of(
+                Company.builder().id("inactive-company").name("Dormant").isActive(false).isDeleted(false).build()
+        ));
+
+        assertThrows(ResourceNotFoundException.class, () -> saleService.getTodaySales("inactive-company"));
+        verify(saleRepository, never()).findBySaleDate(any(), any());
+    }
+
+    @Test
+    void getSalesByDateRangeUsesTheRequestedCompanyWhenTheTokenHasNone() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+        when(companyRepository.findById("param-company")).thenReturn(Optional.of(
+                Company.builder().id("param-company").name("Acme").isActive(true).isDeleted(false).build()
+        ));
+        when(saleRepository.findBySaleDateBetween(eq(CompanyOid.of("param-company")), any(), any()))
+                .thenReturn(java.util.List.of());
+        when(saleMapper.toResponseList(any())).thenReturn(java.util.List.of());
+
+        saleService.getSalesByDateRange("param-company", LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30));
+
+        verify(saleRepository).findBySaleDateBetween(eq(CompanyOid.of("param-company")), any(), any());
+    }
+
+    @Test
     void createSalePlacesSaleAndDecreasesStock() {
         stubAuthenticatedContext();
         when(productRepository.findById("product-1")).thenReturn(Optional.of(productWithStock(5)));
         when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
-        when(saleRepository.findBySaleDateBetween(any(), any())).thenReturn(java.util.List.of());
+        when(saleRepository.findBySaleDateBetween(any(), any(), any())).thenReturn(java.util.List.of());
         when(saleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         SaleResponse expected = new SaleResponse();
         when(saleMapper.toResponse(any())).thenReturn(expected);

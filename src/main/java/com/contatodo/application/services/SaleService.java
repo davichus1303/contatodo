@@ -15,6 +15,7 @@ import com.contatodo.domain.model.Money;
 import com.contatodo.domain.repositories.ProductRepository;
 import com.contatodo.domain.repositories.SaleRepository;
 import com.contatodo.domain.repositories.UserRepository;
+import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.SaleConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.shared.utils.DateUtils;
@@ -94,7 +95,8 @@ public class SaleService {
         Money unitRealCost = Money.of(product.getUnitRealCost() != null ? product.getUnitRealCost() : product.getRealCost());
         Money unitPublicCost = Money.of(product.getUnitPublicCost() != null ? product.getUnitPublicCost() : product.getRealCost());
 
-        Long saleNumber = generateDailySaleNumber();
+        CompanyOid companyOid = resolveCompanyOid(request.getCompanyOid());
+        Long saleNumber = generateDailySaleNumber(companyOid);
 
         Sale sale = Sale.place(
                 saleNumber,
@@ -106,7 +108,7 @@ public class SaleService {
                 unitRealCost,
                 unitPublicCost,
                 request.getNotes(),
-                resolveCompanyOid(request.getCompanyOid())
+                companyOid
         );
 
         productRepository.save(updatedProduct);
@@ -117,26 +119,36 @@ public class SaleService {
     /**
      * Retrieves today's sales.
      *
+     * <p>The owning company comes from the session first; when the session has
+     * none, the supplied company identifier is used and validated.</p>
+     *
+     * @param requestedCompanyOid Company identifier from the request, used when the session has none.
      * @return List of sale responses.
      */
-    public List<SaleResponse> getTodaySales() {
+    public List<SaleResponse> getTodaySales(String requestedCompanyOid) {
+        CompanyOid companyOid = resolveReadCompanyOid(requestedCompanyOid);
         LocalDate today = LocalDate.now();
-        List<Sale> sales = saleRepository.findBySaleDate(today);
+        List<Sale> sales = saleRepository.findBySaleDate(companyOid, today);
         return saleMapper.toResponseList(sales);
     }
 
     /**
      * Retrieves sales by date range.
      *
+     * <p>The owning company comes from the session first; when the session has
+     * none, the supplied company identifier is used and validated.</p>
+     *
+     * @param requestedCompanyOid Company identifier from the request, used when the session has none.
      * @param startDate Start date.
      * @param endDate End date.
      * @return List of sale responses.
      */
-    public List<SaleResponse> getSalesByDateRange(LocalDate startDate, LocalDate endDate) {
+    public List<SaleResponse> getSalesByDateRange(String requestedCompanyOid, LocalDate startDate, LocalDate endDate) {
+        CompanyOid companyOid = resolveReadCompanyOid(requestedCompanyOid);
         LocalDateTime startDateTime = DateUtils.startOfDay(startDate);
         LocalDateTime endDateTime = DateUtils.endOfDay(endDate);
 
-        List<Sale> sales = saleRepository.findBySaleDateBetween(startDateTime, endDateTime);
+        List<Sale> sales = saleRepository.findBySaleDateBetween(companyOid, startDateTime, endDateTime);
         return saleMapper.toResponseList(sales);
     }
 
@@ -145,12 +157,12 @@ public class SaleService {
      *
      * @return Next available sale number for today.
      */
-    private Long generateDailySaleNumber() {
+    private Long generateDailySaleNumber(CompanyOid companyOid) {
         LocalDate today = LocalDate.now();
         LocalDateTime startOfDay = DateUtils.startOfDay(today);
         LocalDateTime endOfDay = DateUtils.endOfDay(today);
 
-        Optional<Long> highestSaleNumber = saleRepository.findBySaleDateBetween(startOfDay, endOfDay)
+        Optional<Long> highestSaleNumber = saleRepository.findBySaleDateBetween(companyOid, startOfDay, endOfDay)
                 .stream()
                 .map(Sale::getSaleNumber)
                 .max(Long::compareTo);
@@ -184,5 +196,29 @@ public class SaleService {
             return CompanyOid.of(companyOidValidator.validate(requestedCompanyOid));
         }
         return null;
+    }
+
+    /**
+     * Resolves the owning company read by a query.
+     *
+     * <p>The company of the session always wins. Only when the token carries
+     * none, which every caller without a claim faces, the company identifier
+     * supplied in the request is used. Unlike the write path, where a missing
+     * company is left {@code null}, a read has no separate bucket to fall back
+     * to, so a missing, blank or invalid value is rejected.</p>
+     *
+     * @param requestedCompanyOid Company identifier supplied in the request.
+     * @return Company to scope the query to.
+     * @throws ResourceNotFoundException when no company can be resolved.
+     */
+    private CompanyOid resolveReadCompanyOid(String requestedCompanyOid) {
+        Optional<CompanyOid> sessionCompany = companyContextProvider.currentCompanyOid();
+        if (sessionCompany.isPresent()) {
+            return sessionCompany.get();
+        }
+        if (requestedCompanyOid != null && !requestedCompanyOid.isBlank()) {
+            return CompanyOid.of(companyOidValidator.validate(requestedCompanyOid));
+        }
+        throw new ResourceNotFoundException(AuthConstants.COMPANY_CONTEXT_REQUIRED);
     }
 }
