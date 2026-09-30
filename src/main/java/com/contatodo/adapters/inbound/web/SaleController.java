@@ -51,24 +51,36 @@ public class SaleController {
     /**
      * Retrieves today's sales.
      *
+     * <p>The owning company comes from the session token; when the session has
+     * none, the {@code companyOid} parameter is used instead.</p>
+     *
+     * @param companyOid Owning company, used when the session has no company claim.
      * @return List of sales.
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<List<SaleResponse>>> getTodaySales() {
-        List<SaleResponse> sales = saleService.getTodaySales();
+    public ResponseEntity<ApiResponse<List<SaleResponse>>> getTodaySales(
+            @RequestParam(required = false) String companyOid) {
+        List<SaleResponse> sales = saleService.getTodaySales(companyOid);
         return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, sales);
     }
 
     /**
      * Retrieves sales by date.
      *
+     * <p>The owning company comes from the session token; when the session has
+     * none, the {@code companyOid} parameter is used instead.</p>
+     *
+     * @param companyOid Owning company, used when the session has no company claim.
      * @param startDate Start date.
      * @param endDate End date.
      * @return List of sales.
      */
     @GetMapping("/date-range")
-    public ResponseEntity<ApiResponse<List<SaleResponse>>> getSalesByDateRange(@RequestParam LocalDate startDate, @RequestParam LocalDate endDate) {
-        List<SaleResponse> sales = saleService.getSalesByDateRange(startDate, endDate);
+    public ResponseEntity<ApiResponse<List<SaleResponse>>> getSalesByDateRange(
+            @RequestParam(required = false) String companyOid,
+            @RequestParam LocalDate startDate,
+            @RequestParam LocalDate endDate) {
+        List<SaleResponse> sales = saleService.getSalesByDateRange(companyOid, startDate, endDate);
         return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, sales);
     }
 }
