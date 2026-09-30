@@ -101,7 +101,7 @@ public class SaleService {
                 unitRealCost,
                 unitPublicCost,
                 request.getNotes(),
-                resolveCompanyOid()
+                resolveCompanyOid(request.getCompanyOid())
         );
 
         productRepository.save(updatedProduct);
@@ -155,15 +155,23 @@ public class SaleService {
     /**
      * Resolves the owning company for a write.
      *
-     * <p>The identifier is taken from the company context of the session. When the
-     * token carries no company claim, which is the case for the root user and for
-     * any session without a company, the identifier is left {@code null} instead
-     * of being rejected, so the record is always persisted with whatever company
-     * the caller actually belongs to.</p>
+     * <p>The company of the session always wins, so a caller can never move a record
+     * out of the company its own token points at. Only when the token carries no
+     * company, which is the case for the root user and for any session without a
+     * company, the optional value supplied in the request is used. The identifier is
+     * left {@code null} when neither is available, instead of being rejected.</p>
      *
-     * @return Company identifier, or {@code null} when the token carries none.
+     * @param requestedCompanyOid Optional company identifier supplied in the request.
+     * @return Company identifier, or {@code null} when neither source provides one.
      */
-    private CompanyOid resolveCompanyOid() {
-        return companyContextProvider.currentCompanyOid().orElse(null);
+    private CompanyOid resolveCompanyOid(String requestedCompanyOid) {
+        Optional<CompanyOid> sessionCompany = companyContextProvider.currentCompanyOid();
+        if (sessionCompany.isPresent()) {
+            return sessionCompany.get();
+        }
+        if (requestedCompanyOid != null && !requestedCompanyOid.isBlank()) {
+            return CompanyOid.of(requestedCompanyOid);
+        }
+        return null;
     }
 }
