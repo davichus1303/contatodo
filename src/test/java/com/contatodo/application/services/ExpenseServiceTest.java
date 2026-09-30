@@ -81,6 +81,39 @@ class ExpenseServiceTest {
     }
 
     @Test
+    void createExpenseUsesTheRequestedCompanyWhenTheTokenHasNone() {
+        CreateExpenseRequest request = request();
+        request.setCompanyOid("company-9");
+        when(authenticatedUserProvider.getCurrentUserOid()).thenReturn("user-1");
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+        when(expenseMapper.toEntity(any(), eq("user-1"), any(), eq(CompanyOid.of("company-9"))))
+                .thenReturn(mock(Expense.class));
+        when(expenseRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(expenseMapper.toResponse(any())).thenReturn(new ExpenseResponse());
+
+        expenseService.createExpense(request);
+
+        verify(expenseMapper).toEntity(any(), eq("user-1"), any(), eq(CompanyOid.of("company-9")));
+    }
+
+    @Test
+    void createExpenseIgnoresTheRequestedCompanyWhenTheTokenHasOne() {
+        CreateExpenseRequest request = request();
+        request.setCompanyOid("company-9");
+        when(authenticatedUserProvider.getCurrentUserOid()).thenReturn("user-1");
+        when(companyContextProvider.currentCompanyOid())
+                .thenReturn(Optional.of(CompanyOid.of("company-1")));
+        when(expenseMapper.toEntity(any(), eq("user-1"), any(), eq(CompanyOid.of("company-1"))))
+                .thenReturn(mock(Expense.class));
+        when(expenseRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(expenseMapper.toResponse(any())).thenReturn(new ExpenseResponse());
+
+        expenseService.createExpense(request);
+
+        verify(expenseMapper).toEntity(any(), eq("user-1"), any(), eq(CompanyOid.of("company-1")));
+    }
+
+    @Test
     void createExpenseLeavesTheCompanyNullWhenTheTokenCarriesNoCompany() {
         when(authenticatedUserProvider.getCurrentUserOid()).thenReturn("user-1");
         when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
