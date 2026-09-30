@@ -12,7 +12,6 @@ import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.domain.entities.User;
 import com.contatodo.domain.repositories.ProductRepository;
-import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.ProductConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
@@ -158,16 +157,18 @@ public class ProductService {
     }
 
     /**
-     * Resolves the owning company for a non-root write.
+     * Resolves the owning company for a write.
      *
-     * @return Company identifier, or {@code null} for the root user.
+     * <p>The identifier is taken from the company context of the session. When the
+     * token carries no company claim, which is the case for the root user and for
+     * any session without a company, the identifier is left {@code null} instead
+     * of being rejected, so the record is always persisted with whatever company
+     * the caller actually belongs to.</p>
+     *
+     * @return Company identifier, or {@code null} when the token carries none.
      */
     private CompanyOid resolveCompanyOid() {
-        if (companyContextProvider.isRoot()) {
-            return null;
-        }
-        return companyContextProvider.currentCompanyOid()
-                .orElseThrow(() -> new ResourceNotFoundException(AuthConstants.COMPANY_CONTEXT_REQUIRED));
+        return companyContextProvider.currentCompanyOid().orElse(null);
     }
 
 }
