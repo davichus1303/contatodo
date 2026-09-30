@@ -1,6 +1,7 @@
 package com.contatodo.application.services;
 
 import com.contatodo.application.dto.request.CreateUserRequest;
+import com.contatodo.application.dto.request.UpdateUserRequest;
 import com.contatodo.application.dto.request.LoginRequest;
 import com.contatodo.application.dto.response.CompanyResponse;
 import com.contatodo.application.dto.response.LoginResponse;
@@ -11,6 +12,7 @@ import com.contatodo.application.mapper.RoleMapper;
 import com.contatodo.application.mapper.UserMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.port.CompanyContextProvider;
+import com.contatodo.application.validators.CompanyOidValidator;
 import com.contatodo.application.port.TokenProvider;
 import com.contatodo.application.validators.UserValidator;
 import com.contatodo.domain.entities.Company;
@@ -91,7 +93,7 @@ class UserServiceTest {
     @BeforeEach
     void setUp() {
         userService = new UserService(
-                userRepository, roleRepository, companyRepository, userValidator, userMapper, roleMapper, companyMapper, passwordEncoder, tokenProvider, companyContextProvider, authenticatedUserProvider);
+                userRepository, roleRepository, companyRepository, new CompanyOidValidator(companyRepository), userValidator, userMapper, roleMapper, companyMapper, passwordEncoder, tokenProvider, companyContextProvider, authenticatedUserProvider);
     }
 
     private CreateUserRequest createRequest(String email) {
@@ -236,6 +238,45 @@ class UserServiceTest {
     }
 
     @Test
+    void createUserRejectsAnInactiveCompany() {
+        CreateUserRequest request = createRequest("new@example.com");
+        request.setCompanyOid("inactive-company");
+        when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(companyRepository.findById("inactive-company")).thenReturn(Optional.of(
+                Company.builder().id("inactive-company").name("Dormant").isActive(false).isDeleted(false).build()
+        ));
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> userService.createUser(request, Optional.empty()));
+    }
+
+    @Test
+    void updateUserRejectsAnInactiveCompany() {
+        UpdateUserRequest request = new UpdateUserRequest();
+        request.setCompanyOid("inactive-company");
+        when(userRepository.findById("user-1")).thenReturn(Optional.of(activeUser()));
+        when(companyRepository.findById("inactive-company")).thenReturn(Optional.of(
+                Company.builder().id("inactive-company").name("Dormant").isActive(false).isDeleted(false).build()
+        ));
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> userService.updateUser("user-1", request));
+    }
+
+    @Test
+    void createUserRejectsADeletedCompany() {
+        CreateUserRequest request = createRequest("new@example.com");
+        request.setCompanyOid("deleted-company");
+        when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(companyRepository.findById("deleted-company")).thenReturn(Optional.of(
+                Company.builder().id("deleted-company").name("Gone").isActive(true).isDeleted(true).build()
+        ));
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> userService.createUser(request, Optional.empty()));
+    }
+
+    @Test
     void createUserRejectsInvalidCompanyOid() {
         CreateUserRequest request = createRequest("new@example.com");
         request.setCompanyOid("invalid-company");
@@ -252,7 +293,7 @@ class UserServiceTest {
         request.setCompanyOid("valid-company");
         when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
         when(companyRepository.findById("valid-company")).thenReturn(Optional.of(
-                Company.builder().id("valid-company").name("Test Company").build()
+                Company.builder().id("valid-company").name("Test Company").isActive(true).isDeleted(false).build()
         ));
         when(passwordEncoder.encode("secret123")).thenReturn("hashed-value");
         when(userRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -270,7 +311,7 @@ class UserServiceTest {
         request.setCompanyOid("other-company");
         when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
         when(companyRepository.findById("other-company")).thenReturn(Optional.of(
-                Company.builder().id("other-company").name("Other Company").build()
+                Company.builder().id("other-company").name("Other Company").isActive(true).isDeleted(false).build()
         ));
         when(passwordEncoder.encode("secret123")).thenReturn("hashed-value");
         when(userRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -292,7 +333,7 @@ class UserServiceTest {
                 .thenReturn(Optional.of(activeUser()));
         when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.of(CompanyOid.of("company-1")));
         when(companyRepository.findById("company-1")).thenReturn(Optional.of(
-                Company.builder().id("company-1").name("Test Company").build()
+                Company.builder().id("company-1").name("Test Company").isActive(true).isDeleted(false).build()
         ));
         when(passwordEncoder.encode("secret123")).thenReturn("hashed-value");
         when(userRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -312,7 +353,7 @@ class UserServiceTest {
         request.setCompanyOid("company-2");
         when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
         when(companyRepository.findById("company-2")).thenReturn(Optional.of(
-                Company.builder().id("company-2").name("Test Company").build()
+                Company.builder().id("company-2").name("Test Company").isActive(true).isDeleted(false).build()
         ));
         when(passwordEncoder.encode("secret123")).thenReturn("hashed-value");
         when(userRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -419,7 +460,7 @@ class UserServiceTest {
         when(userRepository.findAllActive()).thenReturn(List.of(user));
         when(roleRepository.findById("role-1")).thenReturn(Optional.of(role("role-1", "Admin")));
         when(companyRepository.findById("company-1")).thenReturn(Optional.of(
-                Company.builder().id("company-1").name("VichoBox").build()
+                Company.builder().id("company-1").name("VichoBox").isActive(true).isDeleted(false).build()
         ));
         when(userMapper.toResponseList(anyList(), anyMap(), anyMap())).thenReturn(List.of(new UserResponse()));
 

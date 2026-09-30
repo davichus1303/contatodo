@@ -5,10 +5,12 @@ import com.contatodo.application.dto.response.SaleResponse;
 import com.contatodo.application.mapper.SaleMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.port.CompanyContextProvider;
+import com.contatodo.application.validators.CompanyOidValidator;
 import com.contatodo.application.validators.SaleValidator;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.entities.User;
 import com.contatodo.domain.repositories.ProductRepository;
+import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.domain.repositories.SaleRepository;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.shared.constants.SaleConstants;
@@ -39,6 +41,9 @@ class SaleServiceTest {
     private SaleRepository saleRepository;
 
     @Mock
+    private CompanyRepository companyRepository;
+
+    @Mock
     private ProductRepository productRepository;
 
     @Mock
@@ -62,7 +67,7 @@ class SaleServiceTest {
     void setUp() {
         saleService = new SaleService(
                 saleRepository, productRepository, userRepository,
-                saleValidator, saleMapper, authenticatedUserProvider, companyContextProvider
+                saleValidator, saleMapper, authenticatedUserProvider, companyContextProvider, new CompanyOidValidator(companyRepository)
         );
     }
 

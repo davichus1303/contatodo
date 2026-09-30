@@ -6,6 +6,7 @@ import com.contatodo.application.dto.response.ProductResponse;
 import com.contatodo.application.mapper.ProductMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.port.CompanyContextProvider;
+import com.contatodo.application.validators.CompanyOidValidator;
 import com.contatodo.application.validators.ProductValidator;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.model.CompanyOid;
@@ -17,6 +18,7 @@ import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Service containing product business logic.
@@ -30,6 +32,7 @@ public class ProductService {
     private final ProductMapper productMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final CompanyContextProvider companyContextProvider;
+    private final CompanyOidValidator companyOidValidator;
 
     /**
      * Creates a product service.
@@ -39,7 +42,8 @@ public class ProductService {
      * @param productValidator Product validator.
      * @param productMapper Product mapper.
      * @param authenticatedUserProvider Authenticated user provider.
-     * @param companyContextProvider Company context provider.
+     * @param companyRepository Company repository port.
+     *@param companyContextProvider Company context provider.
      */
     public ProductService(
             ProductRepository productRepository,
@@ -47,7 +51,8 @@ public class ProductService {
             ProductValidator productValidator,
             ProductMapper productMapper,
             AuthenticatedUserProvider authenticatedUserProvider,
-            CompanyContextProvider companyContextProvider
+            CompanyContextProvider companyContextProvider,
+            CompanyOidValidator companyOidValidator
     ) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
@@ -55,6 +60,7 @@ public class ProductService {
         this.productMapper = productMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.companyContextProvider = companyContextProvider;
+        this.companyOidValidator = companyOidValidator;
     }
 
     /**
@@ -72,7 +78,7 @@ public class ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException(ProductConstants.USER_NOT_FOUND));
 
         String nextCode = generateNextCode();
-        CompanyOid companyOid = resolveCompanyOid();
+        CompanyOid companyOid = resolveCompanyOid(request.getCompanyOid());
         Product product = productMapper.toEntity(request, nextCode, userOid, companyOid);
 
         Product savedProduct = productRepository.save(product);
@@ -159,16 +165,30 @@ public class ProductService {
     /**
      * Resolves the owning company for a write.
      *
-     * <p>The identifier is taken from the company context of the session. When the
-     * token carries no company claim, which is the case for the root user and for
-     * any session without a company, the identifier is left {@code null} instead
-     * of being rejected, so the record is always persisted with whatever company
-     * the caller actually belongs to.</p>
+     * <p>The company of the session always wins, so a caller can never move a record
+     * out of the company its own token points at. Only when the token carries no
+     * company, which is the case for the root user and for any session without a
+     * company, the optional value supplied in the request is used. The identifier is
+     * left {@code null} when neither is available, instead of being rejected.</p>
      *
-     * @return Company identifier, or {@code null} when the token carries none.
+     * <p>The value supplied in the request is validated against the stored companies
+     * before it is used, so a record can never be attached to a company that does
+     * not exist. The value is only validated when it is actually the one applied,
+     * which is when the session carries no company.</p>
+     *
+     * @param requestedCompanyOid Optional company identifier supplied in the request.
+     * @return Company identifier, or {@code null} when neither source provides one.
+     * @throws ResourceNotFoundException when the requested company does not exist.
      */
-    private CompanyOid resolveCompanyOid() {
-        return companyContextProvider.currentCompanyOid().orElse(null);
+    private CompanyOid resolveCompanyOid(String requestedCompanyOid) {
+        Optional<CompanyOid> sessionCompany = companyContextProvider.currentCompanyOid();
+        if (sessionCompany.isPresent()) {
+            return sessionCompany.get();
+        }
+        if (requestedCompanyOid != null && !requestedCompanyOid.isBlank()) {
+            return CompanyOid.of(companyOidValidator.validate(requestedCompanyOid));
+        }
+        return null;
     }
 
 }

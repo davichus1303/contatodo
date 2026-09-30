@@ -9,6 +9,7 @@ public final class CompanyConstants {
     public static final String COMPANY_UPDATED = "Company updated successfully.";
     public static final String COMPANY_DELETED = "Company deleted successfully.";
     public static final String COMPANY_NOT_FOUND = "Company not found.";
+    public static final String COMPANY_NOT_AVAILABLE = "Company is not available.";
     public static final String COMPANIES_REQUIRED = "At least one company is required.";
     public static final String COMPANY_REQUIRED = "Company data is required.";
     public static final String COMPANY_NAME_REQUIRED = "Name is required.";

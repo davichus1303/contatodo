@@ -5,6 +5,7 @@ import com.contatodo.application.dto.response.SaleResponse;
 import com.contatodo.application.mapper.SaleMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.port.CompanyContextProvider;
+import com.contatodo.application.validators.CompanyOidValidator;
 import com.contatodo.application.validators.SaleValidator;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.entities.Sale;
@@ -37,6 +38,7 @@ public class SaleService {
     private final SaleMapper saleMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final CompanyContextProvider companyContextProvider;
+    private final CompanyOidValidator companyOidValidator;
 
     /**
      * Creates a sale service.
@@ -47,7 +49,8 @@ public class SaleService {
      * @param saleValidator Sale validator.
      * @param saleMapper Sale mapper.
      * @param authenticatedUserProvider Authenticated user provider.
-     * @param companyContextProvider Company context provider.
+     * @param companyRepository Company repository port.
+     *@param companyContextProvider Company context provider.
      */
     public SaleService(
             SaleRepository saleRepository,
@@ -56,7 +59,8 @@ public class SaleService {
             SaleValidator saleValidator,
             SaleMapper saleMapper,
             AuthenticatedUserProvider authenticatedUserProvider,
-            CompanyContextProvider companyContextProvider
+            CompanyContextProvider companyContextProvider,
+            CompanyOidValidator companyOidValidator
     ) {
         this.saleRepository = saleRepository;
         this.productRepository = productRepository;
@@ -65,6 +69,7 @@ public class SaleService {
         this.saleMapper = saleMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.companyContextProvider = companyContextProvider;
+        this.companyOidValidator = companyOidValidator;
     }
 
     /**
@@ -101,7 +106,7 @@ public class SaleService {
                 unitRealCost,
                 unitPublicCost,
                 request.getNotes(),
-                resolveCompanyOid()
+                resolveCompanyOid(request.getCompanyOid())
         );
 
         productRepository.save(updatedProduct);
@@ -155,15 +160,29 @@ public class SaleService {
     /**
      * Resolves the owning company for a write.
      *
-     * <p>The identifier is taken from the company context of the session. When the
-     * token carries no company claim, which is the case for the root user and for
-     * any session without a company, the identifier is left {@code null} instead
-     * of being rejected, so the record is always persisted with whatever company
-     * the caller actually belongs to.</p>
+     * <p>The company of the session always wins, so a caller can never move a record
+     * out of the company its own token points at. Only when the token carries no
+     * company, which is the case for the root user and for any session without a
+     * company, the optional value supplied in the request is used. The identifier is
+     * left {@code null} when neither is available, instead of being rejected.</p>
      *
-     * @return Company identifier, or {@code null} when the token carries none.
+     * <p>The value supplied in the request is validated against the stored companies
+     * before it is used, so a record can never be attached to a company that does
+     * not exist. The value is only validated when it is actually the one applied,
+     * which is when the session carries no company.</p>
+     *
+     * @param requestedCompanyOid Optional company identifier supplied in the request.
+     * @return Company identifier, or {@code null} when neither source provides one.
+     * @throws ResourceNotFoundException when the requested company does not exist.
      */
-    private CompanyOid resolveCompanyOid() {
-        return companyContextProvider.currentCompanyOid().orElse(null);
+    private CompanyOid resolveCompanyOid(String requestedCompanyOid) {
+        Optional<CompanyOid> sessionCompany = companyContextProvider.currentCompanyOid();
+        if (sessionCompany.isPresent()) {
+            return sessionCompany.get();
+        }
+        if (requestedCompanyOid != null && !requestedCompanyOid.isBlank()) {
+            return CompanyOid.of(companyOidValidator.validate(requestedCompanyOid));
+        }
+        return null;
     }
 }
