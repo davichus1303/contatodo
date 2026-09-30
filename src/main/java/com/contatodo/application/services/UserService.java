@@ -236,6 +236,23 @@ public class UserService {
     }
 
     /**
+     * Retrieves the users that can be picked as the contact of a company.
+     *
+     * <p>The read is not company scoped on purpose: a company contact may belong
+     * to any company and a company created now has no users yet, so a root
+     * session must see every active user. A company session keeps seeing only
+     * its own users.</p>
+     *
+     * @return List of user responses.
+     */
+    public List<UserResponse> getContactCandidates() {
+        List<User> users = userRepository.findAllActiveInSessionScope();
+        Map<String, RoleResponse> roles = resolveRoles(users);
+        Map<String, CompanyResponse> companies = resolveCompanies(users);
+        return userMapper.toResponseList(users, roles, companies);
+    }
+
+    /**
      * Resolves the identifier of the user in session to record as the last updater.
      *
      * <p>Returns {@code null} when there is no resolvable session user so an

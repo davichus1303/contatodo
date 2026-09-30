@@ -109,6 +109,20 @@ public class UserController {
     }
 
     /**
+     * Retrieves the users that can be picked as the contact of a company.
+     *
+     * <p>This read is not company scoped: the contact may belong to any
+     * company, so a root session receives every active user.</p>
+     *
+     * @return List of users.
+     */
+    @GetMapping("/users/contacts")
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getContactCandidates() {
+        List<UserResponse> users = userService.getContactCandidates();
+        return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, users);
+    }
+
+    /**
      * Retrieves a user by email.
      *
      * @param email User email.
