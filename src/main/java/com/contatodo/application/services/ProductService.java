@@ -11,7 +11,9 @@ import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.domain.entities.User;
+import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.domain.repositories.ProductRepository;
+import com.contatodo.shared.constants.CompanyConstants;
 import com.contatodo.shared.constants.ProductConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,7 @@ public class ProductService {
     private final ProductMapper productMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final CompanyContextProvider companyContextProvider;
+    private final CompanyRepository companyRepository;
 
     /**
      * Creates a product service.
@@ -40,7 +43,8 @@ public class ProductService {
      * @param productValidator Product validator.
      * @param productMapper Product mapper.
      * @param authenticatedUserProvider Authenticated user provider.
-     * @param companyContextProvider Company context provider.
+     * @param companyRepository Company repository port.
+     *@param companyContextProvider Company context provider.
      */
     public ProductService(
             ProductRepository productRepository,
@@ -48,7 +52,8 @@ public class ProductService {
             ProductValidator productValidator,
             ProductMapper productMapper,
             AuthenticatedUserProvider authenticatedUserProvider,
-            CompanyContextProvider companyContextProvider
+            CompanyContextProvider companyContextProvider,
+            CompanyRepository companyRepository
     ) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
@@ -56,6 +61,7 @@ public class ProductService {
         this.productMapper = productMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.companyContextProvider = companyContextProvider;
+        this.companyRepository = companyRepository;
     }
 
     /**
@@ -166,8 +172,14 @@ public class ProductService {
      * company, the optional value supplied in the request is used. The identifier is
      * left {@code null} when neither is available, instead of being rejected.</p>
      *
+     * <p>The value supplied in the request is validated against the stored companies
+     * before it is used, so a record can never be attached to a company that does
+     * not exist. The value is only validated when it is actually the one applied,
+     * which is when the session carries no company.</p>
+     *
      * @param requestedCompanyOid Optional company identifier supplied in the request.
      * @return Company identifier, or {@code null} when neither source provides one.
+     * @throws ResourceNotFoundException when the requested company does not exist.
      */
     private CompanyOid resolveCompanyOid(String requestedCompanyOid) {
         Optional<CompanyOid> sessionCompany = companyContextProvider.currentCompanyOid();
@@ -175,7 +187,13 @@ public class ProductService {
             return sessionCompany.get();
         }
         if (requestedCompanyOid != null && !requestedCompanyOid.isBlank()) {
-            return CompanyOid.of(requestedCompanyOid);
+            CompanyOid requested = CompanyOid.of(requestedCompanyOid);
+            if (!companyRepository.findById(requested.value()).isPresent()) {
+                throw new ResourceNotFoundException(
+                        CompanyConstants.COMPANY_NOT_FOUND + " Id: " + requested.value()
+                );
+            }
+            return requested;
         }
         return null;
     }

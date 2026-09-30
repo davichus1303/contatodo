@@ -12,8 +12,10 @@ import com.contatodo.domain.entities.User;
 import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.model.Money;
 import com.contatodo.domain.repositories.ProductRepository;
+import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.domain.repositories.SaleRepository;
 import com.contatodo.domain.repositories.UserRepository;
+import com.contatodo.shared.constants.CompanyConstants;
 import com.contatodo.shared.constants.SaleConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.shared.utils.DateUtils;
@@ -37,6 +39,7 @@ public class SaleService {
     private final SaleMapper saleMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final CompanyContextProvider companyContextProvider;
+    private final CompanyRepository companyRepository;
 
     /**
      * Creates a sale service.
@@ -47,7 +50,8 @@ public class SaleService {
      * @param saleValidator Sale validator.
      * @param saleMapper Sale mapper.
      * @param authenticatedUserProvider Authenticated user provider.
-     * @param companyContextProvider Company context provider.
+     * @param companyRepository Company repository port.
+     *@param companyContextProvider Company context provider.
      */
     public SaleService(
             SaleRepository saleRepository,
@@ -56,7 +60,8 @@ public class SaleService {
             SaleValidator saleValidator,
             SaleMapper saleMapper,
             AuthenticatedUserProvider authenticatedUserProvider,
-            CompanyContextProvider companyContextProvider
+            CompanyContextProvider companyContextProvider,
+            CompanyRepository companyRepository
     ) {
         this.saleRepository = saleRepository;
         this.productRepository = productRepository;
@@ -65,6 +70,7 @@ public class SaleService {
         this.saleMapper = saleMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.companyContextProvider = companyContextProvider;
+        this.companyRepository = companyRepository;
     }
 
     /**
@@ -161,8 +167,14 @@ public class SaleService {
      * company, the optional value supplied in the request is used. The identifier is
      * left {@code null} when neither is available, instead of being rejected.</p>
      *
+     * <p>The value supplied in the request is validated against the stored companies
+     * before it is used, so a record can never be attached to a company that does
+     * not exist. The value is only validated when it is actually the one applied,
+     * which is when the session carries no company.</p>
+     *
      * @param requestedCompanyOid Optional company identifier supplied in the request.
      * @return Company identifier, or {@code null} when neither source provides one.
+     * @throws ResourceNotFoundException when the requested company does not exist.
      */
     private CompanyOid resolveCompanyOid(String requestedCompanyOid) {
         Optional<CompanyOid> sessionCompany = companyContextProvider.currentCompanyOid();
@@ -170,7 +182,13 @@ public class SaleService {
             return sessionCompany.get();
         }
         if (requestedCompanyOid != null && !requestedCompanyOid.isBlank()) {
-            return CompanyOid.of(requestedCompanyOid);
+            CompanyOid requested = CompanyOid.of(requestedCompanyOid);
+            if (!companyRepository.findById(requested.value()).isPresent()) {
+                throw new ResourceNotFoundException(
+                        CompanyConstants.COMPANY_NOT_FOUND + " Id: " + requested.value()
+                );
+            }
+            return requested;
         }
         return null;
     }
