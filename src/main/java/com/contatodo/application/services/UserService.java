@@ -53,6 +53,7 @@ public class UserService {
     private final TokenProvider tokenProvider;
     private final CompanyContextProvider companyContextProvider;
     private final AuthenticatedUserProvider authenticatedUserProvider;
+    private final CompanyService companyService;
 
     /**
      * Creates a user service.
@@ -69,6 +70,7 @@ public class UserService {
      * @param tokenProvider Security token provider.
      * @param companyContextProvider Company context provider.
      * @param authenticatedUserProvider Authenticated user provider.
+     * @param companyService Company service.
      */
     public UserService(
             UserRepository userRepository,
@@ -82,7 +84,8 @@ public class UserService {
             PasswordEncoder passwordEncoder,
             TokenProvider tokenProvider,
             CompanyContextProvider companyContextProvider,
-            AuthenticatedUserProvider authenticatedUserProvider
+            AuthenticatedUserProvider authenticatedUserProvider,
+            CompanyService companyService
     ) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -96,6 +99,7 @@ public class UserService {
         this.tokenProvider = tokenProvider;
         this.companyContextProvider = companyContextProvider;
         this.authenticatedUserProvider = authenticatedUserProvider;
+        this.companyService = companyService;
     }
 
     /**
@@ -194,12 +198,18 @@ public class UserService {
     }
 
     /**
-     * Retrieves all active users with their role and company resolved.
+     * Retrieves all active users of a company with their role and company resolved.
      *
+     * <p>The company of the session scopes the read. A root session falls back
+     * to the requested company so an operator can list the users of any
+     * company.</p>
+     *
+     * @param requestedCompanyOid Company requested by the caller.
      * @return List of user responses.
      */
-    public List<UserResponse> getAllUsers() {
-        List<User> users = userRepository.findAllActive();
+    public List<UserResponse> getAllUsers(String requestedCompanyOid) {
+        CompanyOid companyOid = companyService.resolveReadCompanyOid(requestedCompanyOid);
+        List<User> users = userRepository.findAllActive(companyOid);
         Map<String, RoleResponse> roles = resolveRoles(users);
         Map<String, CompanyResponse> companies = resolveCompanies(users);
         return userMapper.toResponseList(users, roles, companies);
