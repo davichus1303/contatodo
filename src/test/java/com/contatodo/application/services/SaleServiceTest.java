@@ -122,7 +122,7 @@ class SaleServiceTest {
     void createSalePlacesSaleAndDecreasesStock() {
         stubAuthenticatedContext();
         when(productRepository.findById("product-1")).thenReturn(Optional.of(productWithStock(5)));
-        when(companyContextProvider.isRoot()).thenReturn(true);
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
         when(saleRepository.findBySaleDateBetween(any(), any())).thenReturn(java.util.List.of());
         when(saleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         SaleResponse expected = new SaleResponse();

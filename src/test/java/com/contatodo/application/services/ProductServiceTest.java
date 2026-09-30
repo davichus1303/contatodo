@@ -97,7 +97,6 @@ class ProductServiceTest {
     void createProductAssignsCompanyToNormalUser() {
         when(authenticatedUserProvider.getCurrentUserEmail()).thenReturn("david@example.com");
         when(userRepository.findByEmail("david@example.com")).thenReturn(Optional.of(owner()));
-        when(companyContextProvider.isRoot()).thenReturn(false);
         when(companyContextProvider.currentCompanyOid())
                 .thenReturn(Optional.of(CompanyOid.of("company-1")));
         when(productRepository.findTopByOrderByCodeDesc()).thenReturn(Optional.empty());
@@ -110,10 +109,24 @@ class ProductServiceTest {
     }
 
     @Test
+    void createProductAssignsNullCompanyWhenTheTokenCarriesNoCompany() {
+        when(authenticatedUserProvider.getCurrentUserEmail()).thenReturn("david@example.com");
+        when(userRepository.findByEmail("david@example.com")).thenReturn(Optional.of(owner()));
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+        when(productRepository.findTopByOrderByCodeDesc()).thenReturn(Optional.empty());
+        when(productRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(productMapper.toResponse(any())).thenReturn(new com.contatodo.application.dto.response.ProductResponse());
+
+        productService.createProduct(createRequest());
+
+        verify(productMapper).toEntity(any(), eq("1"), eq("user-1"), isNull());
+    }
+
+    @Test
     void createProductAssignsNullCompanyToRoot() {
         when(authenticatedUserProvider.getCurrentUserEmail()).thenReturn("david@example.com");
         when(userRepository.findByEmail("david@example.com")).thenReturn(Optional.of(owner()));
-        when(companyContextProvider.isRoot()).thenReturn(true);
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
         when(productRepository.findTopByOrderByCodeDesc()).thenReturn(Optional.empty());
         when(productRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(productMapper.toResponse(any())).thenReturn(new com.contatodo.application.dto.response.ProductResponse());
