@@ -1,6 +1,7 @@
 package com.contatodo.domain.repositories;
 
 import com.contatodo.domain.entities.Acquisition;
+import com.contatodo.domain.model.CompanyOid;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -19,13 +20,14 @@ public interface AcquisitionRepository {
     Acquisition save(Acquisition acquisition);
 
     /**
-     * Finds acquisitions by date range.
+     * Finds acquisitions of the given company by date range.
      *
+     * @param companyOid Owning company, {@code null} keeps acquisitions without a company.
      * @param startDate Start date.
      * @param endDate End date.
      * @return List of acquisitions.
      */
-    List<Acquisition> findByAcquisitionDateBetween(LocalDateTime startDate, LocalDateTime endDate);
+    List<Acquisition> findByAcquisitionDateBetween(CompanyOid companyOid, LocalDateTime startDate, LocalDateTime endDate);
 
     /**
      * Finds acquisitions by product OID.
