@@ -5,6 +5,7 @@ import com.contatodo.application.dto.response.SaleResponse;
 import com.contatodo.application.mapper.SaleMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.port.CompanyContextProvider;
+import com.contatodo.application.validators.CompanyOidValidator;
 import com.contatodo.application.validators.SaleValidator;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.entities.Sale;
@@ -12,10 +13,8 @@ import com.contatodo.domain.entities.User;
 import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.model.Money;
 import com.contatodo.domain.repositories.ProductRepository;
-import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.domain.repositories.SaleRepository;
 import com.contatodo.domain.repositories.UserRepository;
-import com.contatodo.shared.constants.CompanyConstants;
 import com.contatodo.shared.constants.SaleConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.shared.utils.DateUtils;
@@ -39,7 +38,7 @@ public class SaleService {
     private final SaleMapper saleMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final CompanyContextProvider companyContextProvider;
-    private final CompanyRepository companyRepository;
+    private final CompanyOidValidator companyOidValidator;
 
     /**
      * Creates a sale service.
@@ -61,7 +60,7 @@ public class SaleService {
             SaleMapper saleMapper,
             AuthenticatedUserProvider authenticatedUserProvider,
             CompanyContextProvider companyContextProvider,
-            CompanyRepository companyRepository
+            CompanyOidValidator companyOidValidator
     ) {
         this.saleRepository = saleRepository;
         this.productRepository = productRepository;
@@ -70,7 +69,7 @@ public class SaleService {
         this.saleMapper = saleMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.companyContextProvider = companyContextProvider;
-        this.companyRepository = companyRepository;
+        this.companyOidValidator = companyOidValidator;
     }
 
     /**
@@ -182,13 +181,7 @@ public class SaleService {
             return sessionCompany.get();
         }
         if (requestedCompanyOid != null && !requestedCompanyOid.isBlank()) {
-            CompanyOid requested = CompanyOid.of(requestedCompanyOid);
-            if (!companyRepository.findById(requested.value()).isPresent()) {
-                throw new ResourceNotFoundException(
-                        CompanyConstants.COMPANY_NOT_FOUND + " Id: " + requested.value()
-                );
-            }
-            return requested;
+            return CompanyOid.of(companyOidValidator.validate(requestedCompanyOid));
         }
         return null;
     }

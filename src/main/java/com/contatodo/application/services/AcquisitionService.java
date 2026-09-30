@@ -6,6 +6,7 @@ import com.contatodo.application.dto.response.AcquisitionResponse;
 import com.contatodo.application.mapper.AcquisitionMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.port.CompanyContextProvider;
+import com.contatodo.application.validators.CompanyOidValidator;
 import com.contatodo.application.validators.AcquisitionValidator;
 import com.contatodo.domain.entities.Acquisition;
 import com.contatodo.domain.entities.AcquisitionType;
@@ -13,9 +14,7 @@ import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.AcquisitionRepository;
 import com.contatodo.domain.repositories.AcquisitionTypeRepository;
-import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.domain.repositories.ProductRepository;
-import com.contatodo.shared.constants.CompanyConstants;
 import com.contatodo.shared.constants.AcquisitionTypeConstants;
 import com.contatodo.shared.constants.ExpenseConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
@@ -48,7 +47,7 @@ public class AcquisitionService {
     private final AcquisitionMapper acquisitionMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final CompanyContextProvider companyContextProvider;
-    private final CompanyRepository companyRepository;
+    private final CompanyOidValidator companyOidValidator;
     private final ExpenseService expenseService;
     private final ProductInventoryHandler productInventoryHandler;
 
@@ -64,6 +63,7 @@ public class AcquisitionService {
      * @param companyContextProvider Company context provider.
      * @param expenseService Expense use case service.
      * @param productInventoryHandler Inventory side effects handler.
+     * @param companyOidValidator Company identifier validator.
      */
     public AcquisitionService(
             AcquisitionRepository acquisitionRepository,
@@ -75,7 +75,7 @@ public class AcquisitionService {
             CompanyContextProvider companyContextProvider,
             ExpenseService expenseService,
             ProductInventoryHandler productInventoryHandler,
-            CompanyRepository companyRepository
+            CompanyOidValidator companyOidValidator
     ) {
         this.acquisitionRepository = acquisitionRepository;
         this.productRepository = productRepository;
@@ -84,9 +84,9 @@ public class AcquisitionService {
         this.acquisitionMapper = acquisitionMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.companyContextProvider = companyContextProvider;
+        this.companyOidValidator = companyOidValidator;
         this.expenseService = expenseService;
         this.productInventoryHandler = productInventoryHandler;
-        this.companyRepository = companyRepository;
     }
 
     /**
@@ -231,13 +231,7 @@ public class AcquisitionService {
             return sessionCompany.get();
         }
         if (requestedCompanyOid != null && !requestedCompanyOid.isBlank()) {
-            CompanyOid requested = CompanyOid.of(requestedCompanyOid);
-            if (!companyRepository.findById(requested.value()).isPresent()) {
-                throw new ResourceNotFoundException(
-                        CompanyConstants.COMPANY_NOT_FOUND + " Id: " + requested.value()
-                );
-            }
-            return requested;
+            return CompanyOid.of(companyOidValidator.validate(requestedCompanyOid));
         }
         return null;
     }

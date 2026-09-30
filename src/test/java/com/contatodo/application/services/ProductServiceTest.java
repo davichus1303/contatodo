@@ -4,7 +4,9 @@ import com.contatodo.application.dto.request.CreateProductRequest;
 import com.contatodo.application.mapper.ProductMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.port.CompanyContextProvider;
+import com.contatodo.application.validators.CompanyOidValidator;
 import com.contatodo.application.validators.ProductValidator;
+import com.contatodo.domain.entities.Company;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.entities.User;
 import com.contatodo.domain.model.CompanyOid;
@@ -64,7 +66,7 @@ class ProductServiceTest {
     void setUp() {
         productService = new ProductService(
                 productRepository, userRepository, productValidator,
-                productMapper, authenticatedUserProvider, companyContextProvider, companyRepository
+                productMapper, authenticatedUserProvider, companyContextProvider, new CompanyOidValidator(companyRepository)
         );
     }
 
@@ -92,7 +94,7 @@ class ProductServiceTest {
         when(authenticatedUserProvider.getCurrentUserEmail()).thenReturn("david@example.com");
         when(userRepository.findByEmail("david@example.com")).thenReturn(Optional.of(owner()));
         when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
-        when(companyRepository.findById("company-9")).thenReturn(Optional.of(org.mockito.Mockito.mock(com.contatodo.domain.entities.Company.class)));
+        when(companyRepository.findById("company-9")).thenReturn(Optional.of(Company.builder().id("company-9").name("Acme").isActive(true).isDeleted(false).build()));
         when(productRepository.findTopByOrderByCodeDesc()).thenReturn(Optional.empty());
         when(productRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(productMapper.toResponse(any())).thenReturn(new com.contatodo.application.dto.response.ProductResponse());

@@ -6,14 +6,13 @@ import com.contatodo.application.dto.response.ProductResponse;
 import com.contatodo.application.mapper.ProductMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.port.CompanyContextProvider;
+import com.contatodo.application.validators.CompanyOidValidator;
 import com.contatodo.application.validators.ProductValidator;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.domain.entities.User;
-import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.domain.repositories.ProductRepository;
-import com.contatodo.shared.constants.CompanyConstants;
 import com.contatodo.shared.constants.ProductConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
@@ -33,7 +32,7 @@ public class ProductService {
     private final ProductMapper productMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final CompanyContextProvider companyContextProvider;
-    private final CompanyRepository companyRepository;
+    private final CompanyOidValidator companyOidValidator;
 
     /**
      * Creates a product service.
@@ -53,7 +52,7 @@ public class ProductService {
             ProductMapper productMapper,
             AuthenticatedUserProvider authenticatedUserProvider,
             CompanyContextProvider companyContextProvider,
-            CompanyRepository companyRepository
+            CompanyOidValidator companyOidValidator
     ) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
@@ -61,7 +60,7 @@ public class ProductService {
         this.productMapper = productMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.companyContextProvider = companyContextProvider;
-        this.companyRepository = companyRepository;
+        this.companyOidValidator = companyOidValidator;
     }
 
     /**
@@ -187,13 +186,7 @@ public class ProductService {
             return sessionCompany.get();
         }
         if (requestedCompanyOid != null && !requestedCompanyOid.isBlank()) {
-            CompanyOid requested = CompanyOid.of(requestedCompanyOid);
-            if (!companyRepository.findById(requested.value()).isPresent()) {
-                throw new ResourceNotFoundException(
-                        CompanyConstants.COMPANY_NOT_FOUND + " Id: " + requested.value()
-                );
-            }
-            return requested;
+            return CompanyOid.of(companyOidValidator.validate(requestedCompanyOid));
         }
         return null;
     }

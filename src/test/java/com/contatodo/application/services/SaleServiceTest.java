@@ -5,6 +5,7 @@ import com.contatodo.application.dto.response.SaleResponse;
 import com.contatodo.application.mapper.SaleMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.port.CompanyContextProvider;
+import com.contatodo.application.validators.CompanyOidValidator;
 import com.contatodo.application.validators.SaleValidator;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.entities.User;
@@ -66,7 +67,7 @@ class SaleServiceTest {
     void setUp() {
         saleService = new SaleService(
                 saleRepository, productRepository, userRepository,
-                saleValidator, saleMapper, authenticatedUserProvider, companyContextProvider, companyRepository
+                saleValidator, saleMapper, authenticatedUserProvider, companyContextProvider, new CompanyOidValidator(companyRepository)
         );
     }
 

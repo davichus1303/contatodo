@@ -13,6 +13,7 @@ import com.contatodo.application.mapper.RoleMapper;
 import com.contatodo.application.mapper.UserMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.port.CompanyContextProvider;
+import com.contatodo.application.validators.CompanyOidValidator;
 import com.contatodo.application.port.TokenProvider;
 import com.contatodo.application.validators.UserValidator;
 import com.contatodo.domain.entities.Role;
@@ -43,6 +44,7 @@ public class UserService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final CompanyRepository companyRepository;
+    private final CompanyOidValidator companyOidValidator;
     private final UserValidator userValidator;
     private final UserMapper userMapper;
     private final RoleMapper roleMapper;
@@ -58,6 +60,7 @@ public class UserService {
      * @param userRepository User repository port.
      * @param roleRepository Role repository port.
      * @param companyRepository Company repository port.
+     * @param companyOidValidator Company identifier validator.
      * @param userValidator User validator.
      * @param userMapper User mapper.
      * @param roleMapper Role mapper.
@@ -71,6 +74,7 @@ public class UserService {
             UserRepository userRepository,
             RoleRepository roleRepository,
             CompanyRepository companyRepository,
+            CompanyOidValidator companyOidValidator,
             UserValidator userValidator,
             UserMapper userMapper,
             RoleMapper roleMapper,
@@ -83,6 +87,7 @@ public class UserService {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.companyRepository = companyRepository;
+        this.companyOidValidator = companyOidValidator;
         this.userValidator = userValidator;
         this.userMapper = userMapper;
         this.roleMapper = roleMapper;
@@ -113,13 +118,8 @@ public class UserService {
         }
 
         // Validate companyOid if provided
-        String effectiveCompanyOid = resolveWritableCompanyOid(request.getCompanyOid());
+        String effectiveCompanyOid = companyOidValidator.validate(resolveWritableCompanyOid(request.getCompanyOid()));
         request.setCompanyOid(effectiveCompanyOid);
-        if (effectiveCompanyOid != null && !effectiveCompanyOid.isEmpty()) {
-            if (!companyRepository.findById(effectiveCompanyOid).isPresent()) {
-                throw new ResourceNotFoundException("Company not found with id: " + effectiveCompanyOid);
-            }
-        }
 
         String hashedPassword = passwordEncoder.encode(request.getPassword());
 
@@ -166,13 +166,8 @@ public class UserService {
         }
 
         // Validate companyOid if provided
-        String effectiveCompanyOid = resolveWritableCompanyOid(request.getCompanyOid());
+        String effectiveCompanyOid = companyOidValidator.validate(resolveWritableCompanyOid(request.getCompanyOid()));
         request.setCompanyOid(effectiveCompanyOid);
-        if (effectiveCompanyOid != null && !effectiveCompanyOid.isEmpty()) {
-            if (!companyRepository.findById(effectiveCompanyOid).isPresent()) {
-                throw new ResourceNotFoundException("Company not found with id: " + effectiveCompanyOid);
-            }
-        }
 
         String hashedPassword = request.getPassword() != null
                 ? passwordEncoder.encode(request.getPassword())

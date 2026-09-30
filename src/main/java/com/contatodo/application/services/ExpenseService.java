@@ -7,9 +7,7 @@ import com.contatodo.application.dto.response.TotalExpensesResponse;
 import com.contatodo.application.mapper.ExpenseMapper;
 import com.contatodo.application.validators.ExpenseValidator;
 import com.contatodo.domain.entities.Expense;
-import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.domain.repositories.ExpenseRepository;
-import com.contatodo.shared.constants.CompanyConstants;
 import com.contatodo.shared.constants.ExpenseConstants;
 import com.contatodo.shared.constants.ValidationConstants;
 import com.contatodo.domain.model.Money;
@@ -17,6 +15,7 @@ import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.shared.exceptions.InvalidDateRangeException;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.port.CompanyContextProvider;
+import com.contatodo.application.validators.CompanyOidValidator;
 import com.contatodo.domain.model.CompanyOid;
 import org.springframework.stereotype.Service;
 
@@ -36,7 +35,7 @@ public class ExpenseService {
     private final ExpenseMapper expenseMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final CompanyContextProvider companyContextProvider;
-    private final CompanyRepository companyRepository;
+    private final CompanyOidValidator companyOidValidator;
 
     /**
      * Creates an expense service.
@@ -53,14 +52,14 @@ public class ExpenseService {
             ExpenseMapper expenseMapper,
             AuthenticatedUserProvider authenticatedUserProvider,
             CompanyContextProvider companyContextProvider,
-            CompanyRepository companyRepository
+            CompanyOidValidator companyOidValidator
     ) {
         this.expenseRepository = expenseRepository;
         this.expenseValidator = expenseValidator;
         this.expenseMapper = expenseMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.companyContextProvider = companyContextProvider;
-        this.companyRepository = companyRepository;
+        this.companyOidValidator = companyOidValidator;
     }
 
     /**
@@ -104,13 +103,7 @@ public class ExpenseService {
             return sessionCompany.get();
         }
         if (requestedCompanyOid != null && !requestedCompanyOid.isBlank()) {
-            CompanyOid requested = CompanyOid.of(requestedCompanyOid);
-            if (!companyRepository.findById(requested.value()).isPresent()) {
-                throw new ResourceNotFoundException(
-                        CompanyConstants.COMPANY_NOT_FOUND + " Id: " + requested.value()
-                );
-            }
-            return requested;
+            return CompanyOid.of(companyOidValidator.validate(requestedCompanyOid));
         }
         return null;
     }

@@ -5,6 +5,7 @@ import com.contatodo.application.dto.response.ExpenseResponse;
 import com.contatodo.application.mapper.ExpenseMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.port.CompanyContextProvider;
+import com.contatodo.application.validators.CompanyOidValidator;
 import com.contatodo.application.validators.ExpenseValidator;
 import com.contatodo.domain.entities.Company;
 import com.contatodo.domain.entities.Expense;
@@ -65,7 +66,7 @@ class ExpenseServiceTest {
         expenseService = new ExpenseService(
                 expenseRepository, expenseValidator, expenseMapper,
                 authenticatedUserProvider, companyContextProvider,
-                companyRepository
+                new CompanyOidValidator(companyRepository)
         );
     }
 
@@ -113,7 +114,7 @@ class ExpenseServiceTest {
         request.setCompanyOid("company-9");
         when(authenticatedUserProvider.getCurrentUserOid()).thenReturn("user-1");
         when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
-        when(companyRepository.findById("company-9")).thenReturn(Optional.of(mock(Company.class)));
+        when(companyRepository.findById("company-9")).thenReturn(Optional.of(Company.builder().id("company-9").name("Acme").isActive(true).isDeleted(false).build()));
         when(expenseMapper.toEntity(any(), eq("user-1"), any(), eq(CompanyOid.of("company-9"))))
                 .thenReturn(mock(Expense.class));
         when(expenseRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
