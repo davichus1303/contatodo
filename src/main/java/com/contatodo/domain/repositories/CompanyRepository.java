@@ -40,4 +40,11 @@ public interface CompanyRepository {
      * @return List of non-deleted companies ordered by name.
      */
     List<Company> findAllNotDeleted();
+
+    /**
+     * Finds all active and non-deleted companies.
+     *
+     * @return List of active companies that are not deleted, ordered by name.
+     */
+    List<Company> findAllActiveNotDeleted();
 }

@@ -16,4 +16,11 @@ public interface CompanyMongoRepository extends MongoRepository<CompanyDocument,
      * @return List of non-deleted company documents ordered by name.
      */
     List<CompanyDocument> findByIsDeletedFalseOrderByNameAsc();
+
+    /**
+     * Finds all companies that are active and not deleted.
+     *
+     * @return List of active, non-deleted company documents ordered by name.
+     */
+    List<CompanyDocument> findByIsActiveTrueAndIsDeletedFalseOrderByNameAsc();
 }

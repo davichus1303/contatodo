@@ -126,6 +126,21 @@ public class CompanyService {
     }
 
     /**
+     * Retrieves all active companies that are not deleted, resolving each
+     * related contact user.
+     *
+     * <p>Each contact is looked up at most once. A contact that cannot be
+     * resolved (missing identifier, not found or lookup error) is left empty
+     * for that company without failing the whole query.</p>
+     *
+     * @return List of active, non-deleted company responses.
+     */
+    public List<CompanyResponse> getActiveCompanies() {
+        List<Company> companies = companyRepository.findAllActiveNotDeleted();
+        return companyMapper.toResponseList(companies, resolveContacts(companies));
+    }
+
+    /**
      * Resolves the contact users referenced by the given companies, keyed by user identifier.
      *
      * @param companies Companies whose contacts must be resolved.

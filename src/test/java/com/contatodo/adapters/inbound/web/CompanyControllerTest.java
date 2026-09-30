@@ -69,6 +69,17 @@ class CompanyControllerTest {
     }
 
     @Test
+    void getActiveCompaniesReturnsOkWithEnvelope() throws Exception {
+        when(companyService.getActiveCompanies()).thenReturn(List.of(companyResponse()));
+
+        mockMvc.perform(get("/companies/active").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.data[0].id").value("c1"))
+                .andExpect(jsonPath("$.data[0].name").value("Acme"));
+    }
+
+    @Test
     void createCompaniesReturnsOkWithMessage() throws Exception {
         when(companyService.createCompanies(any())).thenReturn(List.of(companyResponse()));
 

@@ -116,6 +116,20 @@ class CompanyServiceTest {
     }
 
     @Test
+    void getActiveCompaniesResolvesTheContactOfEachCompany() {
+        when(companyRepository.findAllActiveNotDeleted()).thenReturn(List.of(companyWithContact("user-1")));
+        when(userRepository.findById("user-1")).thenReturn(Optional.of(contactUser()));
+
+        List<CompanyResponse> response = companyService.getActiveCompanies();
+
+        assertEquals(1, response.size());
+        assertEquals("company-1", response.get(0).getId());
+        assertEquals("user-1", response.get(0).getContactUserOId());
+        verify(companyRepository).findAllActiveNotDeleted();
+        verify(userRepository).findById("user-1");
+    }
+
+    @Test
     void getCompaniesResolvesTheContactOfEachCompany() {
         when(companyRepository.findAllNotDeleted()).thenReturn(List.of(companyWithContact("user-1")));
         when(userRepository.findById("user-1")).thenReturn(Optional.of(contactUser()));
