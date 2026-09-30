@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -91,13 +92,14 @@ public class UserController {
     }
 
     /**
-     * Retrieves all active users.
+     * Retrieves all active users of a company.
      *
+     * @param companyOid Company selected by a root session.
      * @return List of users.
      */
     @GetMapping("/users")
-    public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers() {
-        List<UserResponse> users = userService.getAllUsers();
+    public ResponseEntity<ApiResponse<List<UserResponse>>> getAllUsers(@RequestParam(required = false) String companyOid) {
+        List<UserResponse> users = userService.getAllUsers(companyOid);
         return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, users);
     }
 

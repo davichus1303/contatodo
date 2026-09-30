@@ -22,6 +22,7 @@ import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.domain.repositories.RoleRepository;
 import com.contatodo.domain.repositories.UserRepository;
+import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.UserConstants;
 import com.contatodo.shared.exceptions.AuthenticationException;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
@@ -88,12 +89,15 @@ class UserServiceTest {
     @Mock
     private AuthenticatedUserProvider authenticatedUserProvider;
 
+    @Mock
+    private CompanyService companyService;
+
     private UserService userService;
 
     @BeforeEach
     void setUp() {
         userService = new UserService(
-                userRepository, roleRepository, companyRepository, new CompanyOidValidator(companyRepository), userValidator, userMapper, roleMapper, companyMapper, passwordEncoder, tokenProvider, companyContextProvider, authenticatedUserProvider);
+                userRepository, roleRepository, companyRepository, new CompanyOidValidator(companyRepository), userValidator, userMapper, roleMapper, companyMapper, passwordEncoder, tokenProvider, companyContextProvider, authenticatedUserProvider, companyService);
     }
 
     private CreateUserRequest createRequest(String email) {
@@ -453,20 +457,48 @@ class UserServiceTest {
         );
         assertEquals(UserConstants.USER_INACTIVE, exception.getMessage());
     }
-@Test
+
+    @Test
+    void getAllUsersScopesTheReadToTheResolvedCompany() {
+        when(companyService.resolveReadCompanyOid("company-2")).thenReturn(CompanyOid.of("company-2"));
+        when(userRepository.findAllActive(CompanyOid.of("company-2"))).thenReturn(List.of());
+        when(userMapper.toResponseList(anyList(), anyMap(), anyMap())).thenReturn(List.of());
+
+        List<UserResponse> response = userService.getAllUsers("company-2");
+
+        assertEquals(0, response.size());
+        verify(userRepository).findAllActive(CompanyOid.of("company-2"));
+    }
+
+    @Test
+    void getAllUsersRejectsReadsWithoutCompanyContext() {
+        when(companyService.resolveReadCompanyOid(null))
+                .thenThrow(new ResourceNotFoundException(AuthConstants.COMPANY_CONTEXT_REQUIRED));
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> userService.getAllUsers(null)
+        );
+        assertEquals(AuthConstants.COMPANY_CONTEXT_REQUIRED, exception.getMessage());
+        verify(userRepository, never()).findAllActive(any());
+    }
+
+    @Test
     void getAllUsersResolvesRoleAndCompany() {
         User user = activeUserWithRoleAndCompany("role-1", "company-1");
 
-        when(userRepository.findAllActive()).thenReturn(List.of(user));
+        when(companyService.resolveReadCompanyOid("company-1")).thenReturn(CompanyOid.of("company-1"));
+        when(userRepository.findAllActive(CompanyOid.of("company-1"))).thenReturn(List.of(user));
         when(roleRepository.findById("role-1")).thenReturn(Optional.of(role("role-1", "Admin")));
         when(companyRepository.findById("company-1")).thenReturn(Optional.of(
                 Company.builder().id("company-1").name("VichoBox").isActive(true).isDeleted(false).build()
         ));
         when(userMapper.toResponseList(anyList(), anyMap(), anyMap())).thenReturn(List.of(new UserResponse()));
 
-        List<UserResponse> response = userService.getAllUsers();
+        List<UserResponse> response = userService.getAllUsers("company-1");
 
         assertEquals(1, response.size());
+        verify(userRepository).findAllActive(CompanyOid.of("company-1"));
         verify(roleRepository).findById("role-1");
         verify(companyRepository).findById("company-1");
         verify(userMapper).toResponseList(anyList(), anyMap(), anyMap());
@@ -476,11 +508,12 @@ class UserServiceTest {
     void getAllUsersReturnsUsersWhenRoleLookupFails() {
         User user = activeUserWithRoleAndCompany("role-1", "company-1");
 
-        when(userRepository.findAllActive()).thenReturn(List.of(user));
+        when(companyService.resolveReadCompanyOid("company-1")).thenReturn(CompanyOid.of("company-1"));
+        when(userRepository.findAllActive(CompanyOid.of("company-1"))).thenReturn(List.of(user));
         when(roleRepository.findById("role-1")).thenThrow(new RuntimeException("boom"));
         when(userMapper.toResponseList(anyList(), anyMap(), anyMap())).thenReturn(List.of(new UserResponse()));
 
-        List<UserResponse> response = userService.getAllUsers();
+        List<UserResponse> response = userService.getAllUsers("company-1");
 
         assertEquals(1, response.size());
         verify(userMapper).toResponseList(anyList(), anyMap(), anyMap());
@@ -490,11 +523,12 @@ class UserServiceTest {
     void getAllUsersReturnsUsersWhenCompanyLookupFails() {
         User user = activeUserWithRoleAndCompany("role-1", "company-1");
 
-        when(userRepository.findAllActive()).thenReturn(List.of(user));
+        when(companyService.resolveReadCompanyOid("company-1")).thenReturn(CompanyOid.of("company-1"));
+        when(userRepository.findAllActive(CompanyOid.of("company-1"))).thenReturn(List.of(user));
         when(companyRepository.findById("company-1")).thenThrow(new RuntimeException("boom"));
         when(userMapper.toResponseList(anyList(), anyMap(), anyMap())).thenReturn(List.of(new UserResponse()));
 
-        List<UserResponse> response = userService.getAllUsers();
+        List<UserResponse> response = userService.getAllUsers("company-1");
 
         assertEquals(1, response.size());
         verify(userMapper).toResponseList(anyList(), anyMap(), anyMap());

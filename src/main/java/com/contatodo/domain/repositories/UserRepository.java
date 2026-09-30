@@ -1,6 +1,7 @@
 package com.contatodo.domain.repositories;
 
 import com.contatodo.domain.entities.User;
+import com.contatodo.domain.model.CompanyOid;
 
 import java.util.List;
 import java.util.Optional;
@@ -35,11 +36,12 @@ public interface UserRepository {
     Optional<User> findByEmail(String email);
 
     /**
-     * Finds all active users.
+     * Finds all active users for the given company.
      *
+     * @param companyOid Owning company, {@code null} keeps users without a company.
      * @return List of active users.
      */
-    List<User> findAllActive();
+    List<User> findAllActive(CompanyOid companyOid);
 
     /**
      * Checks if a user exists by email.
