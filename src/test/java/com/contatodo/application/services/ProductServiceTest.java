@@ -81,6 +81,55 @@ class ProductServiceTest {
     }
 
     @Test
+    void createProductUsesTheRequestedCompanyWhenTheTokenHasNone() {
+        CreateProductRequest request = createRequest();
+        request.setCompanyOid("company-9");
+        when(authenticatedUserProvider.getCurrentUserEmail()).thenReturn("david@example.com");
+        when(userRepository.findByEmail("david@example.com")).thenReturn(Optional.of(owner()));
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+        when(productRepository.findTopByOrderByCodeDesc()).thenReturn(Optional.empty());
+        when(productRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(productMapper.toResponse(any())).thenReturn(new com.contatodo.application.dto.response.ProductResponse());
+
+        productService.createProduct(request);
+
+        verify(productMapper).toEntity(any(), eq("1"), eq("user-1"), eq(CompanyOid.of("company-9")));
+    }
+
+    @Test
+    void createProductIgnoresTheRequestedCompanyWhenTheTokenHasOne() {
+        CreateProductRequest request = createRequest();
+        request.setCompanyOid("company-9");
+        when(authenticatedUserProvider.getCurrentUserEmail()).thenReturn("david@example.com");
+        when(userRepository.findByEmail("david@example.com")).thenReturn(Optional.of(owner()));
+        when(companyContextProvider.currentCompanyOid())
+                .thenReturn(Optional.of(CompanyOid.of("company-1")));
+        when(productRepository.findTopByOrderByCodeDesc()).thenReturn(Optional.empty());
+        when(productRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(productMapper.toResponse(any())).thenReturn(new com.contatodo.application.dto.response.ProductResponse());
+
+        productService.createProduct(request);
+
+        verify(productMapper).toEntity(any(), eq("1"), eq("user-1"), eq(CompanyOid.of("company-1")));
+    }
+
+    @Test
+    void createProductIgnoresABlankRequestedCompany() {
+        CreateProductRequest request = createRequest();
+        request.setCompanyOid("   ");
+        when(authenticatedUserProvider.getCurrentUserEmail()).thenReturn("david@example.com");
+        when(userRepository.findByEmail("david@example.com")).thenReturn(Optional.of(owner()));
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+        when(productRepository.findTopByOrderByCodeDesc()).thenReturn(Optional.empty());
+        when(productRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(productMapper.toResponse(any())).thenReturn(new com.contatodo.application.dto.response.ProductResponse());
+
+        productService.createProduct(request);
+
+        verify(productMapper).toEntity(any(), eq("1"), eq("user-1"), isNull());
+    }
+
+    @Test
     void createProductRejectsUnknownAuthenticatedUser() {
         when(authenticatedUserProvider.getCurrentUserEmail()).thenReturn("ghost@example.com");
         when(userRepository.findByEmail("ghost@example.com")).thenReturn(Optional.empty());
@@ -97,7 +146,6 @@ class ProductServiceTest {
     void createProductAssignsCompanyToNormalUser() {
         when(authenticatedUserProvider.getCurrentUserEmail()).thenReturn("david@example.com");
         when(userRepository.findByEmail("david@example.com")).thenReturn(Optional.of(owner()));
-        when(companyContextProvider.isRoot()).thenReturn(false);
         when(companyContextProvider.currentCompanyOid())
                 .thenReturn(Optional.of(CompanyOid.of("company-1")));
         when(productRepository.findTopByOrderByCodeDesc()).thenReturn(Optional.empty());
@@ -110,10 +158,24 @@ class ProductServiceTest {
     }
 
     @Test
+    void createProductAssignsNullCompanyWhenTheTokenCarriesNoCompany() {
+        when(authenticatedUserProvider.getCurrentUserEmail()).thenReturn("david@example.com");
+        when(userRepository.findByEmail("david@example.com")).thenReturn(Optional.of(owner()));
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+        when(productRepository.findTopByOrderByCodeDesc()).thenReturn(Optional.empty());
+        when(productRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(productMapper.toResponse(any())).thenReturn(new com.contatodo.application.dto.response.ProductResponse());
+
+        productService.createProduct(createRequest());
+
+        verify(productMapper).toEntity(any(), eq("1"), eq("user-1"), isNull());
+    }
+
+    @Test
     void createProductAssignsNullCompanyToRoot() {
         when(authenticatedUserProvider.getCurrentUserEmail()).thenReturn("david@example.com");
         when(userRepository.findByEmail("david@example.com")).thenReturn(Optional.of(owner()));
-        when(companyContextProvider.isRoot()).thenReturn(true);
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
         when(productRepository.findTopByOrderByCodeDesc()).thenReturn(Optional.empty());
         when(productRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(productMapper.toResponse(any())).thenReturn(new com.contatodo.application.dto.response.ProductResponse());

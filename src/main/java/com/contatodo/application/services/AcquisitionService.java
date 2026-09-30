@@ -14,7 +14,6 @@ import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.AcquisitionRepository;
 import com.contatodo.domain.repositories.AcquisitionTypeRepository;
 import com.contatodo.domain.repositories.ProductRepository;
-import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.AcquisitionTypeConstants;
 import com.contatodo.shared.constants.ExpenseConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
@@ -93,7 +92,7 @@ public class AcquisitionService {
      */
     public AcquisitionResponse registerAcquisition(CreateAcquisitionRequest request) {
         String userOid = authenticatedUserProvider.getCurrentUserOid();
-        CompanyOid companyOid = resolveCompanyOid();
+        CompanyOid companyOid = resolveCompanyOid(request.getCompanyOid());
 
         AcquisitionType acquisitionType = findAcquisitionType(request.getAcquisitionTypeOid());
 
@@ -204,16 +203,26 @@ public class AcquisitionService {
     }
 
     /**
-     * Resolves the owning company for a non-root write.
+     * Resolves the owning company for a write.
      *
-     * @return Company identifier, or {@code null} for the root user.
+     * <p>The company of the session always wins, so a caller can never move a record
+     * out of the company its own token points at. Only when the token carries no
+     * company, which is the case for the root user and for any session without a
+     * company, the optional value supplied in the request is used. The identifier is
+     * left {@code null} when neither is available, instead of being rejected.</p>
+     *
+     * @param requestedCompanyOid Optional company identifier supplied in the request.
+     * @return Company identifier, or {@code null} when neither source provides one.
      */
-    private CompanyOid resolveCompanyOid() {
-        if (companyContextProvider.isRoot()) {
-            return null;
+    private CompanyOid resolveCompanyOid(String requestedCompanyOid) {
+        Optional<CompanyOid> sessionCompany = companyContextProvider.currentCompanyOid();
+        if (sessionCompany.isPresent()) {
+            return sessionCompany.get();
         }
-        return companyContextProvider.currentCompanyOid()
-                .orElseThrow(() -> new ResourceNotFoundException(AuthConstants.COMPANY_CONTEXT_REQUIRED));
+        if (requestedCompanyOid != null && !requestedCompanyOid.isBlank()) {
+            return CompanyOid.of(requestedCompanyOid);
+        }
+        return null;
     }
 
     /**

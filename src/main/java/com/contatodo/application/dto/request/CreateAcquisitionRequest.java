@@ -19,6 +19,8 @@ public class CreateAcquisitionRequest {
     public CreateAcquisitionRequest() {
     }
 
+    private String companyOid;
+
     public String getAcquisitionTypeOid() {
         return acquisitionTypeOid;
     }
@@ -97,5 +99,27 @@ public class CreateAcquisitionRequest {
 
     public void setObservations(String observations) {
         this.observations = observations;
+    }
+
+    /**
+     * Gets the company the record is being created for.
+     *
+     * <p>Optional. When omitted, the company is taken from the session token. When the
+     * token carries no company, this value is used instead, and is left null when neither
+     * is available.</p>
+     *
+     * @return Requested company identifier, or null.
+     */
+    public String getCompanyOid() {
+        return companyOid;
+    }
+
+    /**
+     * Sets the company the record is being created for.
+     *
+     * @param companyOid Requested company identifier.
+     */
+    public void setCompanyOid(String companyOid) {
+        this.companyOid = companyOid;
     }
 }

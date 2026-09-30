@@ -14,7 +14,6 @@ import com.contatodo.domain.model.Money;
 import com.contatodo.domain.repositories.ProductRepository;
 import com.contatodo.domain.repositories.SaleRepository;
 import com.contatodo.domain.repositories.UserRepository;
-import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.SaleConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.shared.utils.DateUtils;
@@ -102,7 +101,7 @@ public class SaleService {
                 unitRealCost,
                 unitPublicCost,
                 request.getNotes(),
-                resolveCompanyOid()
+                resolveCompanyOid(request.getCompanyOid())
         );
 
         productRepository.save(updatedProduct);
@@ -154,15 +153,25 @@ public class SaleService {
     }
 
     /**
-     * Resolves the owning company for a non-root write.
+     * Resolves the owning company for a write.
      *
-     * @return Company identifier, or {@code null} for the root user.
+     * <p>The company of the session always wins, so a caller can never move a record
+     * out of the company its own token points at. Only when the token carries no
+     * company, which is the case for the root user and for any session without a
+     * company, the optional value supplied in the request is used. The identifier is
+     * left {@code null} when neither is available, instead of being rejected.</p>
+     *
+     * @param requestedCompanyOid Optional company identifier supplied in the request.
+     * @return Company identifier, or {@code null} when neither source provides one.
      */
-    private CompanyOid resolveCompanyOid() {
-        if (companyContextProvider.isRoot()) {
-            return null;
+    private CompanyOid resolveCompanyOid(String requestedCompanyOid) {
+        Optional<CompanyOid> sessionCompany = companyContextProvider.currentCompanyOid();
+        if (sessionCompany.isPresent()) {
+            return sessionCompany.get();
         }
-        return companyContextProvider.currentCompanyOid()
-                .orElseThrow(() -> new ResourceNotFoundException(AuthConstants.COMPANY_CONTEXT_REQUIRED));
+        if (requestedCompanyOid != null && !requestedCompanyOid.isBlank()) {
+            return CompanyOid.of(requestedCompanyOid);
+        }
+        return null;
     }
 }
