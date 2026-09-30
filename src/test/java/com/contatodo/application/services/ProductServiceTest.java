@@ -8,6 +8,7 @@ import com.contatodo.application.validators.ProductValidator;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.entities.User;
 import com.contatodo.domain.model.CompanyOid;
+import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.domain.repositories.ProductRepository;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.shared.constants.ProductConstants;
@@ -22,6 +23,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
@@ -37,6 +39,9 @@ class ProductServiceTest {
 
     @Mock
     private ProductRepository productRepository;
+
+    @Mock
+    private CompanyRepository companyRepository;
 
     @Mock
     private UserRepository userRepository;
@@ -59,7 +64,7 @@ class ProductServiceTest {
     void setUp() {
         productService = new ProductService(
                 productRepository, userRepository, productValidator,
-                productMapper, authenticatedUserProvider, companyContextProvider
+                productMapper, authenticatedUserProvider, companyContextProvider, companyRepository
         );
     }
 
@@ -87,6 +92,7 @@ class ProductServiceTest {
         when(authenticatedUserProvider.getCurrentUserEmail()).thenReturn("david@example.com");
         when(userRepository.findByEmail("david@example.com")).thenReturn(Optional.of(owner()));
         when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+        when(companyRepository.findById("company-9")).thenReturn(Optional.of(org.mockito.Mockito.mock(com.contatodo.domain.entities.Company.class)));
         when(productRepository.findTopByOrderByCodeDesc()).thenReturn(Optional.empty());
         when(productRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(productMapper.toResponse(any())).thenReturn(new com.contatodo.application.dto.response.ProductResponse());
@@ -94,6 +100,24 @@ class ProductServiceTest {
         productService.createProduct(request);
 
         verify(productMapper).toEntity(any(), eq("1"), eq("user-1"), eq(CompanyOid.of("company-9")));
+    }
+
+    @Test
+    void createProductRejectsARequestedCompanyThatDoesNotExist() {
+        CreateProductRequest request = createRequest();
+        request.setCompanyOid("company-404");
+        when(authenticatedUserProvider.getCurrentUserEmail()).thenReturn("david@example.com");
+        when(userRepository.findByEmail("david@example.com")).thenReturn(Optional.of(owner()));
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+        when(companyRepository.findById("company-404")).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> productService.createProduct(request)
+        );
+
+        assertTrue(exception.getMessage().contains("company-404"));
+        verify(productRepository, never()).save(any());
     }
 
     @Test
