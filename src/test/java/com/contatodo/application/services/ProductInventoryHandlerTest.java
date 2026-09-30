@@ -74,7 +74,7 @@ class ProductInventoryHandlerTest {
     @Test
     void applyToInventoryCreatesProductWhenMissing() {
         when(productRepository.findByNameAndIsActiveTrue("Cafe")).thenReturn(Optional.empty());
-        when(productRepository.findAll()).thenReturn(List.of());
+        when(productRepository.findAll(any(CompanyOid.class))).thenReturn(List.of());
         when(productRepository.save(any())).thenAnswer(invocation -> {
             Product toSave = invocation.getArgument(0);
             return Product.builder()

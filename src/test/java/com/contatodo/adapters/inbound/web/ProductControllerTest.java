@@ -12,6 +12,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -48,9 +50,9 @@ class ProductControllerTest {
 
     @Test
     void getAllProductsReturnsOkWithEnvelope() throws Exception {
-        when(productService.getAllProducts()).thenReturn(List.of(productResponse()));
+        when(productService.getAllProducts(any())).thenReturn(List.of(productResponse()));
 
-        mockMvc.perform(get("/products").accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/products").param("companyOid", "c1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("Success."))
@@ -60,9 +62,9 @@ class ProductControllerTest {
 
     @Test
     void getProductByCodeReturnsOk() throws Exception {
-        when(productService.getProductByCode("1")).thenReturn(productResponse());
+        when(productService.getProductByCode(any(), eq("1"))).thenReturn(productResponse());
 
-        mockMvc.perform(get("/products/code/1").accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/products/code/1").param("companyOid", "c1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.code").value("1"));
     }

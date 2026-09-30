@@ -170,7 +170,7 @@ public class ProductInventoryHandler {
                 .name(request.getProductName())
                 .description(request.getDescription() != null ? request.getDescription() : "")
                 .stock(request.getQuantity())
-                .code(generateNextProductCode())
+                .code(generateNextProductCode(companyOid))
                 .realCost(request.getRealCost())
                 .unitRealCost(averageUnitRealCost)
                 .unitPublicCost(request.getUnitPublicCost())
@@ -217,8 +217,8 @@ public class ProductInventoryHandler {
      *
      * @return Next product code.
      */
-    private String generateNextProductCode() {
-        int maxCode = productRepository.findAll().stream()
+    private String generateNextProductCode(CompanyOid companyOid) {
+        int maxCode = productRepository.findAll(companyOid).stream()
                 .map(Product::getCode)
                 .mapToInt(ProductInventoryHandler::parseNumericCode)
                 .max()

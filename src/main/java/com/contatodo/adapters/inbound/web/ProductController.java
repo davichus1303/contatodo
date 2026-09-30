@@ -11,6 +11,7 @@ import com.contatodo.shared.response.WebResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -71,8 +72,9 @@ public class ProductController {
      * @return List of products.
      */
     @GetMapping
-    public ResponseEntity<ApiResponse<List<ProductResponse>>> getAllProducts() {
-        List<ProductResponse> products = productService.getAllProducts();
+    public ResponseEntity<ApiResponse<List<ProductResponse>>> getAllProducts(
+            @RequestParam(required = false) String companyOid) {
+        List<ProductResponse> products = productService.getAllProducts(companyOid);
         return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, products);
     }
 
@@ -83,8 +85,10 @@ public class ProductController {
      * @return Product response.
      */
     @GetMapping("/code/{code}")
-    public ResponseEntity<ApiResponse<ProductResponse>> getProductByCode(@PathVariable String code) {
-        ProductResponse product = productService.getProductByCode(code);
+    public ResponseEntity<ApiResponse<ProductResponse>> getProductByCode(
+            @PathVariable String code,
+            @RequestParam(required = false) String companyOid) {
+        ProductResponse product = productService.getProductByCode(companyOid, code);
         return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, product);
     }
 
@@ -95,8 +99,10 @@ public class ProductController {
      * @return List of products.
      */
     @GetMapping("/name/{name}")
-    public ResponseEntity<ApiResponse<List<ProductResponse>>> getProductsByName(@PathVariable String name) {
-        List<ProductResponse> products = productService.getProductsByName(name);
+    public ResponseEntity<ApiResponse<List<ProductResponse>>> getProductsByName(
+            @PathVariable String name,
+            @RequestParam(required = false) String companyOid) {
+        List<ProductResponse> products = productService.getProductsByName(companyOid, name);
         return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, products);
     }
 
@@ -106,8 +112,9 @@ public class ProductController {
      * @return List of products.
      */
     @GetMapping("/available")
-    public ResponseEntity<ApiResponse<List<ProductResponse>>> getAvailableProducts() {
-        List<ProductResponse> products = productService.getAvailableProducts();
+    public ResponseEntity<ApiResponse<List<ProductResponse>>> getAvailableProducts(
+            @RequestParam(required = false) String companyOid) {
+        List<ProductResponse> products = productService.getAvailableProducts(companyOid);
         return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, products);
     }
 }

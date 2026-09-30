@@ -6,11 +6,15 @@ import com.contatodo.application.dto.request.UpdateCompanyRequest;
 import com.contatodo.application.dto.response.CompanyResponse;
 import com.contatodo.application.mapper.CompanyMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
+import com.contatodo.application.port.CompanyContextProvider;
+import com.contatodo.application.validators.CompanyOidValidator;
 import com.contatodo.application.validators.CompanyValidator;
 import com.contatodo.domain.entities.Company;
 import com.contatodo.domain.entities.User;
+import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.domain.repositories.UserRepository;
+import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.shared.exceptions.InvalidRequestException;
 import com.contatodo.shared.validators.FieldValidator;
@@ -52,6 +56,9 @@ class CompanyServiceTest {
     @Mock
     private AuthenticatedUserProvider authenticatedUserProvider;
 
+    @Mock
+    private CompanyContextProvider companyContextProvider;
+
     private CompanyService companyService;
 
     @BeforeEach
@@ -61,7 +68,9 @@ class CompanyServiceTest {
                 userRepository,
                 new CompanyMapper(),
                 new CompanyValidator(new FieldValidator()),
-                authenticatedUserProvider
+                authenticatedUserProvider,
+                companyContextProvider,
+                new CompanyOidValidator(companyRepository)
         );
     }
 
@@ -361,4 +370,106 @@ class CompanyServiceTest {
         assertThrows(ResourceNotFoundException.class, () -> companyService.deleteCompany("company-1"));
         verify(companyRepository, never()).save(any(Company.class));
     }
+    @Test
+    void resolveCompanyOidUsesTheCompanyFromTheTokenWhenPresent() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.of(CompanyOid.of("claim-company")));
+
+        CompanyOid resolved = companyService.resolveCompanyOid("param-company");
+
+        assertEquals(CompanyOid.of("claim-company"), resolved);
+        verify(companyRepository, never()).findById(any());
+    }
+
+    @Test
+    void resolveCompanyOidUsesTheRequestedCompanyWhenTheTokenHasNone() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+        when(companyRepository.findById("param-company")).thenReturn(Optional.of(usableCompany("param-company")));
+
+        CompanyOid resolved = companyService.resolveCompanyOid("param-company");
+
+        assertEquals(CompanyOid.of("param-company"), resolved);
+    }
+
+    @Test
+    void resolveCompanyOidReturnsNullWhenNeitherSourceProvidesACompany() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+
+        assertNull(companyService.resolveCompanyOid(null));
+        assertNull(companyService.resolveCompanyOid("   "));
+        verify(companyRepository, never()).findById(any());
+    }
+
+    @Test
+    void resolveCompanyOidRejectsAnUnusableRequestedCompanyWhenTheTokenHasNone() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+        when(companyRepository.findById("inactive-company")).thenReturn(
+                Optional.of(inactiveCompany("inactive-company"))
+        );
+
+        assertThrows(ResourceNotFoundException.class, () -> companyService.resolveCompanyOid("inactive-company"));
+    }
+
+    @Test
+    void resolveReadCompanyOidUsesTheCompanyFromTheTokenWhenPresent() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.of(CompanyOid.of("claim-company")));
+
+        CompanyOid resolved = companyService.resolveReadCompanyOid("param-company");
+
+        assertEquals(CompanyOid.of("claim-company"), resolved);
+        verify(companyRepository, never()).findById(any());
+    }
+
+    @Test
+    void resolveReadCompanyOidUsesTheRequestedCompanyWhenTheTokenHasNone() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+        when(companyRepository.findById("param-company")).thenReturn(Optional.of(usableCompany("param-company")));
+
+        CompanyOid resolved = companyService.resolveReadCompanyOid("param-company");
+
+        assertEquals(CompanyOid.of("param-company"), resolved);
+    }
+
+    @Test
+    void resolveReadCompanyOidRejectsTheQueryWhenNoCompanyCanBeResolved() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> companyService.resolveReadCompanyOid(null)
+        );
+        assertEquals(AuthConstants.COMPANY_CONTEXT_REQUIRED, exception.getMessage());
+        verify(companyRepository, never()).findById(any());
+    }
+
+    @Test
+    void resolveReadCompanyOidRejectsAnInactiveRequestedCompanyWhenTheTokenHasNone() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+        when(companyRepository.findById("inactive-company")).thenReturn(
+                Optional.of(inactiveCompany("inactive-company"))
+        );
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> companyService.resolveReadCompanyOid("inactive-company")
+        );
+    }
+
+    private Company usableCompany(String id) {
+        return Company.builder()
+                .id(id)
+                .name("Acme")
+                .isActive(true)
+                .isDeleted(false)
+                .build();
+    }
+
+    private Company inactiveCompany(String id) {
+        return Company.builder()
+                .id(id)
+                .name("Dormant")
+                .isActive(false)
+                .isDeleted(false)
+                .build();
+    }
 }
+
