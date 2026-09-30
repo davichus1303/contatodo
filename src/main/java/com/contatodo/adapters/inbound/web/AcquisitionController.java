@@ -54,16 +54,18 @@ public class AcquisitionController {
      * By default, returns today's acquisitions.
      * Supports optional date range filtering.
      *
+     * @param companyOid Company selected by a root session.
      * @param startDate Optional start date.
      * @param endDate Optional end date.
      * @return List of acquisition responses.
      */
     @GetMapping
     public ResponseEntity<ApiResponse<List<AcquisitionResponse>>> getAcquisitions(
+            @RequestParam(required = false) String companyOid,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate
     ) {
-        List<AcquisitionResponse> acquisitions = acquisitionService.getAcquisitions(startDate, endDate);
+        List<AcquisitionResponse> acquisitions = acquisitionService.getAcquisitions(companyOid, startDate, endDate);
         return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, acquisitions);
     }
 }
