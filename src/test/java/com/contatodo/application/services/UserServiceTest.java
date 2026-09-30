@@ -484,6 +484,24 @@ class UserServiceTest {
     }
 
     @Test
+    void getContactCandidatesIgnoresTheRequestedCompanyScope() {
+        User user = activeUserWithRoleAndCompany("role-1", "company-1");
+
+        when(userRepository.findAllActiveInSessionScope()).thenReturn(List.of(user));
+        when(roleRepository.findById("role-1")).thenReturn(Optional.of(role("role-1", "Admin")));
+        when(companyRepository.findById("company-1")).thenReturn(Optional.of(
+                Company.builder().id("company-1").name("VichoBox").isActive(true).isDeleted(false).build()
+        ));
+        when(userMapper.toResponseList(anyList(), anyMap(), anyMap())).thenReturn(List.of(new UserResponse()));
+
+        List<UserResponse> response = userService.getContactCandidates();
+
+        assertEquals(1, response.size());
+        verify(userRepository).findAllActiveInSessionScope();
+        verify(userRepository, never()).findAllActive(any());
+    }
+
+    @Test
     void getAllUsersResolvesRoleAndCompany() {
         User user = activeUserWithRoleAndCompany("role-1", "company-1");
 

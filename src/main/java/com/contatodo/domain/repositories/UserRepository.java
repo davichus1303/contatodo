@@ -44,6 +44,17 @@ public interface UserRepository {
     List<User> findAllActive(CompanyOid companyOid);
 
     /**
+     * Finds all active users the current session is allowed to see.
+     *
+     * <p>A company session only sees its own users while a root session sees
+     * every active user, so this read is meant for the pickers that must offer
+     * candidates of any company, never for a company scoped catalog.</p>
+     *
+     * @return List of active users visible to the session.
+     */
+    List<User> findAllActiveInSessionScope();
+
+    /**
      * Checks if a user exists by email.
      *
      * @param email User email.

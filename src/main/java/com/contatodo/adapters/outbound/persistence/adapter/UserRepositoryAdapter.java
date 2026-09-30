@@ -96,6 +96,18 @@ public class UserRepositoryAdapter implements UserRepository {
      * {@inheritDoc}
      */
     @Override
+    public List<User> findAllActiveInSessionScope() {
+        Query query = buildBaseQuery();
+        query.addCriteria(Criteria.where("isDeleted").is(false));
+        return mongoTemplate.find(query, UserDocument.class).stream()
+                .map(persistenceMapper::toEntity)
+                .toList();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public boolean existsByEmail(String email) {
         return userMongoRepository.existsByEmail(email);
     }
