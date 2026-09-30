@@ -5,11 +5,15 @@ import com.contatodo.application.dto.request.UpdateCompanyRequest;
 import com.contatodo.application.dto.response.CompanyResponse;
 import com.contatodo.application.mapper.CompanyMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
+import com.contatodo.application.port.CompanyContextProvider;
+import com.contatodo.application.validators.CompanyOidValidator;
 import com.contatodo.application.validators.CompanyValidator;
 import com.contatodo.domain.entities.Company;
 import com.contatodo.domain.entities.User;
+import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.domain.repositories.UserRepository;
+import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.CompanyConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
@@ -17,6 +21,7 @@ import org.springframework.stereotype.Service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Service containing company business logic.
@@ -29,6 +34,8 @@ public class CompanyService {
     private final CompanyMapper companyMapper;
     private final CompanyValidator companyValidator;
     private final AuthenticatedUserProvider authenticatedUserProvider;
+    private final CompanyContextProvider companyContextProvider;
+    private final CompanyOidValidator companyOidValidator;
 
     /**
      * Creates a company service.
@@ -38,19 +45,25 @@ public class CompanyService {
      * @param companyMapper Company mapper.
      * @param companyValidator Company validator.
      * @param authenticatedUserProvider Authenticated user provider.
+     * @param companyContextProvider Company context provider.
+     * @param companyOidValidator Company identifier validator.
      */
     public CompanyService(
             CompanyRepository companyRepository,
             UserRepository userRepository,
             CompanyMapper companyMapper,
             CompanyValidator companyValidator,
-            AuthenticatedUserProvider authenticatedUserProvider
+            AuthenticatedUserProvider authenticatedUserProvider,
+            CompanyContextProvider companyContextProvider,
+            CompanyOidValidator companyOidValidator
     ) {
         this.companyRepository = companyRepository;
         this.userRepository = userRepository;
         this.companyMapper = companyMapper;
         this.companyValidator = companyValidator;
         this.authenticatedUserProvider = authenticatedUserProvider;
+        this.companyContextProvider = companyContextProvider;
+        this.companyOidValidator = companyOidValidator;
     }
 
     /**
@@ -138,6 +151,52 @@ public class CompanyService {
     public List<CompanyResponse> getActiveCompanies() {
         List<Company> companies = companyRepository.findAllActiveNotDeleted();
         return companyMapper.toResponseList(companies, resolveContacts(companies));
+    }
+
+    /**
+     * Resolves the owning company of a write operation from the requested value.
+     *
+     * <p>The company of the session wins. Only when the token carries none is
+     * the company identifier supplied in the request used. A record may still
+     * be written without a company, so a missing identifier leaves the result
+     * {@code null}.</p>
+     *
+     * @param requestedCompanyOid Optional company identifier supplied in the request.
+     * @return Company identifier, or {@code null} when neither source provides one.
+     * @throws ResourceNotFoundException when the requested company cannot be used.
+     */
+    public CompanyOid resolveCompanyOid(String requestedCompanyOid) {
+        Optional<CompanyOid> sessionCompany = companyContextProvider.currentCompanyOid();
+        if (sessionCompany.isPresent()) {
+            return sessionCompany.get();
+        }
+        if (requestedCompanyOid != null && !requestedCompanyOid.isBlank()) {
+            return CompanyOid.of(companyOidValidator.validate(requestedCompanyOid));
+        }
+        return null;
+    }
+
+    /**
+     * Resolves the owning company of a read query from the requested value.
+     *
+     * <p>The company of the session always wins. Only when the token carries
+     * none is the company identifier supplied in the request used. A read has
+     * no separate bucket to fall back to, so a missing, blank or invalid value
+     * is rejected.</p>
+     *
+     * @param requestedCompanyOid Company identifier supplied in the request.
+     * @return Company to scope the query to.
+     * @throws ResourceNotFoundException when no company can be resolved.
+     */
+    public CompanyOid resolveReadCompanyOid(String requestedCompanyOid) {
+        Optional<CompanyOid> sessionCompany = companyContextProvider.currentCompanyOid();
+        if (sessionCompany.isPresent()) {
+            return sessionCompany.get();
+        }
+        if (requestedCompanyOid != null && !requestedCompanyOid.isBlank()) {
+            return CompanyOid.of(companyOidValidator.validate(requestedCompanyOid));
+        }
+        throw new ResourceNotFoundException(AuthConstants.COMPANY_CONTEXT_REQUIRED);
     }
 
     /**

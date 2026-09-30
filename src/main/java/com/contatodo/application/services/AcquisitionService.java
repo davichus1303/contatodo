@@ -5,8 +5,6 @@ import com.contatodo.application.dto.request.CreateExpenseRequest;
 import com.contatodo.application.dto.response.AcquisitionResponse;
 import com.contatodo.application.mapper.AcquisitionMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
-import com.contatodo.application.port.CompanyContextProvider;
-import com.contatodo.application.validators.CompanyOidValidator;
 import com.contatodo.application.validators.AcquisitionValidator;
 import com.contatodo.domain.entities.Acquisition;
 import com.contatodo.domain.entities.AcquisitionType;
@@ -46,8 +44,7 @@ public class AcquisitionService {
     private final AcquisitionValidator acquisitionValidator;
     private final AcquisitionMapper acquisitionMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
-    private final CompanyContextProvider companyContextProvider;
-    private final CompanyOidValidator companyOidValidator;
+    private final CompanyService companyService;
     private final ExpenseService expenseService;
     private final ProductInventoryHandler productInventoryHandler;
 
@@ -60,10 +57,9 @@ public class AcquisitionService {
      * @param acquisitionValidator Acquisition validator.
      * @param acquisitionMapper Acquisition mapper.
      * @param authenticatedUserProvider Authenticated user provider.
-     * @param companyContextProvider Company context provider.
      * @param expenseService Expense use case service.
      * @param productInventoryHandler Inventory side effects handler.
-     * @param companyOidValidator Company identifier validator.
+     * @param companyService Company service used to resolve the owning company.
      */
     public AcquisitionService(
             AcquisitionRepository acquisitionRepository,
@@ -72,10 +68,9 @@ public class AcquisitionService {
             AcquisitionValidator acquisitionValidator,
             AcquisitionMapper acquisitionMapper,
             AuthenticatedUserProvider authenticatedUserProvider,
-            CompanyContextProvider companyContextProvider,
             ExpenseService expenseService,
             ProductInventoryHandler productInventoryHandler,
-            CompanyOidValidator companyOidValidator
+            CompanyService companyService
     ) {
         this.acquisitionRepository = acquisitionRepository;
         this.productRepository = productRepository;
@@ -83,8 +78,7 @@ public class AcquisitionService {
         this.acquisitionValidator = acquisitionValidator;
         this.acquisitionMapper = acquisitionMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
-        this.companyContextProvider = companyContextProvider;
-        this.companyOidValidator = companyOidValidator;
+        this.companyService = companyService;
         this.expenseService = expenseService;
         this.productInventoryHandler = productInventoryHandler;
     }
@@ -97,7 +91,7 @@ public class AcquisitionService {
      */
     public AcquisitionResponse registerAcquisition(CreateAcquisitionRequest request) {
         String userOid = authenticatedUserProvider.getCurrentUserOid();
-        CompanyOid companyOid = resolveCompanyOid(request.getCompanyOid());
+        CompanyOid companyOid = companyService.resolveCompanyOid(request.getCompanyOid());
 
         AcquisitionType acquisitionType = findAcquisitionType(request.getAcquisitionTypeOid());
 
@@ -207,34 +201,7 @@ public class AcquisitionService {
                 .orElseThrow(() -> new ResourceNotFoundException(AcquisitionTypeConstants.NOT_FOUND_ERROR));
     }
 
-    /**
-     * Resolves the owning company for a write.
-     *
-     * <p>The company of the session always wins, so a caller can never move a record
-     * out of the company its own token points at. Only when the token carries no
-     * company, which is the case for the root user and for any session without a
-     * company, the optional value supplied in the request is used. The identifier is
-     * left {@code null} when neither is available, instead of being rejected.</p>
-     *
-     * <p>The value supplied in the request is validated against the stored companies
-     * before it is used, so a record can never be attached to a company that does
-     * not exist. The value is only validated when it is actually the one applied,
-     * which is when the session carries no company.</p>
-     *
-     * @param requestedCompanyOid Optional company identifier supplied in the request.
-     * @return Company identifier, or {@code null} when neither source provides one.
-     * @throws ResourceNotFoundException when the requested company does not exist.
-     */
-    private CompanyOid resolveCompanyOid(String requestedCompanyOid) {
-        Optional<CompanyOid> sessionCompany = companyContextProvider.currentCompanyOid();
-        if (sessionCompany.isPresent()) {
-            return sessionCompany.get();
-        }
-        if (requestedCompanyOid != null && !requestedCompanyOid.isBlank()) {
-            return CompanyOid.of(companyOidValidator.validate(requestedCompanyOid));
-        }
-        return null;
-    }
+    
 
     /**
      * Resolves a name map for a related entity, looking each OID up at most once.

@@ -4,13 +4,9 @@ import com.contatodo.application.dto.request.CreateExpenseRequest;
 import com.contatodo.application.dto.response.ExpenseResponse;
 import com.contatodo.application.mapper.ExpenseMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
-import com.contatodo.application.port.CompanyContextProvider;
-import com.contatodo.application.validators.CompanyOidValidator;
 import com.contatodo.application.validators.ExpenseValidator;
-import com.contatodo.domain.entities.Company;
 import com.contatodo.domain.entities.Expense;
 import com.contatodo.domain.model.CompanyOid;
-import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.domain.repositories.ExpenseRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -20,7 +16,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -28,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -45,9 +41,6 @@ class ExpenseServiceTest {
     private ExpenseRepository expenseRepository;
 
     @Mock
-    private CompanyRepository companyRepository;
-
-    @Mock
     private ExpenseValidator expenseValidator;
 
     @Mock
@@ -57,7 +50,7 @@ class ExpenseServiceTest {
     private AuthenticatedUserProvider authenticatedUserProvider;
 
     @Mock
-    private CompanyContextProvider companyContextProvider;
+    private CompanyService companyService;
 
     private ExpenseService expenseService;
 
@@ -65,8 +58,7 @@ class ExpenseServiceTest {
     void setUp() {
         expenseService = new ExpenseService(
                 expenseRepository, expenseValidator, expenseMapper,
-                authenticatedUserProvider, companyContextProvider,
-                new CompanyOidValidator(companyRepository)
+                authenticatedUserProvider, companyService
         );
     }
 
@@ -80,7 +72,7 @@ class ExpenseServiceTest {
     @Test
     void createExpenseUsesTheCompanyFromTheToken() {
         when(authenticatedUserProvider.getCurrentUserOid()).thenReturn("user-1");
-        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.of(CompanyOid.of("company-1")));
+        when(companyService.resolveCompanyOid(any())).thenReturn(CompanyOid.of("company-1"));
         when(expenseMapper.toEntity(any(), eq("user-1"), any(), eq(CompanyOid.of("company-1"))))
                 .thenReturn(mock(Expense.class));
         when(expenseRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -96,8 +88,9 @@ class ExpenseServiceTest {
         CreateExpenseRequest request = request();
         request.setCompanyOid("company-404");
         when(authenticatedUserProvider.getCurrentUserOid()).thenReturn("user-1");
-        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
-        when(companyRepository.findById("company-404")).thenReturn(Optional.empty());
+        when(companyService.resolveCompanyOid("company-404")).thenThrow(
+                new ResourceNotFoundException("Company is not available. Id: company-404")
+        );
 
         ResourceNotFoundException exception = assertThrows(
                 ResourceNotFoundException.class,
@@ -113,8 +106,7 @@ class ExpenseServiceTest {
         CreateExpenseRequest request = request();
         request.setCompanyOid("company-9");
         when(authenticatedUserProvider.getCurrentUserOid()).thenReturn("user-1");
-        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
-        when(companyRepository.findById("company-9")).thenReturn(Optional.of(Company.builder().id("company-9").name("Acme").isActive(true).isDeleted(false).build()));
+        when(companyService.resolveCompanyOid("company-9")).thenReturn(CompanyOid.of("company-9"));
         when(expenseMapper.toEntity(any(), eq("user-1"), any(), eq(CompanyOid.of("company-9"))))
                 .thenReturn(mock(Expense.class));
         when(expenseRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -130,8 +122,7 @@ class ExpenseServiceTest {
         CreateExpenseRequest request = request();
         request.setCompanyOid("company-9");
         when(authenticatedUserProvider.getCurrentUserOid()).thenReturn("user-1");
-        when(companyContextProvider.currentCompanyOid())
-                .thenReturn(Optional.of(CompanyOid.of("company-1")));
+        when(companyService.resolveCompanyOid("company-9")).thenReturn(CompanyOid.of("company-1"));
         when(expenseMapper.toEntity(any(), eq("user-1"), any(), eq(CompanyOid.of("company-1"))))
                 .thenReturn(mock(Expense.class));
         when(expenseRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -145,7 +136,6 @@ class ExpenseServiceTest {
     @Test
     void createExpenseLeavesTheCompanyNullWhenTheTokenCarriesNoCompany() {
         when(authenticatedUserProvider.getCurrentUserOid()).thenReturn("user-1");
-        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
         ArgumentCaptor<CompanyOid> captor = ArgumentCaptor.forClass(CompanyOid.class);
         when(expenseMapper.toEntity(any(), eq("user-1"), any(), captor.capture()))
                 .thenReturn(mock(Expense.class));

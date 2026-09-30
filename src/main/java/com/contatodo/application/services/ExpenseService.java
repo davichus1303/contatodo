@@ -14,15 +14,12 @@ import com.contatodo.domain.model.Money;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.shared.exceptions.InvalidDateRangeException;
 import com.contatodo.application.port.AuthenticatedUserProvider;
-import com.contatodo.application.port.CompanyContextProvider;
-import com.contatodo.application.validators.CompanyOidValidator;
 import com.contatodo.domain.model.CompanyOid;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Service containing expense business logic.
@@ -34,8 +31,7 @@ public class ExpenseService {
     private final ExpenseValidator expenseValidator;
     private final ExpenseMapper expenseMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
-    private final CompanyContextProvider companyContextProvider;
-    private final CompanyOidValidator companyOidValidator;
+    private final CompanyService companyService;
 
     /**
      * Creates an expense service.
@@ -44,22 +40,20 @@ public class ExpenseService {
      * @param expenseValidator Expense validator.
      * @param expenseMapper Expense mapper.
      * @param authenticatedUserProvider Authenticated user provider.
-     * @param companyContextProvider Company context provider.
+     * @param companyService Company service used to resolve the owning company.
      */
     public ExpenseService(
             ExpenseRepository expenseRepository,
             ExpenseValidator expenseValidator,
             ExpenseMapper expenseMapper,
             AuthenticatedUserProvider authenticatedUserProvider,
-            CompanyContextProvider companyContextProvider,
-            CompanyOidValidator companyOidValidator
+            CompanyService companyService
     ) {
         this.expenseRepository = expenseRepository;
         this.expenseValidator = expenseValidator;
         this.expenseMapper = expenseMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
-        this.companyContextProvider = companyContextProvider;
-        this.companyOidValidator = companyOidValidator;
+        this.companyService = companyService;
     }
 
     /**
@@ -75,38 +69,11 @@ public class ExpenseService {
         LocalDateTime expenseDate = resolveExpenseDate(request.getExpenseDate());
 
         Expense savedExpense = expenseRepository.save(
-                expenseMapper.toEntity(request, userOid, expenseDate, resolveCompanyOid(request.getCompanyOid())));
+                expenseMapper.toEntity(request, userOid, expenseDate, companyService.resolveCompanyOid(request.getCompanyOid())));
         return expenseMapper.toResponse(savedExpense);
     }
 
-    /**
-     * Resolves the owning company for a write.
-     *
-     * <p>The company of the session always wins, so a caller can never move a record
-     * out of the company its own token points at. Only when the token carries no
-     * company, which is the case for the root user and for any session without a
-     * company, the optional value supplied in the request is used. The identifier is
-     * left {@code null} when neither is available, instead of being rejected.</p>
-     *
-     * <p>The value supplied in the request is validated against the stored companies
-     * before it is used, so a record can never be attached to a company that does
-     * not exist. The value is only validated when it is actually the one applied,
-     * which is when the session carries no company.</p>
-     *
-     * @param requestedCompanyOid Optional company identifier supplied in the request.
-     * @return Company identifier, or {@code null} when neither source provides one.
-     * @throws ResourceNotFoundException when the requested company does not exist.
-     */
-    private CompanyOid resolveCompanyOid(String requestedCompanyOid) {
-        Optional<CompanyOid> sessionCompany = companyContextProvider.currentCompanyOid();
-        if (sessionCompany.isPresent()) {
-            return sessionCompany.get();
-        }
-        if (requestedCompanyOid != null && !requestedCompanyOid.isBlank()) {
-            return CompanyOid.of(companyOidValidator.validate(requestedCompanyOid));
-        }
-        return null;
-    }
+    
 
     /**
      * Resolves the effective expense date, defaulting to now when absent.
