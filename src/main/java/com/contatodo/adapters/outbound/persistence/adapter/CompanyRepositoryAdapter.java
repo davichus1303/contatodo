@@ -70,4 +70,14 @@ public class CompanyRepositoryAdapter implements CompanyRepository {
                 companyMongoRepository.findByIsDeletedFalseOrderByNameAsc()
         );
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public List<Company> findAllActiveNotDeleted() {
+        return persistenceMapper.toEntityList(
+                companyMongoRepository.findByIsActiveTrueAndIsDeletedFalseOrderByNameAsc()
+        );
+    }
 }
