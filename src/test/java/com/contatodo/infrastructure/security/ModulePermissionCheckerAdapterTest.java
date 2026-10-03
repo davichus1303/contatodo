@@ -1,10 +1,17 @@
 package com.contatodo.infrastructure.security;
 
 import com.contatodo.application.dto.response.RolePermissionResponse;
+import com.contatodo.application.dto.response.RoleResponse;
+import com.contatodo.application.mapper.RoleMapper;
+import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.port.CompanyContextProvider;
 import com.contatodo.domain.entities.Module;
-import com.contatodo.domain.repositories.ModuleRepository;
+import com.contatodo.domain.entities.Role;
+import com.contatodo.domain.entities.User;
 import com.contatodo.domain.model.ModulePermissionAction;
+import com.contatodo.domain.repositories.ModuleRepository;
+import com.contatodo.domain.repositories.RoleRepository;
+import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.ModuleConstants;
 import com.contatodo.shared.exceptions.AccessDeniedException;
@@ -18,20 +25,22 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Unit tests for {@link JwtModulePermissionChecker}.
+ * Unit tests for {@link ModulePermissionCheckerAdapter}.
  */
 @ExtendWith(MockitoExtension.class)
-class JwtModulePermissionCheckerTest {
+class ModulePermissionCheckerAdapterTest {
 
     private static final String USERS_OID = "users-oid";
     private static final String SALES_OID = "sales-oid";
@@ -43,13 +52,34 @@ class JwtModulePermissionCheckerTest {
     private ModuleRepository moduleRepository;
 
     @Mock
+    private UserRepository userRepository;
+
+    @Mock
+    private RoleRepository roleRepository;
+
+    @Mock
+    private RoleMapper roleMapper;
+
+    @Mock
+    private AuthenticatedUserProvider authenticatedUserProvider;
+
+    @Mock
     private CompanyContextProvider companyContextProvider;
 
-    private JwtModulePermissionChecker checker;
+    private ModulePermissionCheckerAdapter checker;
 
     @BeforeEach
     void setUp() {
-        checker = new JwtModulePermissionChecker(jwtService, moduleRepository, companyContextProvider, new ObjectMapper());
+        checker = new ModulePermissionCheckerAdapter(
+                jwtService,
+                moduleRepository,
+                userRepository,
+                roleRepository,
+                roleMapper,
+                authenticatedUserProvider,
+                companyContextProvider,
+                new ObjectMapper()
+        );
     }
 
     private Module module(String id, String link) {
@@ -85,12 +115,33 @@ class JwtModulePermissionCheckerTest {
         );
     }
 
+    private void storedRoleGrants(RolePermissionResponse.Permissions details) {
+        // Las entidades validan al construirse, asi que se arman antes de tocar los mocks.
+        User user = User.builder()
+                .id("user-1")
+                .userName("vendedor")
+                .name("Vendedor")
+                .email("vendedor@example.com")
+                .password("hashed-password")
+                .roleId("role-1")
+                .build();
+        Role role = Role.builder().id("role-1").name("Vendedor").build();
+        RoleResponse response = new RoleResponse();
+        response.setPermissions(List.of(new RolePermissionResponse(USERS_OID, "Usuarios", details)));
+
+        when(authenticatedUserProvider.getCurrentUserEmail()).thenReturn("vendedor@example.com");
+        when(userRepository.findActiveUserByEmail("vendedor@example.com", false)).thenReturn(Optional.of(user));
+        when(roleRepository.findById("role-1")).thenReturn(Optional.of(role));
+        when(roleMapper.toResponse(role)).thenReturn(response);
+    }
+
     @Test
     void rootIsAllowedEveryActionWithoutConsultingTheClaim() {
         when(companyContextProvider.isRoot()).thenReturn(true);
 
         assertTrue(checker.hasPermission(ModuleConstants.USERS_LINK, ModulePermissionAction.DELETE));
         verify(moduleRepository, never()).findAllActive();
+        verify(userRepository, never()).findActiveUserByEmail(any(), anyBoolean());
     }
 
     @Test
@@ -103,6 +154,18 @@ class JwtModulePermissionCheckerTest {
         assertTrue(checker.hasPermission(ModuleConstants.USERS_LINK, ModulePermissionAction.CREATE));
         assertFalse(checker.hasPermission(ModuleConstants.USERS_LINK, ModulePermissionAction.UPDATE));
         assertFalse(checker.hasPermission(ModuleConstants.USERS_LINK, ModulePermissionAction.DELETE));
+    }
+
+    @Test
+    void theClaimIsUsedWithoutReadingTheStoredRole() {
+        when(companyContextProvider.isRoot()).thenReturn(false);
+        activeModules();
+        claimOf(entry(USERS_OID, flags(true, false, false, false)));
+
+        assertTrue(checker.hasPermission(ModuleConstants.USERS_LINK, ModulePermissionAction.VIEW));
+
+        verify(userRepository, never()).findActiveUserByEmail(any(), anyBoolean());
+        verify(roleRepository, never()).findById(any());
     }
 
     @Test
@@ -128,20 +191,74 @@ class JwtModulePermissionCheckerTest {
     }
 
     @Test
-    void aMissingClaimGrantsNothing() {
+    void theStoredRoleIsUsedWhenTheClaimIsAbsent() {
         when(companyContextProvider.isRoot()).thenReturn(false);
         activeModules();
         when(jwtService.getClaimValue(AuthConstants.JWT_CLAIM_PERMISSION_OF_ROLE)).thenReturn(null);
+        storedRoleGrants(flags(true, true, false, false));
+
+        assertTrue(checker.hasPermission(ModuleConstants.USERS_LINK, ModulePermissionAction.VIEW));
+        assertTrue(checker.hasPermission(ModuleConstants.USERS_LINK, ModulePermissionAction.CREATE));
+        assertFalse(checker.hasPermission(ModuleConstants.USERS_LINK, ModulePermissionAction.DELETE));
+    }
+
+    @Test
+    void theStoredRoleIsUsedWhenTheClaimIsEmpty() {
+        when(companyContextProvider.isRoot()).thenReturn(false);
+        activeModules();
+        claimOf();
+        storedRoleGrants(flags(true, false, false, false));
+
+        assertTrue(checker.hasPermission(ModuleConstants.USERS_LINK, ModulePermissionAction.VIEW));
+        verify(roleRepository).findById("role-1");
+    }
+
+    @Test
+    void aMalformedClaimFallsBackToTheStoredRole() {
+        when(companyContextProvider.isRoot()).thenReturn(false);
+        activeModules();
+        when(jwtService.getClaimValue(AuthConstants.JWT_CLAIM_PERMISSION_OF_ROLE)).thenReturn("not-a-list");
+        storedRoleGrants(flags(true, false, false, false));
+
+        assertTrue(checker.hasPermission(ModuleConstants.USERS_LINK, ModulePermissionAction.VIEW));
+    }
+
+    @Test
+    void theStoredRoleOfAnotherModuleDoesNotGrantAccess() {
+        when(companyContextProvider.isRoot()).thenReturn(false);
+        activeModules();
+        when(jwtService.getClaimValue(AuthConstants.JWT_CLAIM_PERMISSION_OF_ROLE)).thenReturn(null);
+        storedRoleGrants(flags(false, false, false, false));
 
         assertFalse(checker.hasPermission(ModuleConstants.USERS_LINK, ModulePermissionAction.VIEW));
     }
 
     @Test
-    void aMalformedClaimGrantsNothing() {
+    void aSessionWithoutRoleGrantsNothing() {
         when(companyContextProvider.isRoot()).thenReturn(false);
         activeModules();
-        when(jwtService.getClaimValue(AuthConstants.JWT_CLAIM_PERMISSION_OF_ROLE))
-                .thenReturn("not-a-list");
+        when(jwtService.getClaimValue(AuthConstants.JWT_CLAIM_PERMISSION_OF_ROLE)).thenReturn(null);
+        User withoutRole = User.builder()
+                .id("user-2")
+                .userName("sin-rol")
+                .name("Sin Rol")
+                .email("sin-rol@example.com")
+                .password("hashed-password")
+                .build();
+        when(authenticatedUserProvider.getCurrentUserEmail()).thenReturn("sin-rol@example.com");
+        when(userRepository.findActiveUserByEmail("sin-rol@example.com", false)).thenReturn(Optional.of(withoutRole));
+
+        assertFalse(checker.hasPermission(ModuleConstants.USERS_LINK, ModulePermissionAction.VIEW));
+        verify(roleRepository, never()).findById(any());
+    }
+
+    @Test
+    void anUnknownSessionGrantsNothing() {
+        when(companyContextProvider.isRoot()).thenReturn(false);
+        activeModules();
+        when(jwtService.getClaimValue(AuthConstants.JWT_CLAIM_PERMISSION_OF_ROLE)).thenReturn(null);
+        when(authenticatedUserProvider.getCurrentUserEmail()).thenReturn("fantasma@example.com");
+        when(userRepository.findActiveUserByEmail("fantasma@example.com", false)).thenReturn(Optional.empty());
 
         assertFalse(checker.hasPermission(ModuleConstants.USERS_LINK, ModulePermissionAction.VIEW));
     }

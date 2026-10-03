@@ -6,7 +6,7 @@ package com.contatodo.shared.constants;
  * <p>The link is the stable identifier of a module: the module identifier itself
  * is generated per database, so it can never be hardcoded in source.</p>
  *
- * @see com.contatodo.infrastructure.security.JwtModulePermissionChecker
+ * @see com.contatodo.infrastructure.security.ModulePermissionCheckerAdapter
  */
 public final class ModuleConstants {
 
