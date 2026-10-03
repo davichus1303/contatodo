@@ -246,6 +246,8 @@ public class UserService {
      * @return List of user responses.
      */
     public List<UserResponse> getContactCandidates() {
+        modulePermissionChecker.requirePermission(ModuleConstants.USERS_LINK, ModulePermissionAction.VIEW);
+
         List<User> users = userRepository.findAllActiveInSessionScope();
         Map<String, RoleResponse> roles = resolveRoles(users);
         Map<String, CompanyResponse> companies = resolveCompanies(users);

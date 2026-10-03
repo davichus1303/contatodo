@@ -633,6 +633,16 @@ class UserServiceTest {
     }
 
     @Test
+    void getContactCandidatesRequiresTheViewPermission() {
+        doThrow(new AccessDeniedException(AuthConstants.ACCESS_DENIED))
+                .when(modulePermissionChecker)
+                .requirePermission(ModuleConstants.USERS_LINK, ModulePermissionAction.VIEW);
+
+        assertThrows(AccessDeniedException.class, () -> userService.getContactCandidates());
+        verify(userRepository, never()).findAllActiveInSessionScope();
+    }
+
+    @Test
     void updateUserRequiresTheUpdatePermission() {
         UpdateUserRequest request = new UpdateUserRequest();
         doThrow(new AccessDeniedException(AuthConstants.ACCESS_DENIED))
