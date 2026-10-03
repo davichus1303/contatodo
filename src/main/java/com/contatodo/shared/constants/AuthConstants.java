@@ -14,6 +14,7 @@ public final class AuthConstants {
 
     public static final String JWT_CLAIM_COMPANY_OID = "companyOid";
     public static final String JWT_CLAIM_ROLE = "role";
+    public static final String JWT_CLAIM_PERMISSION_OF_ROLE = "permissionOfRole";
     public static final String ROOT_ROLE_CLAIM = "ROOT";
     public static final String ROOT_ROLE_NAME = "Root";
 

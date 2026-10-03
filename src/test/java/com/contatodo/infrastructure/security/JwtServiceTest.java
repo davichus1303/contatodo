@@ -1,12 +1,23 @@
 package com.contatodo.infrastructure.security;
 
 import com.contatodo.application.port.TokenProvider;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpHeaders;
+import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
@@ -19,6 +30,11 @@ class JwtServiceTest {
     @BeforeEach
     void setUp() {
         jwtService = new JwtService("test-secret-key-with-sufficient-length-32chars", 3600000);
+    }
+
+    @AfterEach
+    void tearDown() {
+        RequestContextHolder.resetRequestAttributes();
     }
 
     @Test
@@ -75,5 +91,45 @@ class JwtServiceTest {
         String token = jwtService.generateToken("user@example.com");
 
         assertFalse(otherService.isTokenValid(token));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void getClaimValueReadsTheStructuredPermissionClaimOfTheCurrentRequest() {
+        List<Map<String, Object>> permissions = List.of(Map.of(
+                "moduleOid", "users-oid",
+                "permissions", Map.of("view", true, "create", false, "update", true, "delete", false)
+        ));
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("permissionOfRole", permissions);
+        String token = jwtService.generateToken("user@example.com", claims);
+        bindTokenToCurrentRequest(token);
+
+        Object claim = jwtService.getClaimValue("permissionOfRole");
+
+        assertInstanceOf(List.class, claim);
+        List<Object> entries = (List<Object>) claim;
+        assertEquals(1, entries.size());
+        Map<String, Object> entry = (Map<String, Object>) entries.get(0);
+        assertEquals("users-oid", entry.get("moduleOid"));
+        assertEquals(
+                Map.of("view", true, "create", false, "update", true, "delete", false),
+                entry.get("permissions")
+        );
+    }
+
+    @Test
+    void getClaimValueReturnsNullWithoutAnAuthorizationHeader() {
+        RequestContextHolder.setRequestAttributes(
+                new ServletRequestAttributes(new MockHttpServletRequest())
+        );
+
+        assertNull(jwtService.getClaimValue("permissionOfRole"));
+    }
+
+    private void bindTokenToCurrentRequest(String token) {
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + token);
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
     }
 }

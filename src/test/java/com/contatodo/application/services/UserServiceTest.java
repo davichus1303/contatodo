@@ -12,6 +12,7 @@ import com.contatodo.application.mapper.RoleMapper;
 import com.contatodo.application.mapper.UserMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.port.CompanyContextProvider;
+import com.contatodo.application.port.ModulePermissionChecker;
 import com.contatodo.application.validators.CompanyOidValidator;
 import com.contatodo.application.port.TokenProvider;
 import com.contatodo.application.validators.UserValidator;
@@ -19,11 +20,14 @@ import com.contatodo.domain.entities.Company;
 import com.contatodo.domain.entities.Role;
 import com.contatodo.domain.entities.User;
 import com.contatodo.domain.model.CompanyOid;
+import com.contatodo.domain.model.ModulePermissionAction;
 import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.domain.repositories.RoleRepository;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.shared.constants.AuthConstants;
+import com.contatodo.shared.constants.ModuleConstants;
 import com.contatodo.shared.constants.UserConstants;
+import com.contatodo.shared.exceptions.AccessDeniedException;
 import com.contatodo.shared.exceptions.AuthenticationException;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.shared.exceptions.UserAlreadyExistsException;
@@ -46,6 +50,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -92,12 +97,15 @@ class UserServiceTest {
     @Mock
     private CompanyService companyService;
 
+    @Mock
+    private ModulePermissionChecker modulePermissionChecker;
+
     private UserService userService;
 
     @BeforeEach
     void setUp() {
         userService = new UserService(
-                userRepository, roleRepository, companyRepository, new CompanyOidValidator(companyRepository), userValidator, userMapper, roleMapper, companyMapper, passwordEncoder, tokenProvider, companyContextProvider, authenticatedUserProvider, companyService);
+                userRepository, roleRepository, companyRepository, new CompanyOidValidator(companyRepository), userValidator, userMapper, roleMapper, companyMapper, passwordEncoder, tokenProvider, companyContextProvider, authenticatedUserProvider, companyService, modulePermissionChecker);
     }
 
     private CreateUserRequest createRequest(String email) {
@@ -180,6 +188,7 @@ class UserServiceTest {
         CreateUserRequest request = createRequest("new@example.com");
         request.setRoleId("role-1");
         when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(companyContextProvider.isAuthenticated()).thenReturn(true);
         when(userRepository.findActiveUserByEmail("david@example.com", false))
                 .thenReturn(Optional.of(activeUser()));
         when(passwordEncoder.encode("secret123")).thenReturn("hashed-value");
@@ -224,6 +233,7 @@ class UserServiceTest {
         CreateUserRequest request = createRequest("new@example.com");
         request.setRoleId("role-1");
         when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(companyContextProvider.isAuthenticated()).thenReturn(true);
         when(userRepository.findActiveUserByEmail("unknown@example.com", false)).thenReturn(Optional.empty());
         when(passwordEncoder.encode("secret123")).thenReturn("hashed-value");
         when(userRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -246,6 +256,8 @@ class UserServiceTest {
         CreateUserRequest request = createRequest("new@example.com");
         request.setCompanyOid("inactive-company");
         when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(companyService.resolveCompanyOid("inactive-company"))
+                .thenReturn(CompanyOid.of("inactive-company"));
         when(companyRepository.findById("inactive-company")).thenReturn(Optional.of(
                 Company.builder().id("inactive-company").name("Dormant").isActive(false).isDeleted(false).build()
         ));
@@ -259,6 +271,8 @@ class UserServiceTest {
         UpdateUserRequest request = new UpdateUserRequest();
         request.setCompanyOid("inactive-company");
         when(userRepository.findById("user-1")).thenReturn(Optional.of(activeUser()));
+        when(companyService.resolveCompanyOid("inactive-company"))
+                .thenReturn(CompanyOid.of("inactive-company"));
         when(companyRepository.findById("inactive-company")).thenReturn(Optional.of(
                 Company.builder().id("inactive-company").name("Dormant").isActive(false).isDeleted(false).build()
         ));
@@ -272,6 +286,8 @@ class UserServiceTest {
         CreateUserRequest request = createRequest("new@example.com");
         request.setCompanyOid("deleted-company");
         when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(companyService.resolveCompanyOid("deleted-company"))
+                .thenReturn(CompanyOid.of("deleted-company"));
         when(companyRepository.findById("deleted-company")).thenReturn(Optional.of(
                 Company.builder().id("deleted-company").name("Gone").isActive(true).isDeleted(true).build()
         ));
@@ -285,6 +301,8 @@ class UserServiceTest {
         CreateUserRequest request = createRequest("new@example.com");
         request.setCompanyOid("invalid-company");
         when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(companyService.resolveCompanyOid("invalid-company"))
+                .thenReturn(CompanyOid.of("invalid-company"));
         when(companyRepository.findById("invalid-company")).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class,
@@ -296,6 +314,8 @@ class UserServiceTest {
         CreateUserRequest request = createRequest("new@example.com");
         request.setCompanyOid("valid-company");
         when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(companyService.resolveCompanyOid("valid-company"))
+                .thenReturn(CompanyOid.of("valid-company"));
         when(companyRepository.findById("valid-company")).thenReturn(Optional.of(
                 Company.builder().id("valid-company").name("Test Company").isActive(true).isDeleted(false).build()
         ));
@@ -310,12 +330,17 @@ class UserServiceTest {
     }
 
     @Test
-    void createUserRespectsRequestedCompanyEvenForCompanySession() {
+    void createUserKeepsTheSessionCompanyEvenWhenTheRequestCarriesAnother() {
         CreateUserRequest request = createRequest("new@example.com");
         request.setCompanyOid("other-company");
         when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
-        when(companyRepository.findById("other-company")).thenReturn(Optional.of(
-                Company.builder().id("other-company").name("Other Company").isActive(true).isDeleted(false).build()
+        when(companyContextProvider.isAuthenticated()).thenReturn(true);
+        when(userRepository.findActiveUserByEmail("david@example.com", false))
+                .thenReturn(Optional.of(activeUser()));
+        when(companyService.resolveCompanyOid("other-company"))
+                .thenReturn(CompanyOid.of("session-company"));
+        when(companyRepository.findById("session-company")).thenReturn(Optional.of(
+                Company.builder().id("session-company").name("Session Company").isActive(true).isDeleted(false).build()
         ));
         when(passwordEncoder.encode("secret123")).thenReturn("hashed-value");
         when(userRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -326,16 +351,18 @@ class UserServiceTest {
 
         ArgumentCaptor<CreateUserRequest> requestCaptor = ArgumentCaptor.forClass(CreateUserRequest.class);
         verify(userMapper).toEntity(requestCaptor.capture(), any(), any(), any(), anyBoolean());
-        assertEquals("other-company", requestCaptor.getValue().getCompanyOid());
+        assertEquals("session-company", requestCaptor.getValue().getCompanyOid());
+        verify(companyService).resolveCompanyOid("other-company");
     }
 
     @Test
     void createUserFallsBackToSessionCompanyWhenNoneRequested() {
         CreateUserRequest request = createRequest("new@example.com");
         when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(companyContextProvider.isAuthenticated()).thenReturn(true);
         when(userRepository.findActiveUserByEmail("david@example.com", false))
                 .thenReturn(Optional.of(activeUser()));
-        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.of(CompanyOid.of("company-1")));
+        when(companyService.resolveCompanyOid(null)).thenReturn(CompanyOid.of("company-1"));
         when(companyRepository.findById("company-1")).thenReturn(Optional.of(
                 Company.builder().id("company-1").name("Test Company").isActive(true).isDeleted(false).build()
         ));
@@ -356,6 +383,7 @@ class UserServiceTest {
         CreateUserRequest request = createRequest("new@example.com");
         request.setCompanyOid("company-2");
         when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(companyService.resolveCompanyOid("company-2")).thenReturn(CompanyOid.of("company-2"));
         when(companyRepository.findById("company-2")).thenReturn(Optional.of(
                 Company.builder().id("company-2").name("Test Company").isActive(true).isDeleted(false).build()
         ));
@@ -532,5 +560,88 @@ class UserServiceTest {
 
         assertEquals(1, response.size());
         verify(userMapper).toResponseList(anyList(), anyMap(), anyMap());
+    }
+
+    @Test
+    void createUserWithoutTheCreatePermissionIsRejected() {
+        CreateUserRequest request = createRequest("new@example.com");
+        when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(companyContextProvider.isAuthenticated()).thenReturn(true);
+        org.mockito.Mockito.doThrow(new AccessDeniedException(AuthConstants.ACCESS_DENIED))
+                .when(modulePermissionChecker)
+                .requirePermission(ModuleConstants.USERS_LINK, ModulePermissionAction.CREATE);
+
+        AccessDeniedException exception = assertThrows(
+                AccessDeniedException.class,
+                () -> userService.createUser(request, Optional.of("david@example.com"))
+        );
+        assertEquals(AuthConstants.ACCESS_DENIED, exception.getMessage());
+        verify(userRepository, never()).save(any());
+    }
+
+    @Test
+    void createUserTreatsAnAnonymousAuthenticationAsAPublicRegistration() {
+        CreateUserRequest request = createRequest("new@example.com");
+        request.setRoleId("role-1");
+        when(userRepository.existsByEmail("new@example.com")).thenReturn(false);
+        when(companyContextProvider.isAuthenticated()).thenReturn(false);
+        when(passwordEncoder.encode("secret123")).thenReturn("hashed-value");
+        when(userRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(userMapper.toEntity(any(), any(), any(), any(), anyBoolean())).thenReturn(activeUser());
+        when(userMapper.toResponse(any())).thenReturn(new UserResponse());
+
+        userService.createUser(request, Optional.of("anonymousUser"));
+
+        ArgumentCaptor<String> roleCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<String> creatorCaptor = ArgumentCaptor.forClass(String.class);
+        ArgumentCaptor<Boolean> activeCaptor = ArgumentCaptor.forClass(Boolean.class);
+        verify(userMapper).toEntity(any(), any(), roleCaptor.capture(), creatorCaptor.capture(), activeCaptor.capture());
+        assertEquals(null, roleCaptor.getValue());
+        assertEquals(null, creatorCaptor.getValue());
+        assertEquals(Boolean.FALSE, activeCaptor.getValue());
+        verify(modulePermissionChecker, never())
+                .requirePermission(any(), any());
+        verify(userRepository, never()).findActiveUserByEmail(any(), anyBoolean());
+    }
+
+    @Test
+    void getAllUsersRequiresTheViewPermission() {
+        doThrow(new AccessDeniedException(AuthConstants.ACCESS_DENIED))
+                .when(modulePermissionChecker)
+                .requirePermission(ModuleConstants.USERS_LINK, ModulePermissionAction.VIEW);
+
+        assertThrows(AccessDeniedException.class, () -> userService.getAllUsers("company-1"));
+        verify(companyService, never()).resolveReadCompanyOid(any());
+    }
+
+    @Test
+    void updateUserRequiresTheUpdatePermission() {
+        UpdateUserRequest request = new UpdateUserRequest();
+        doThrow(new AccessDeniedException(AuthConstants.ACCESS_DENIED))
+                .when(modulePermissionChecker)
+                .requirePermission(ModuleConstants.USERS_LINK, ModulePermissionAction.UPDATE);
+
+        assertThrows(AccessDeniedException.class, () -> userService.updateUser("user-1", request));
+        verify(userRepository, never()).findById(any());
+    }
+
+    @Test
+    void deleteUserRequiresTheDeletePermission() {
+        doThrow(new AccessDeniedException(AuthConstants.ACCESS_DENIED))
+                .when(modulePermissionChecker)
+                .requirePermission(ModuleConstants.USERS_LINK, ModulePermissionAction.DELETE);
+
+        assertThrows(AccessDeniedException.class, () -> userService.deleteUser("user-1"));
+        verify(userRepository, never()).findById(any());
+    }
+
+    @Test
+    void getUserByEmailRequiresTheViewPermission() {
+        doThrow(new AccessDeniedException(AuthConstants.ACCESS_DENIED))
+                .when(modulePermissionChecker)
+                .requirePermission(ModuleConstants.USERS_LINK, ModulePermissionAction.VIEW);
+
+        assertThrows(AccessDeniedException.class, () -> userService.getUserByEmail("david@example.com"));
+        verify(userRepository, never()).findByEmail(any());
     }
 }

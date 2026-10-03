@@ -116,6 +116,23 @@ public class JwtService implements TokenProvider {
                 .orElse(null);
     }
 
+    /**
+     * Retrieves a claim of any type from the JWT token of the current request.
+     *
+     * <p>Required for claims holding structured payloads, such as the
+     * {@code permissionOfRole} list, which cannot be read as a
+     * {@link String}.</p>
+     *
+     * @param claimName Name of the claim.
+     * @return Claim value, or {@code null} when there is no current request or
+     *         the claim is absent.
+     */
+    public Object getClaimValue(String claimName) {
+        return currentTokenClaims()
+                .map(claims -> claims.get(claimName))
+                .orElse(null);
+    }
+
     private Optional<Claims> currentTokenClaims() {
         Optional<String> token = currentToken();
         if (token.isEmpty()) {

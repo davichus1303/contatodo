@@ -13,16 +13,19 @@ import com.contatodo.application.mapper.RoleMapper;
 import com.contatodo.application.mapper.UserMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.port.CompanyContextProvider;
+import com.contatodo.application.port.ModulePermissionChecker;
 import com.contatodo.application.validators.CompanyOidValidator;
 import com.contatodo.application.port.TokenProvider;
 import com.contatodo.application.validators.UserValidator;
 import com.contatodo.domain.entities.Role;
 import com.contatodo.domain.entities.User;
 import com.contatodo.domain.model.CompanyOid;
+import com.contatodo.domain.model.ModulePermissionAction;
 import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.domain.repositories.RoleRepository;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.shared.constants.AuthConstants;
+import com.contatodo.shared.constants.ModuleConstants;
 import com.contatodo.shared.constants.UserConstants;
 import com.contatodo.shared.exceptions.AuthenticationException;
 import com.contatodo.shared.exceptions.UserAlreadyExistsException;
@@ -54,6 +57,7 @@ public class UserService {
     private final CompanyContextProvider companyContextProvider;
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final CompanyService companyService;
+    private final ModulePermissionChecker modulePermissionChecker;
 
     /**
      * Creates a user service.
@@ -71,6 +75,7 @@ public class UserService {
      * @param companyContextProvider Company context provider.
      * @param authenticatedUserProvider Authenticated user provider.
      * @param companyService Company service.
+     * @param modulePermissionChecker Module permission checker.
      */
     public UserService(
             UserRepository userRepository,
@@ -85,7 +90,8 @@ public class UserService {
             TokenProvider tokenProvider,
             CompanyContextProvider companyContextProvider,
             AuthenticatedUserProvider authenticatedUserProvider,
-            CompanyService companyService
+            CompanyService companyService,
+            ModulePermissionChecker modulePermissionChecker
     ) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
@@ -100,6 +106,7 @@ public class UserService {
         this.companyContextProvider = companyContextProvider;
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.companyService = companyService;
+        this.modulePermissionChecker = modulePermissionChecker;
     }
 
     /**
@@ -131,8 +138,14 @@ public class UserService {
         String byUserOid = null;
         boolean isActive = true;
 
-        if (sessionEmail.isPresent()) {
-            Optional<User> sessionUser = userRepository.findActiveUserByEmail(sessionEmail.get(), false);
+        // An anonymous request reaches this endpoint because POST /users is
+        // public; it must not be mistaken for a session with permissions.
+        boolean hasSession = companyContextProvider.isAuthenticated() && sessionEmail.isPresent();
+
+        if (hasSession) {
+            modulePermissionChecker.requirePermission(ModuleConstants.USERS_LINK, ModulePermissionAction.CREATE);
+
+            Optional<User> sessionUser = userRepository.findActiveUserByEmail(sessionEmail.orElseThrow(), false);
             if (sessionUser.isPresent()) {
                 byUserOid = sessionUser.get().getId();
             } else {
@@ -140,6 +153,8 @@ public class UserService {
                 isActive = false;
             }
         } else {
+            // Public self-registration: no role and inactive, so the account
+            // cannot sign in until a role with the create permission enables it.
             roleId = null;
             isActive = false;
         }
@@ -158,6 +173,7 @@ public class UserService {
      */
     public UserResponse updateUser(String id, UpdateUserRequest request) {
         userValidator.validateUpdateRequest(request);
+        modulePermissionChecker.requirePermission(ModuleConstants.USERS_LINK, ModulePermissionAction.UPDATE);
 
         User user = userRepository.findById(id)
                 .filter(existingUser -> !existingUser.isDelete())
@@ -190,6 +206,8 @@ public class UserService {
      * @param id User identifier.
      */
     public void deleteUser(String id) {
+        modulePermissionChecker.requirePermission(ModuleConstants.USERS_LINK, ModulePermissionAction.DELETE);
+
         User user = userRepository.findById(id)
                 .filter(existingUser -> !existingUser.isDelete())
                 .orElseThrow(() -> new ResourceNotFoundException(UserConstants.USER_NOT_FOUND));
@@ -208,6 +226,8 @@ public class UserService {
      * @return List of user responses.
      */
     public List<UserResponse> getAllUsers(String requestedCompanyOid) {
+        modulePermissionChecker.requirePermission(ModuleConstants.USERS_LINK, ModulePermissionAction.VIEW);
+
         CompanyOid companyOid = companyService.resolveReadCompanyOid(requestedCompanyOid);
         List<User> users = userRepository.findAllActive(companyOid);
         Map<String, RoleResponse> roles = resolveRoles(users);
@@ -234,22 +254,16 @@ public class UserService {
     /**
      * Resolves the company to persist for a user write.
      *
-     * <p>The company selected in the request is respected so an operator can
-     * assign any company. When the request carries no company, the company of
-     * the current session is used as a sensible default; without an
-     * authenticated company context (public registration) the requested value
-     * is kept.</p>
+     * <p>The company of the session wins, then the company carried by the
+     * payload. The company is optional: when neither is present the user is
+     * persisted without company, exactly like the product writes.</p>
      *
      * @param requestedCompanyOid Company requested in the payload.
-     * @return Company identifier to persist.
+     * @return Company identifier to persist, or {@code null} when absent.
      */
     private String resolveWritableCompanyOid(String requestedCompanyOid) {
-        if (requestedCompanyOid != null && !requestedCompanyOid.isBlank()) {
-            return requestedCompanyOid;
-        }
-        return companyContextProvider.currentCompanyOid()
-                .map(CompanyOid::value)
-                .orElse(requestedCompanyOid);
+        CompanyOid companyOid = companyService.resolveCompanyOid(requestedCompanyOid);
+        return companyOid != null ? companyOid.value() : null;
     }
 
     /**
@@ -305,6 +319,8 @@ public class UserService {
      * @return User response.
      */
     public UserResponse getUserByEmail(String email) {
+        modulePermissionChecker.requirePermission(ModuleConstants.USERS_LINK, ModulePermissionAction.VIEW);
+
         User user = userRepository.findActiveUserByEmail(email, false)
                 .orElseThrow(() -> new ResourceNotFoundException(UserConstants.USER_NOT_FOUND));
         Map<String, RoleResponse> roles = resolveRoles(List.of(user));
@@ -348,7 +364,7 @@ public class UserService {
                             : roleResponse.getName());
 
             if (roleResponse.getPermissions() != null) {
-                claims.put("permissionOfRole", roleResponse.getPermissions());
+                claims.put(AuthConstants.JWT_CLAIM_PERMISSION_OF_ROLE, roleResponse.getPermissions());
             }
         }
         if (user.getCompanyOid() != null) {

@@ -12,6 +12,7 @@ import com.contatodo.shared.constants.UserConstants;
 import com.contatodo.shared.response.ApiResponse;
 import com.contatodo.shared.response.WebResponses;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -48,9 +49,10 @@ public class UserController {
     /**
      * Creates a new user.
      *
-     * <p>The endpoint accepts the session token optionally. When a valid token
-     * is present, the user in session is recorded as the creator of the new
-     * user; otherwise the user is created without role and inactive.</p>
+     * <p>The endpoint is public so an anonymous visitor can register, and the
+     * account is created inactive and without a role. When a valid token is
+     * present the caller needs the create permission over the users module and
+     * the user in session is recorded as the creator of the new user.</p>
      *
      * @param request Create user request.
      * @return Created user response.
@@ -58,7 +60,10 @@ public class UserController {
     @PostMapping("/users")
     public ResponseEntity<ApiResponse<UserResponse>> createUser(@RequestBody CreateUserRequest request) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String sessionEmail = authentication != null ? authentication.getName() : null;
+        boolean authenticated = authentication != null
+                && authentication.isAuthenticated()
+                && !(authentication instanceof AnonymousAuthenticationToken);
+        String sessionEmail = authenticated ? authentication.getName() : null;
         UserResponse user = userService.createUser(request, Optional.ofNullable(sessionEmail));
         return WebResponses.ok(UserConstants.USER_CREATED, user);
     }
