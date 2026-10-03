@@ -63,6 +63,20 @@ class UserControllerTest {
     }
 
     @Test
+    @WithMockUser(username = "david@example.com")
+    void getContactCandidatesReturnsOkWithEnvelope() throws Exception {
+        when(userService.getContactCandidates()).thenReturn(List.of(userResponse()));
+
+        mockMvc.perform(get("/users/contacts").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.data[0].id").value("u1"))
+                .andExpect(jsonPath("$.data[0].email").value("david@example.com"));
+
+        verify(userService).getContactCandidates();
+    }
+
+    @Test
     @WithAnonymousUser
     void createUserWithoutSessionCreatesAPublicRegistration() throws Exception {
         when(userService.createUser(any(), eq(Optional.empty()))).thenReturn(userResponse());

@@ -512,6 +512,24 @@ class UserServiceTest {
     }
 
     @Test
+    void getContactCandidatesIgnoresTheRequestedCompanyScope() {
+        User user = activeUserWithRoleAndCompany("role-1", "company-1");
+
+        when(userRepository.findAllActiveInSessionScope()).thenReturn(List.of(user));
+        when(roleRepository.findById("role-1")).thenReturn(Optional.of(role("role-1", "Admin")));
+        when(companyRepository.findById("company-1")).thenReturn(Optional.of(
+                Company.builder().id("company-1").name("VichoBox").isActive(true).isDeleted(false).build()
+        ));
+        when(userMapper.toResponseList(anyList(), anyMap(), anyMap())).thenReturn(List.of(new UserResponse()));
+
+        List<UserResponse> response = userService.getContactCandidates();
+
+        assertEquals(1, response.size());
+        verify(userRepository).findAllActiveInSessionScope();
+        verify(userRepository, never()).findAllActive(any());
+    }
+
+    @Test
     void getAllUsersResolvesRoleAndCompany() {
         User user = activeUserWithRoleAndCompany("role-1", "company-1");
 
@@ -612,6 +630,16 @@ class UserServiceTest {
 
         assertThrows(AccessDeniedException.class, () -> userService.getAllUsers("company-1"));
         verify(companyService, never()).resolveReadCompanyOid(any());
+    }
+
+    @Test
+    void getContactCandidatesRequiresTheViewPermission() {
+        doThrow(new AccessDeniedException(AuthConstants.ACCESS_DENIED))
+                .when(modulePermissionChecker)
+                .requirePermission(ModuleConstants.USERS_LINK, ModulePermissionAction.VIEW);
+
+        assertThrows(AccessDeniedException.class, () -> userService.getContactCandidates());
+        verify(userRepository, never()).findAllActiveInSessionScope();
     }
 
     @Test
