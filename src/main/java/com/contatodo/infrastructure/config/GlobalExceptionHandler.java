@@ -2,6 +2,7 @@ package com.contatodo.infrastructure.config;
 
 import com.contatodo.domain.exception.InvalidEntityStateException;
 import com.contatodo.shared.constants.ResponseConstants;
+import com.contatodo.shared.exceptions.AccessDeniedException;
 import com.contatodo.shared.exceptions.AuthenticationException;
 import com.contatodo.shared.exceptions.InsufficientStockException;
 import com.contatodo.shared.exceptions.InvalidDateRangeException;
@@ -96,6 +97,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponse> handleAuthenticationException(AuthenticationException exception) {
         return buildResponse(HttpStatus.UNAUTHORIZED, exception.getMessage(), List.of());
+    }
+
+    /**
+     * Handles access denied exceptions.
+     *
+     * @param exception Access denied exception.
+     * @return 403 response.
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException exception) {
+        return buildResponse(HttpStatus.FORBIDDEN, exception.getMessage(), List.of());
     }
 
     /**

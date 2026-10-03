@@ -1,6 +1,7 @@
 package com.contatodo.adapters.outbound.persistence.adapter;
 
 import com.contatodo.domain.entities.User;
+import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.application.port.CompanyContextProvider;
 import com.contatodo.shared.constants.AuthConstants;
@@ -83,8 +84,8 @@ public class UserRepositoryAdapter implements UserRepository {
      * {@inheritDoc}
      */
     @Override
-    public List<User> findAllActive() {
-        Query query = buildBaseQuery();
+    public List<User> findAllActive(CompanyOid companyOid) {
+        Query query = Query.query(Criteria.where("companyOid").is(companyOid != null ? companyOid.value() : null));
         query.addCriteria(Criteria.where("isDeleted").is(false));
         return mongoTemplate.find(query, UserDocument.class).stream()
                 .map(persistenceMapper::toEntity)

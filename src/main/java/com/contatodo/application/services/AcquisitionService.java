@@ -105,15 +105,22 @@ public class AcquisitionService {
     }
 
     /**
-     * Retrieves acquisitions within a date range.
+     * Retrieves acquisitions of a company within a date range.
      * If no date range is provided, returns today's acquisitions.
      *
+     * <p>The company of the session scopes the read. A root session falls back
+     * to the requested company so an operator can list the acquisitions of any
+     * company.</p>
+     *
+     * @param requestedCompanyOid Company requested by the caller.
      * @param startDate Optional start date.
      * @param endDate Optional end date.
      * @return List of acquisition responses.
      */
-    public List<AcquisitionResponse> getAcquisitions(LocalDateTime startDate, LocalDateTime endDate) {
+    public List<AcquisitionResponse> getAcquisitions(String requestedCompanyOid, LocalDateTime startDate, LocalDateTime endDate) {
+        CompanyOid companyOid = companyService.resolveReadCompanyOid(requestedCompanyOid);
         List<Acquisition> acquisitions = acquisitionRepository.findByAcquisitionDateBetween(
+                companyOid,
                 startDate != null ? startDate : DateUtils.startOfDay(LocalDate.now()),
                 endDate != null ? endDate : DateUtils.endOfDay(LocalDate.now())
         );
