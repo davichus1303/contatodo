@@ -8,8 +8,8 @@ import java.util.function.Function;
  * Actions a role can be granted over a module.
  *
  * <p>Each action reads its flag from {@link RolePermissionResponse.Permissions},
- * the payload that already travels in the {@code permissionOfRole} claim, so
- * the authorization check and the login response cannot drift apart.</p>
+ * the payload the login claim and the roles endpoint already share, so the
+ * authorization check cannot drift from the permissions a role was granted.</p>
  */
 public enum ModulePermissionAction {
 
