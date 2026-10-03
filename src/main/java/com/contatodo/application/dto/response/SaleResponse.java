@@ -11,7 +11,7 @@ public class SaleResponse {
     private Long saleNumber;
     private String productOid;
     private String productName;
-    private String userOid;
+    private String byUserOid;
     private Integer quantity;
     private Double totalCost;
     private Double originalTotalPrice;
@@ -53,12 +53,12 @@ public class SaleResponse {
         this.productName = productName;
     }
 
-    public String getUserOid() {
-        return userOid;
+    public String getByUserOid() {
+        return byUserOid;
     }
 
-    public void setUserOid(String userOid) {
-        this.userOid = userOid;
+    public void setByUserOid(String byUserOid) {
+        this.byUserOid = byUserOid;
     }
 
     public Integer getQuantity() {

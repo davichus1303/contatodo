@@ -5,7 +5,6 @@ import com.contatodo.application.dto.request.CreateExpenseRequest;
 import com.contatodo.application.dto.response.AcquisitionResponse;
 import com.contatodo.application.mapper.AcquisitionMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
-import com.contatodo.application.port.CompanyContextProvider;
 import com.contatodo.application.validators.AcquisitionValidator;
 import com.contatodo.domain.entities.Acquisition;
 import com.contatodo.domain.entities.AcquisitionType;
@@ -14,7 +13,6 @@ import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.AcquisitionRepository;
 import com.contatodo.domain.repositories.AcquisitionTypeRepository;
 import com.contatodo.domain.repositories.ProductRepository;
-import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.AcquisitionTypeConstants;
 import com.contatodo.shared.constants.ExpenseConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
@@ -46,7 +44,7 @@ public class AcquisitionService {
     private final AcquisitionValidator acquisitionValidator;
     private final AcquisitionMapper acquisitionMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
-    private final CompanyContextProvider companyContextProvider;
+    private final CompanyService companyService;
     private final ExpenseService expenseService;
     private final ProductInventoryHandler productInventoryHandler;
 
@@ -59,9 +57,9 @@ public class AcquisitionService {
      * @param acquisitionValidator Acquisition validator.
      * @param acquisitionMapper Acquisition mapper.
      * @param authenticatedUserProvider Authenticated user provider.
-     * @param companyContextProvider Company context provider.
      * @param expenseService Expense use case service.
      * @param productInventoryHandler Inventory side effects handler.
+     * @param companyService Company service used to resolve the owning company.
      */
     public AcquisitionService(
             AcquisitionRepository acquisitionRepository,
@@ -70,9 +68,9 @@ public class AcquisitionService {
             AcquisitionValidator acquisitionValidator,
             AcquisitionMapper acquisitionMapper,
             AuthenticatedUserProvider authenticatedUserProvider,
-            CompanyContextProvider companyContextProvider,
             ExpenseService expenseService,
-            ProductInventoryHandler productInventoryHandler
+            ProductInventoryHandler productInventoryHandler,
+            CompanyService companyService
     ) {
         this.acquisitionRepository = acquisitionRepository;
         this.productRepository = productRepository;
@@ -80,7 +78,7 @@ public class AcquisitionService {
         this.acquisitionValidator = acquisitionValidator;
         this.acquisitionMapper = acquisitionMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
-        this.companyContextProvider = companyContextProvider;
+        this.companyService = companyService;
         this.expenseService = expenseService;
         this.productInventoryHandler = productInventoryHandler;
     }
@@ -93,7 +91,7 @@ public class AcquisitionService {
      */
     public AcquisitionResponse registerAcquisition(CreateAcquisitionRequest request) {
         String userOid = authenticatedUserProvider.getCurrentUserOid();
-        CompanyOid companyOid = resolveCompanyOid();
+        CompanyOid companyOid = companyService.resolveCompanyOid(request.getCompanyOid());
 
         AcquisitionType acquisitionType = findAcquisitionType(request.getAcquisitionTypeOid());
 
@@ -107,15 +105,22 @@ public class AcquisitionService {
     }
 
     /**
-     * Retrieves acquisitions within a date range.
+     * Retrieves acquisitions of a company within a date range.
      * If no date range is provided, returns today's acquisitions.
      *
+     * <p>The company of the session scopes the read. A root session falls back
+     * to the requested company so an operator can list the acquisitions of any
+     * company.</p>
+     *
+     * @param requestedCompanyOid Company requested by the caller.
      * @param startDate Optional start date.
      * @param endDate Optional end date.
      * @return List of acquisition responses.
      */
-    public List<AcquisitionResponse> getAcquisitions(LocalDateTime startDate, LocalDateTime endDate) {
+    public List<AcquisitionResponse> getAcquisitions(String requestedCompanyOid, LocalDateTime startDate, LocalDateTime endDate) {
+        CompanyOid companyOid = companyService.resolveReadCompanyOid(requestedCompanyOid);
         List<Acquisition> acquisitions = acquisitionRepository.findByAcquisitionDateBetween(
+                companyOid,
                 startDate != null ? startDate : DateUtils.startOfDay(LocalDate.now()),
                 endDate != null ? endDate : DateUtils.endOfDay(LocalDate.now())
         );
@@ -203,18 +208,7 @@ public class AcquisitionService {
                 .orElseThrow(() -> new ResourceNotFoundException(AcquisitionTypeConstants.NOT_FOUND_ERROR));
     }
 
-    /**
-     * Resolves the owning company for a non-root write.
-     *
-     * @return Company identifier, or {@code null} for the root user.
-     */
-    private CompanyOid resolveCompanyOid() {
-        if (companyContextProvider.isRoot()) {
-            return null;
-        }
-        return companyContextProvider.currentCompanyOid()
-                .orElseThrow(() -> new ResourceNotFoundException(AuthConstants.COMPANY_CONTEXT_REQUIRED));
-    }
+    
 
     /**
      * Resolves a name map for a related entity, looking each OID up at most once.

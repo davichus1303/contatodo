@@ -21,7 +21,7 @@ public final class Expense {
     private final Double amount;
     private final String currency;
     private final LocalDateTime expenseDate;
-    private final String userOid;
+    private final String byUserOid;
     private final CompanyOid companyOid;
     private final Boolean isActive;
     private final Boolean isDeleted;
@@ -42,7 +42,7 @@ public final class Expense {
         this.amount = builder.amount;
         this.currency = builder.currency;
         this.expenseDate = builder.expenseDate;
-        this.userOid = builder.userOid;
+        this.byUserOid = builder.byUserOid;
         this.companyOid = builder.companyOid;
         this.isActive = builder.isActive;
         this.isDeleted = builder.isDeleted;
@@ -91,8 +91,8 @@ public final class Expense {
         return expenseDate;
     }
 
-    public String getUserOid() {
-        return userOid;
+    public String getByUserOid() {
+        return byUserOid;
     }
 
     public CompanyOid getCompanyOid() {
@@ -128,7 +128,7 @@ public final class Expense {
         private Double amount;
         private String currency;
         private LocalDateTime expenseDate;
-        private String userOid;
+        private String byUserOid;
         private CompanyOid companyOid;
         private Boolean isActive;
         private Boolean isDeleted;
@@ -226,11 +226,11 @@ public final class Expense {
         /**
          * Sets the owning user identifier.
          *
-         * @param userOid User identifier.
+         * @param byUserOid User identifier.
          * @return This builder.
          */
-        public Builder userOid(String userOid) {
-            this.userOid = userOid;
+        public Builder byUserOid(String byUserOid) {
+            this.byUserOid = byUserOid;
             return this;
         }
 
@@ -297,7 +297,7 @@ public final class Expense {
          */
         public Expense build() {
             EntityValidation.requireNotBlank(name, ValidationConstants.FIELD_REQUIRED);
-            EntityValidation.requireNotBlank(userOid, ValidationConstants.FIELD_REQUIRED);
+            EntityValidation.requireNotBlank(byUserOid, ValidationConstants.FIELD_REQUIRED);
             if (expenseDate == null) {
                 throw new com.contatodo.domain.exception.InvalidEntityStateException(ValidationConstants.FIELD_REQUIRED);
             }

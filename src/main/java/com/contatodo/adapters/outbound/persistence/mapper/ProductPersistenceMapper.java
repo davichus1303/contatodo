@@ -31,7 +31,8 @@ public class ProductPersistenceMapper implements PersistenceMapper<ProductDocume
         document.setUnitPublicCost(product.getUnitPublicCost());
         document.setUrlPhoto(product.getUrlPhoto());
         document.setIsActive(product.getIsActive());
-        document.setUserOid(product.getUserOid());
+        document.setByUserOid(product.getByUserOid());
+        document.setUpdatedByUserOid(product.getUpdatedByUserOid());
         document.setCompanyOid(product.getCompanyOid() != null
                 ? product.getCompanyOid().value()
                 : null);
@@ -58,7 +59,8 @@ public class ProductPersistenceMapper implements PersistenceMapper<ProductDocume
                 .unitPublicCost(document.getUnitPublicCost())
                 .urlPhoto(document.getUrlPhoto())
                 .isActive(document.getIsActive())
-                .userOid(document.getUserOid())
+                .byUserOid(document.getByUserOid())
+                .updatedByUserOid(document.getUpdatedByUserOid())
                 .companyOid(document.getCompanyOid() != null
                         ? CompanyOid.of(document.getCompanyOid())
                         : null)

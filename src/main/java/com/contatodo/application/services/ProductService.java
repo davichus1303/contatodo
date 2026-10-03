@@ -5,14 +5,12 @@ import com.contatodo.application.dto.request.UpdateProductRequest;
 import com.contatodo.application.dto.response.ProductResponse;
 import com.contatodo.application.mapper.ProductMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
-import com.contatodo.application.port.CompanyContextProvider;
 import com.contatodo.application.validators.ProductValidator;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.domain.entities.User;
 import com.contatodo.domain.repositories.ProductRepository;
-import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.ProductConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
@@ -30,7 +28,7 @@ public class ProductService {
     private final ProductValidator productValidator;
     private final ProductMapper productMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
-    private final CompanyContextProvider companyContextProvider;
+    private final CompanyService companyService;
 
     /**
      * Creates a product service.
@@ -40,7 +38,7 @@ public class ProductService {
      * @param productValidator Product validator.
      * @param productMapper Product mapper.
      * @param authenticatedUserProvider Authenticated user provider.
-     * @param companyContextProvider Company context provider.
+     * @param companyService Company service used to resolve the owning company.
      */
     public ProductService(
             ProductRepository productRepository,
@@ -48,14 +46,14 @@ public class ProductService {
             ProductValidator productValidator,
             ProductMapper productMapper,
             AuthenticatedUserProvider authenticatedUserProvider,
-            CompanyContextProvider companyContextProvider
+            CompanyService companyService
     ) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.productValidator = productValidator;
         this.productMapper = productMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
-        this.companyContextProvider = companyContextProvider;
+        this.companyService = companyService;
     }
 
     /**
@@ -73,7 +71,7 @@ public class ProductService {
                 .orElseThrow(() -> new ResourceNotFoundException(ProductConstants.USER_NOT_FOUND));
 
         String nextCode = generateNextCode();
-        CompanyOid companyOid = resolveCompanyOid();
+        CompanyOid companyOid = companyService.resolveCompanyOid(request.getCompanyOid());
         Product product = productMapper.toEntity(request, nextCode, userOid, companyOid);
 
         Product savedProduct = productRepository.save(product);
@@ -93,7 +91,9 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ProductConstants.PRODUCT_NOT_FOUND));
 
-        Product updatedProduct = productRepository.save(productMapper.applyUpdate(product, request));
+        Product updatedProduct = productRepository.save(
+                productMapper.applyUpdate(product, request, authenticatedUserProvider.getCurrentUserOid())
+        );
         return productMapper.toResponse(updatedProduct);
     }
 
@@ -102,8 +102,9 @@ public class ProductService {
      *
      * @return List of product responses.
      */
-    public List<ProductResponse> getAllProducts() {
-        return productMapper.toResponseList(productRepository.findAll());
+    public List<ProductResponse> getAllProducts(String requestedCompanyOid) {
+        CompanyOid companyOid = companyService.resolveReadCompanyOid(requestedCompanyOid);
+        return productMapper.toResponseList(productRepository.findAll(companyOid));
     }
 
     /**
@@ -112,8 +113,9 @@ public class ProductService {
      * @param code Product code.
      * @return Product response.
      */
-    public ProductResponse getProductByCode(String code) {
-        Product product = productRepository.findByCode(code)
+    public ProductResponse getProductByCode(String requestedCompanyOid, String code) {
+        CompanyOid companyOid = companyService.resolveReadCompanyOid(requestedCompanyOid);
+        Product product = productRepository.findByCode(companyOid, code)
                 .orElseThrow(() -> new ResourceNotFoundException(ProductConstants.PRODUCT_NOT_FOUND));
         return productMapper.toResponse(product);
     }
@@ -124,8 +126,9 @@ public class ProductService {
      * @param name Product name.
      * @return List of product responses.
      */
-    public List<ProductResponse> getProductsByName(String name) {
-        return productMapper.toResponseList(productRepository.findByName(name));
+    public List<ProductResponse> getProductsByName(String requestedCompanyOid, String name) {
+        CompanyOid companyOid = companyService.resolveReadCompanyOid(requestedCompanyOid);
+        return productMapper.toResponseList(productRepository.findByName(companyOid, name));
     }
 
     /**
@@ -133,8 +136,9 @@ public class ProductService {
      *
      * @return List of product responses.
      */
-    public List<ProductResponse> getAvailableProducts() {
-        return productMapper.toResponseList(productRepository.findByStockGreaterThan(0));
+    public List<ProductResponse> getAvailableProducts(String requestedCompanyOid) {
+        CompanyOid companyOid = companyService.resolveReadCompanyOid(requestedCompanyOid);
+        return productMapper.toResponseList(productRepository.findByStockGreaterThan(companyOid, 0));
     }
 
     /**
@@ -155,17 +159,8 @@ public class ProductService {
                 .orElse("1");
     }
 
-    /**
-     * Resolves the owning company for a non-root write.
-     *
-     * @return Company identifier, or {@code null} for the root user.
-     */
-    private CompanyOid resolveCompanyOid() {
-        if (companyContextProvider.isRoot()) {
-            return null;
-        }
-        return companyContextProvider.currentCompanyOid()
-                .orElseThrow(() -> new ResourceNotFoundException(AuthConstants.COMPANY_CONTEXT_REQUIRED));
-    }
+    
+
+    
 
 }

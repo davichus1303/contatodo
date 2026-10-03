@@ -7,6 +7,7 @@ import com.contatodo.application.port.CompanyContextProvider;
 import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.domain.entities.Product;
+import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.ProductRepository;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -76,16 +77,16 @@ public class ProductRepositoryAdapter implements ProductRepository {
      * {@inheritDoc}
      */
     @Override
-    public List<Product> findAll() {
-        return toEntityList(buildBaseQuery());
+    public List<Product> findAll(CompanyOid companyOid) {
+        return toEntityList(companyQuery(companyOid));
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public Optional<Product> findByCode(String code) {
-        Query query = buildBaseQuery();
+    public Optional<Product> findByCode(CompanyOid companyOid, String code) {
+        Query query = companyQuery(companyOid);
         query.addCriteria(Criteria.where("code").is(code));
         ProductDocument document = mongoTemplate.findOne(query, ProductDocument.class);
         return document != null ? Optional.of(persistenceMapper.toEntity(document)) : Optional.empty();
@@ -95,8 +96,8 @@ public class ProductRepositoryAdapter implements ProductRepository {
      * {@inheritDoc}
      */
     @Override
-    public List<Product> findByName(String name) {
-        Query query = buildBaseQuery();
+    public List<Product> findByName(CompanyOid companyOid, String name) {
+        Query query = companyQuery(companyOid);
         query.addCriteria(Criteria.where("name").is(name));
         return toEntityList(query);
     }
@@ -117,8 +118,8 @@ public class ProductRepositoryAdapter implements ProductRepository {
      * {@inheritDoc}
      */
     @Override
-    public List<Product> findByStockGreaterThan(Integer stock) {
-        Query query = buildBaseQuery();
+    public List<Product> findByStockGreaterThan(CompanyOid companyOid, Integer stock) {
+        Query query = companyQuery(companyOid);
         query.addCriteria(Criteria.where("stock").gt(stock));
         return toEntityList(query);
     }
@@ -138,6 +139,19 @@ public class ProductRepositoryAdapter implements ProductRepository {
         return mongoTemplate.find(query, ProductDocument.class).stream()
                 .map(persistenceMapper::toEntity)
                 .toList();
+    }
+
+    /**
+     * Builds the company filter for a read query.
+     *
+     * <p>Records without a company are matched by {@code null}, so the
+     * company-less products are still reachable.</p>
+     *
+     * @param companyOid Owning company, {@code null} keeps products without a company.
+     * @return Query scoped to the given company.
+     */
+    private Query companyQuery(CompanyOid companyOid) {
+        return Query.query(Criteria.where("companyOid").is(companyOid != null ? companyOid.value() : null));
     }
 
     /**

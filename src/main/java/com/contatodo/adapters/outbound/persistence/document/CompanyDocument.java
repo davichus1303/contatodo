@@ -22,7 +22,8 @@ public class CompanyDocument {
     private Boolean isDeleted;
     private LocalDateTime createdDate;
     private LocalDateTime updatedDate;
-    private String createdBy;
+    private String byUserOid;
+    private String updatedByUserOid;
 
     public String getId() {
         return id;
@@ -104,11 +105,19 @@ public class CompanyDocument {
         this.updatedDate = updatedDate;
     }
 
-    public String getCreatedBy() {
-        return createdBy;
+    public String getByUserOid() {
+        return byUserOid;
     }
 
-    public void setCreatedBy(String createdBy) {
-        this.createdBy = createdBy;
+    public void setByUserOid(String byUserOid) {
+        this.byUserOid = byUserOid;
+    }
+
+    public String getUpdatedByUserOid() {
+        return updatedByUserOid;
+    }
+
+    public void setUpdatedByUserOid(String updatedByUserOid) {
+        this.updatedByUserOid = updatedByUserOid;
     }
 }

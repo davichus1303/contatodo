@@ -24,7 +24,7 @@ public final class Sale {
     private final Long saleNumber;
     private final String productOid;
     private final String productName;
-    private final String userOid;
+    private final String byUserOid;
     private final CompanyOid companyOid;
     private final Integer quantity;
     private final Double totalCost;
@@ -46,7 +46,7 @@ public final class Sale {
         this.saleNumber = builder.saleNumber;
         this.productOid = builder.productOid;
         this.productName = builder.productName;
-        this.userOid = builder.userOid;
+        this.byUserOid = builder.byUserOid;
         this.companyOid = builder.companyOid;
         this.quantity = builder.quantity;
         this.totalCost = builder.totalCost;
@@ -74,7 +74,7 @@ public final class Sale {
      * @param saleNumber Sequential daily sale number.
      * @param productOid Product identifier.
      * @param productName Product name at the time of the sale.
-     * @param userOid Selling user identifier.
+     * @param byUserOid Selling user identifier.
      * @param quantity Sold quantity.
      * @param totalSalePrice Agreed total sale price.
      * @param unitRealCost Real unit cost of the product.
@@ -88,14 +88,14 @@ public final class Sale {
             Long saleNumber,
             String productOid,
             String productName,
-            String userOid,
+            String byUserOid,
             Integer quantity,
             Double totalSalePrice,
             Money unitRealCost,
             Money unitPublicCost,
             String notes
     ) {
-        return place(saleNumber, productOid, productName, userOid, quantity, totalSalePrice,
+        return place(saleNumber, productOid, productName, byUserOid, quantity, totalSalePrice,
                 unitRealCost, unitPublicCost, notes, null);
     }
 
@@ -105,7 +105,7 @@ public final class Sale {
      * @param saleNumber Sequential daily sale number.
      * @param productOid Product identifier.
      * @param productName Product name at the time of the sale.
-     * @param userOid Selling user identifier.
+     * @param byUserOid Selling user identifier.
      * @param quantity Sold quantity.
      * @param totalSalePrice Agreed total sale price.
      * @param unitRealCost Real unit cost of the product.
@@ -120,7 +120,7 @@ public final class Sale {
             Long saleNumber,
             String productOid,
             String productName,
-            String userOid,
+            String byUserOid,
             Integer quantity,
             Double totalSalePrice,
             Money unitRealCost,
@@ -143,7 +143,7 @@ public final class Sale {
                 .saleNumber(saleNumber)
                 .productOid(productOid)
                 .productName(productName)
-                .userOid(userOid)
+                .byUserOid(byUserOid)
                 .companyOid(companyOid)
                 .quantity(quantity)
                 .totalCost(totalCost.toDouble())
@@ -173,8 +173,8 @@ public final class Sale {
         return productName;
     }
 
-    public String getUserOid() {
-        return userOid;
+    public String getByUserOid() {
+        return byUserOid;
     }
 
     public CompanyOid getCompanyOid() {
@@ -226,7 +226,7 @@ public final class Sale {
         private Long saleNumber;
         private String productOid;
         private String productName;
-        private String userOid;
+        private String byUserOid;
         private CompanyOid companyOid;
         private Integer quantity;
         private Double totalCost;
@@ -285,11 +285,11 @@ public final class Sale {
         /**
          * Sets the selling user identifier.
          *
-         * @param userOid User identifier.
+         * @param byUserOid User identifier.
          * @return This builder.
          */
-        public Builder userOid(String userOid) {
-            this.userOid = userOid;
+        public Builder byUserOid(String byUserOid) {
+            this.byUserOid = byUserOid;
             return this;
         }
 
@@ -412,7 +412,7 @@ public final class Sale {
         public Sale build() {
             EntityValidation.requireNotBlank(productOid, SaleConstants.SALE_PRODUCT_OID_REQUIRED);
             EntityValidation.requirePositive(quantity, SaleConstants.SALE_QUANTITY_REQUIRED);
-            EntityValidation.requireNotBlank(userOid, SaleConstants.USER_NOT_FOUND);
+            EntityValidation.requireNotBlank(byUserOid, SaleConstants.USER_NOT_FOUND);
             return new Sale(this);
         }
     }

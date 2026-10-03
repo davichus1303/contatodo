@@ -19,6 +19,7 @@ public final class Module {
     private final Boolean isDeleted;
     private final LocalDateTime createdDate;
     private final LocalDateTime updatedDate;
+    private final String byUserOid;
 
     /**
      * Creates a module from its builder.
@@ -33,6 +34,7 @@ public final class Module {
         this.isDeleted = builder.isDeleted;
         this.createdDate = builder.createdDate;
         this.updatedDate = builder.updatedDate;
+        this.byUserOid = builder.byUserOid;
     }
 
     /**
@@ -72,6 +74,10 @@ public final class Module {
         return updatedDate;
     }
 
+    public String getByUserOid() {
+        return byUserOid;
+    }
+
     /**
      * Fluent builder for {@link Module} with invariant validation.
      */
@@ -84,6 +90,7 @@ public final class Module {
         private Boolean isDeleted;
         private LocalDateTime createdDate;
         private LocalDateTime updatedDate;
+        private String byUserOid;
 
         /**
          * Sets the identifier.
@@ -159,6 +166,17 @@ public final class Module {
          */
         public Builder updatedDate(LocalDateTime updatedDate) {
             this.updatedDate = updatedDate;
+            return this;
+        }
+
+        /**
+         * Sets the identifier of the user that created the module.
+         *
+         * @param byUserOid Creating user identifier.
+         * @return This builder.
+         */
+        public Builder byUserOid(String byUserOid) {
+            this.byUserOid = byUserOid;
             return this;
         }
 

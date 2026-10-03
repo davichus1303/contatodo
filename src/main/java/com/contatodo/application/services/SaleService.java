@@ -4,7 +4,6 @@ import com.contatodo.application.dto.request.CreateSaleRequest;
 import com.contatodo.application.dto.response.SaleResponse;
 import com.contatodo.application.mapper.SaleMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
-import com.contatodo.application.port.CompanyContextProvider;
 import com.contatodo.application.validators.SaleValidator;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.entities.Sale;
@@ -14,7 +13,6 @@ import com.contatodo.domain.model.Money;
 import com.contatodo.domain.repositories.ProductRepository;
 import com.contatodo.domain.repositories.SaleRepository;
 import com.contatodo.domain.repositories.UserRepository;
-import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.SaleConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.shared.utils.DateUtils;
@@ -37,7 +35,7 @@ public class SaleService {
     private final SaleValidator saleValidator;
     private final SaleMapper saleMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
-    private final CompanyContextProvider companyContextProvider;
+    private final CompanyService companyService;
 
     /**
      * Creates a sale service.
@@ -48,7 +46,7 @@ public class SaleService {
      * @param saleValidator Sale validator.
      * @param saleMapper Sale mapper.
      * @param authenticatedUserProvider Authenticated user provider.
-     * @param companyContextProvider Company context provider.
+     * @param companyService Company service used to resolve the owning company.
      */
     public SaleService(
             SaleRepository saleRepository,
@@ -57,7 +55,7 @@ public class SaleService {
             SaleValidator saleValidator,
             SaleMapper saleMapper,
             AuthenticatedUserProvider authenticatedUserProvider,
-            CompanyContextProvider companyContextProvider
+            CompanyService companyService
     ) {
         this.saleRepository = saleRepository;
         this.productRepository = productRepository;
@@ -65,7 +63,7 @@ public class SaleService {
         this.saleValidator = saleValidator;
         this.saleMapper = saleMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
-        this.companyContextProvider = companyContextProvider;
+        this.companyService = companyService;
     }
 
     /**
@@ -90,7 +88,8 @@ public class SaleService {
         Money unitRealCost = Money.of(product.getUnitRealCost() != null ? product.getUnitRealCost() : product.getRealCost());
         Money unitPublicCost = Money.of(product.getUnitPublicCost() != null ? product.getUnitPublicCost() : product.getRealCost());
 
-        Long saleNumber = generateDailySaleNumber();
+        CompanyOid companyOid = companyService.resolveCompanyOid(request.getCompanyOid());
+        Long saleNumber = generateDailySaleNumber(companyOid);
 
         Sale sale = Sale.place(
                 saleNumber,
@@ -102,7 +101,7 @@ public class SaleService {
                 unitRealCost,
                 unitPublicCost,
                 request.getNotes(),
-                resolveCompanyOid()
+                companyOid
         );
 
         productRepository.save(updatedProduct);
@@ -113,26 +112,36 @@ public class SaleService {
     /**
      * Retrieves today's sales.
      *
+     * <p>The owning company comes from the session first; when the session has
+     * none, the supplied company identifier is used and validated.</p>
+     *
+     * @param requestedCompanyOid Company identifier from the request, used when the session has none.
      * @return List of sale responses.
      */
-    public List<SaleResponse> getTodaySales() {
+    public List<SaleResponse> getTodaySales(String requestedCompanyOid) {
+        CompanyOid companyOid = companyService.resolveReadCompanyOid(requestedCompanyOid);
         LocalDate today = LocalDate.now();
-        List<Sale> sales = saleRepository.findBySaleDate(today);
+        List<Sale> sales = saleRepository.findBySaleDate(companyOid, today);
         return saleMapper.toResponseList(sales);
     }
 
     /**
      * Retrieves sales by date range.
      *
+     * <p>The owning company comes from the session first; when the session has
+     * none, the supplied company identifier is used and validated.</p>
+     *
+     * @param requestedCompanyOid Company identifier from the request, used when the session has none.
      * @param startDate Start date.
      * @param endDate End date.
      * @return List of sale responses.
      */
-    public List<SaleResponse> getSalesByDateRange(LocalDate startDate, LocalDate endDate) {
+    public List<SaleResponse> getSalesByDateRange(String requestedCompanyOid, LocalDate startDate, LocalDate endDate) {
+        CompanyOid companyOid = companyService.resolveReadCompanyOid(requestedCompanyOid);
         LocalDateTime startDateTime = DateUtils.startOfDay(startDate);
         LocalDateTime endDateTime = DateUtils.endOfDay(endDate);
 
-        List<Sale> sales = saleRepository.findBySaleDateBetween(startDateTime, endDateTime);
+        List<Sale> sales = saleRepository.findBySaleDateBetween(companyOid, startDateTime, endDateTime);
         return saleMapper.toResponseList(sales);
     }
 
@@ -141,28 +150,19 @@ public class SaleService {
      *
      * @return Next available sale number for today.
      */
-    private Long generateDailySaleNumber() {
+    private Long generateDailySaleNumber(CompanyOid companyOid) {
         LocalDate today = LocalDate.now();
         LocalDateTime startOfDay = DateUtils.startOfDay(today);
         LocalDateTime endOfDay = DateUtils.endOfDay(today);
 
-        Optional<Long> highestSaleNumber = saleRepository.findBySaleDateBetween(startOfDay, endOfDay)
+        Optional<Long> highestSaleNumber = saleRepository.findBySaleDateBetween(companyOid, startOfDay, endOfDay)
                 .stream()
                 .map(Sale::getSaleNumber)
                 .max(Long::compareTo);
         return highestSaleNumber.map(number -> number + 1).orElse(1L);
     }
 
-    /**
-     * Resolves the owning company for a non-root write.
-     *
-     * @return Company identifier, or {@code null} for the root user.
-     */
-    private CompanyOid resolveCompanyOid() {
-        if (companyContextProvider.isRoot()) {
-            return null;
-        }
-        return companyContextProvider.currentCompanyOid()
-                .orElseThrow(() -> new ResourceNotFoundException(AuthConstants.COMPANY_CONTEXT_REQUIRED));
-    }
+    
+
+    
 }

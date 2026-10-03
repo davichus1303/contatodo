@@ -27,7 +27,7 @@ public class SaleMapper implements ResponseMapper<Sale, SaleResponse> {
         response.setSaleNumber(sale.getSaleNumber());
         response.setProductOid(sale.getProductOid());
         response.setProductName(sale.getProductName());
-        response.setUserOid(sale.getUserOid());
+        response.setByUserOid(sale.getByUserOid());
         response.setQuantity(sale.getQuantity());
         response.setTotalCost(sale.getTotalCost());
         response.setOriginalTotalPrice(sale.getOriginalTotalPrice());

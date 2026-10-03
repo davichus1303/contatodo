@@ -7,6 +7,7 @@ import com.contatodo.application.port.CompanyContextProvider;
 import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.domain.entities.Acquisition;
+import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.AcquisitionRepository;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -64,8 +65,8 @@ public class AcquisitionRepositoryAdapter implements AcquisitionRepository {
      * {@inheritDoc}
      */
     @Override
-    public List<Acquisition> findByAcquisitionDateBetween(LocalDateTime startDate, LocalDateTime endDate) {
-        Query query = buildBaseQuery();
+    public List<Acquisition> findByAcquisitionDateBetween(CompanyOid companyOid, LocalDateTime startDate, LocalDateTime endDate) {
+        Query query = companyQuery(companyOid);
         query.addCriteria(Criteria.where("acquisitionDate").gte(startDate).lte(endDate)
                 .and("isDeleted").is(false));
         return toEntityList(query);
@@ -79,6 +80,10 @@ public class AcquisitionRepositoryAdapter implements AcquisitionRepository {
         Query query = buildBaseQuery();
         query.addCriteria(Criteria.where("productOid").is(productOid).and("isDeleted").is(false));
         return toEntityList(query);
+    }
+
+    private Query companyQuery(CompanyOid companyOid) {
+        return Query.query(Criteria.where("companyOid").is(companyOid != null ? companyOid.value() : null));
     }
 
     private List<Acquisition> toEntityList(Query query) {

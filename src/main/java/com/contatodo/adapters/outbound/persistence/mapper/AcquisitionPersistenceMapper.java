@@ -35,7 +35,7 @@ public class AcquisitionPersistenceMapper implements PersistenceMapper<Acquisiti
         document.setInvoiceNumber(acquisition.getInvoiceNumber());
         document.setAcquisitionDate(acquisition.getAcquisitionDate());
         document.setObservations(acquisition.getObservations());
-        document.setUserOid(acquisition.getUserOid());
+        document.setByUserOid(acquisition.getByUserOid());
         document.setCompanyOid(acquisition.getCompanyOid() != null
                 ? acquisition.getCompanyOid().value()
                 : null);
@@ -66,7 +66,7 @@ public class AcquisitionPersistenceMapper implements PersistenceMapper<Acquisiti
                 .invoiceNumber(document.getInvoiceNumber())
                 .acquisitionDate(document.getAcquisitionDate())
                 .observations(document.getObservations())
-                .userOid(document.getUserOid())
+                .byUserOid(document.getByUserOid())
                 .companyOid(document.getCompanyOid() != null
                         ? CompanyOid.of(document.getCompanyOid())
                         : null)

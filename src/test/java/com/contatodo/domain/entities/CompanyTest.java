@@ -27,7 +27,7 @@ class CompanyTest {
                 .isDeleted(false)
                 .createdDate(LocalDateTime.of(2026, 1, 1, 0, 0))
                 .updatedDate(LocalDateTime.of(2026, 1, 1, 0, 0))
-                .createdBy("creator-1")
+                .byUserOid("creator-1")
                 .build();
     }
 
@@ -43,7 +43,7 @@ class CompanyTest {
         assertEquals("user-1", company.getContactUserOId());
         assertEquals(Boolean.TRUE, company.getIsActive());
         assertEquals(Boolean.FALSE, company.getIsDeleted());
-        assertEquals("creator-1", company.getCreatedBy());
+        assertEquals("creator-1", company.getByUserOid());
     }
 
     @Test

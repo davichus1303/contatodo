@@ -1,6 +1,7 @@
 package com.contatodo.adapters.outbound.persistence;
 
 import com.contatodo.domain.entities.Product;
+import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.entities.User;
 import com.contatodo.domain.repositories.ProductRepository;
 import com.contatodo.domain.repositories.UserRepository;
@@ -68,13 +69,14 @@ class MongoPersistenceRoundTripTest {
                 .unitRealCost(10.0)
                 .unitPublicCost(15.0)
                 .isActive(true)
-                .userOid("user-roundtrip")
+                .byUserOid("user-roundtrip")
+                .companyOid(CompanyOid.of("company-roundtrip"))
                 .createdDate(java.time.LocalDateTime.now())
                 .updatedDate(java.time.LocalDateTime.now())
                 .build();
 
         Product saved = productRepository.save(product);
-        Optional<Product> reloaded = productRepository.findByCode("9998");
+        Optional<Product> reloaded = productRepository.findByCode(CompanyOid.of("company-roundtrip"), "9998");
 
         assertTrue(reloaded.isPresent());
         assertEquals(saved.getId(), reloaded.get().getId());

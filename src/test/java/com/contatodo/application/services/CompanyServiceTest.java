@@ -6,11 +6,15 @@ import com.contatodo.application.dto.request.UpdateCompanyRequest;
 import com.contatodo.application.dto.response.CompanyResponse;
 import com.contatodo.application.mapper.CompanyMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
+import com.contatodo.application.port.CompanyContextProvider;
+import com.contatodo.application.validators.CompanyOidValidator;
 import com.contatodo.application.validators.CompanyValidator;
 import com.contatodo.domain.entities.Company;
 import com.contatodo.domain.entities.User;
+import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.CompanyRepository;
 import com.contatodo.domain.repositories.UserRepository;
+import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.shared.exceptions.InvalidRequestException;
 import com.contatodo.shared.validators.FieldValidator;
@@ -52,6 +56,9 @@ class CompanyServiceTest {
     @Mock
     private AuthenticatedUserProvider authenticatedUserProvider;
 
+    @Mock
+    private CompanyContextProvider companyContextProvider;
+
     private CompanyService companyService;
 
     @BeforeEach
@@ -61,7 +68,9 @@ class CompanyServiceTest {
                 userRepository,
                 new CompanyMapper(),
                 new CompanyValidator(new FieldValidator()),
-                authenticatedUserProvider
+                authenticatedUserProvider,
+                companyContextProvider,
+                new CompanyOidValidator(companyRepository)
         );
     }
 
@@ -111,8 +120,22 @@ class CompanyServiceTest {
                 .isDeleted(false)
                 .createdDate(LocalDateTime.of(2026, 1, 1, 0, 0))
                 .updatedDate(LocalDateTime.of(2026, 1, 1, 0, 0))
-                .createdBy("creator-1")
+                .byUserOid("creator-1")
                 .build();
+    }
+
+    @Test
+    void getActiveCompaniesResolvesTheContactOfEachCompany() {
+        when(companyRepository.findAllActiveNotDeleted()).thenReturn(List.of(companyWithContact("user-1")));
+        when(userRepository.findById("user-1")).thenReturn(Optional.of(contactUser()));
+
+        List<CompanyResponse> response = companyService.getActiveCompanies();
+
+        assertEquals(1, response.size());
+        assertEquals("company-1", response.get(0).getId());
+        assertEquals("user-1", response.get(0).getContactUserOId());
+        verify(companyRepository).findAllActiveNotDeleted();
+        verify(userRepository).findById("user-1");
     }
 
     @Test
@@ -204,7 +227,7 @@ class CompanyServiceTest {
         List<Company> saved = captor.getValue();
         assertEquals(2, saved.size());
         assertEquals("RFC-Acme", saved.get(0).getRfc());
-        assertEquals("creator-1", saved.get(0).getCreatedBy());
+        assertEquals("creator-1", saved.get(0).getByUserOid());
         assertEquals(Boolean.TRUE, saved.get(0).getIsActive());
         assertEquals(Boolean.FALSE, saved.get(0).getIsDeleted());
         assertEquals(saved.get(0).getCreatedDate(), saved.get(0).getUpdatedDate());
@@ -253,6 +276,7 @@ class CompanyServiceTest {
         when(companyRepository.findById("company-1")).thenReturn(Optional.of(persistedCompany()));
         when(companyRepository.save(any(Company.class))).thenAnswer(invocation -> invocation.getArgument(0));
         when(userRepository.findById("user-1")).thenReturn(Optional.of(contactUser()));
+        when(authenticatedUserProvider.getCurrentUserOid()).thenReturn("editor-2");
 
         CompanyResponse response = companyService.updateCompany("company-1", request);
 
@@ -269,7 +293,8 @@ class CompanyServiceTest {
         Company saved = captor.getValue();
         assertEquals("company-1", saved.getId());
         assertEquals(Boolean.FALSE, saved.getIsDeleted());
-        assertEquals("creator-1", saved.getCreatedBy());
+        assertEquals("creator-1", saved.getByUserOid());
+        assertEquals("editor-2", saved.getUpdatedByUserOid());
         assertEquals(LocalDateTime.of(2026, 1, 1, 0, 0), saved.getCreatedDate());
         assertTrue(saved.getUpdatedDate().isAfter(LocalDateTime.of(2026, 1, 1, 0, 0)));
     }
@@ -345,4 +370,106 @@ class CompanyServiceTest {
         assertThrows(ResourceNotFoundException.class, () -> companyService.deleteCompany("company-1"));
         verify(companyRepository, never()).save(any(Company.class));
     }
+    @Test
+    void resolveCompanyOidUsesTheCompanyFromTheTokenWhenPresent() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.of(CompanyOid.of("claim-company")));
+
+        CompanyOid resolved = companyService.resolveCompanyOid("param-company");
+
+        assertEquals(CompanyOid.of("claim-company"), resolved);
+        verify(companyRepository, never()).findById(any());
+    }
+
+    @Test
+    void resolveCompanyOidUsesTheRequestedCompanyWhenTheTokenHasNone() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+        when(companyRepository.findById("param-company")).thenReturn(Optional.of(usableCompany("param-company")));
+
+        CompanyOid resolved = companyService.resolveCompanyOid("param-company");
+
+        assertEquals(CompanyOid.of("param-company"), resolved);
+    }
+
+    @Test
+    void resolveCompanyOidReturnsNullWhenNeitherSourceProvidesACompany() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+
+        assertNull(companyService.resolveCompanyOid(null));
+        assertNull(companyService.resolveCompanyOid("   "));
+        verify(companyRepository, never()).findById(any());
+    }
+
+    @Test
+    void resolveCompanyOidRejectsAnUnusableRequestedCompanyWhenTheTokenHasNone() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+        when(companyRepository.findById("inactive-company")).thenReturn(
+                Optional.of(inactiveCompany("inactive-company"))
+        );
+
+        assertThrows(ResourceNotFoundException.class, () -> companyService.resolveCompanyOid("inactive-company"));
+    }
+
+    @Test
+    void resolveReadCompanyOidUsesTheCompanyFromTheTokenWhenPresent() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.of(CompanyOid.of("claim-company")));
+
+        CompanyOid resolved = companyService.resolveReadCompanyOid("param-company");
+
+        assertEquals(CompanyOid.of("claim-company"), resolved);
+        verify(companyRepository, never()).findById(any());
+    }
+
+    @Test
+    void resolveReadCompanyOidUsesTheRequestedCompanyWhenTheTokenHasNone() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+        when(companyRepository.findById("param-company")).thenReturn(Optional.of(usableCompany("param-company")));
+
+        CompanyOid resolved = companyService.resolveReadCompanyOid("param-company");
+
+        assertEquals(CompanyOid.of("param-company"), resolved);
+    }
+
+    @Test
+    void resolveReadCompanyOidRejectsTheQueryWhenNoCompanyCanBeResolved() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> companyService.resolveReadCompanyOid(null)
+        );
+        assertEquals(AuthConstants.COMPANY_CONTEXT_REQUIRED, exception.getMessage());
+        verify(companyRepository, never()).findById(any());
+    }
+
+    @Test
+    void resolveReadCompanyOidRejectsAnInactiveRequestedCompanyWhenTheTokenHasNone() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+        when(companyRepository.findById("inactive-company")).thenReturn(
+                Optional.of(inactiveCompany("inactive-company"))
+        );
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> companyService.resolveReadCompanyOid("inactive-company")
+        );
+    }
+
+    private Company usableCompany(String id) {
+        return Company.builder()
+                .id(id)
+                .name("Acme")
+                .isActive(true)
+                .isDeleted(false)
+                .build();
+    }
+
+    private Company inactiveCompany(String id) {
+        return Company.builder()
+                .id(id)
+                .name("Dormant")
+                .isActive(false)
+                .isDeleted(false)
+                .build();
+    }
 }
+

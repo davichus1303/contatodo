@@ -8,15 +8,13 @@ import com.contatodo.application.mapper.ExpenseMapper;
 import com.contatodo.application.validators.ExpenseValidator;
 import com.contatodo.domain.entities.Expense;
 import com.contatodo.domain.repositories.ExpenseRepository;
-import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.ExpenseConstants;
 import com.contatodo.shared.constants.ValidationConstants;
 import com.contatodo.domain.model.Money;
+import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.shared.exceptions.InvalidDateRangeException;
 import com.contatodo.application.port.AuthenticatedUserProvider;
-import com.contatodo.application.port.CompanyContextProvider;
 import com.contatodo.domain.model.CompanyOid;
-import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -33,7 +31,7 @@ public class ExpenseService {
     private final ExpenseValidator expenseValidator;
     private final ExpenseMapper expenseMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
-    private final CompanyContextProvider companyContextProvider;
+    private final CompanyService companyService;
 
     /**
      * Creates an expense service.
@@ -42,20 +40,20 @@ public class ExpenseService {
      * @param expenseValidator Expense validator.
      * @param expenseMapper Expense mapper.
      * @param authenticatedUserProvider Authenticated user provider.
-     * @param companyContextProvider Company context provider.
+     * @param companyService Company service used to resolve the owning company.
      */
     public ExpenseService(
             ExpenseRepository expenseRepository,
             ExpenseValidator expenseValidator,
             ExpenseMapper expenseMapper,
             AuthenticatedUserProvider authenticatedUserProvider,
-            CompanyContextProvider companyContextProvider
+            CompanyService companyService
     ) {
         this.expenseRepository = expenseRepository;
         this.expenseValidator = expenseValidator;
         this.expenseMapper = expenseMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
-        this.companyContextProvider = companyContextProvider;
+        this.companyService = companyService;
     }
 
     /**
@@ -71,22 +69,11 @@ public class ExpenseService {
         LocalDateTime expenseDate = resolveExpenseDate(request.getExpenseDate());
 
         Expense savedExpense = expenseRepository.save(
-                expenseMapper.toEntity(request, userOid, expenseDate, resolveCompanyOid()));
+                expenseMapper.toEntity(request, userOid, expenseDate, companyService.resolveCompanyOid(request.getCompanyOid())));
         return expenseMapper.toResponse(savedExpense);
     }
 
-    /**
-     * Resolves the owning company for a non-root write.
-     *
-     * @return Company identifier, or {@code null} for the root user.
-     */
-    private CompanyOid resolveCompanyOid() {
-        if (companyContextProvider.isRoot()) {
-            return null;
-        }
-        return companyContextProvider.currentCompanyOid()
-                .orElseThrow(() -> new ResourceNotFoundException(AuthConstants.COMPANY_CONTEXT_REQUIRED));
-    }
+    
 
     /**
      * Resolves the effective expense date, defaulting to now when absent.

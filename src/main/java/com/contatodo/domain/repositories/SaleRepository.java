@@ -1,6 +1,7 @@
 package com.contatodo.domain.repositories;
 
 import com.contatodo.domain.entities.Sale;
+import com.contatodo.domain.model.CompanyOid;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -20,19 +21,21 @@ public interface SaleRepository {
     Sale save(Sale sale);
 
     /**
-     * Finds sales on a specific date.
+     * Finds sales on a specific date for the given company.
      *
+     * @param companyOid Owning company, {@code null} keeps sales without a company.
      * @param date Sale date.
      * @return List of sales.
      */
-    List<Sale> findBySaleDate(LocalDate date);
+    List<Sale> findBySaleDate(CompanyOid companyOid, LocalDate date);
 
     /**
-     * Finds sales within a date range.
+     * Finds sales within a date range for the given company.
      *
+     * @param companyOid Owning company, {@code null} keeps sales without a company.
      * @param startOfDay Start of the range.
      * @param endOfDay End of the range.
      * @return List of sales.
      */
-    List<Sale> findBySaleDateBetween(LocalDateTime startOfDay, LocalDateTime endOfDay);
+    List<Sale> findBySaleDateBetween(CompanyOid companyOid, LocalDateTime startOfDay, LocalDateTime endOfDay);
 }

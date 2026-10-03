@@ -28,7 +28,8 @@ public class CompanyPersistenceMapper implements PersistenceMapper<CompanyDocume
         document.setIsDeleted(company.getIsDeleted());
         document.setCreatedDate(company.getCreatedDate());
         document.setUpdatedDate(company.getUpdatedDate());
-        document.setCreatedBy(company.getCreatedBy());
+        document.setByUserOid(company.getByUserOid());
+        document.setUpdatedByUserOid(company.getUpdatedByUserOid());
         return document;
     }
 
@@ -50,7 +51,8 @@ public class CompanyPersistenceMapper implements PersistenceMapper<CompanyDocume
                 .isDeleted(document.getIsDeleted())
                 .createdDate(document.getCreatedDate())
                 .updatedDate(document.getUpdatedDate())
-                .createdBy(document.getCreatedBy())
+                .byUserOid(document.getByUserOid())
+                .updatedByUserOid(document.getUpdatedByUserOid())
                 .build();
     }
 }

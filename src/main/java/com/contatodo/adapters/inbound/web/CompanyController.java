@@ -90,4 +90,16 @@ public class CompanyController {
         List<CompanyResponse> companies = companyService.getCompanies();
         return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, companies);
     }
+
+    /**
+     * Retrieves all active and non-deleted companies with their resolved
+     * contact data.
+     *
+     * @return List of active, non-deleted companies.
+     */
+    @GetMapping("/active")
+    public ResponseEntity<ApiResponse<List<CompanyResponse>>> getActiveCompanies() {
+        List<CompanyResponse> companies = companyService.getActiveCompanies();
+        return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, companies);
+    }
 }

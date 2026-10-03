@@ -170,12 +170,12 @@ public class ProductInventoryHandler {
                 .name(request.getProductName())
                 .description(request.getDescription() != null ? request.getDescription() : "")
                 .stock(request.getQuantity())
-                .code(generateNextProductCode())
+                .code(generateNextProductCode(companyOid))
                 .realCost(request.getRealCost())
                 .unitRealCost(averageUnitRealCost)
                 .unitPublicCost(request.getUnitPublicCost())
                 .isActive(true)
-                .userOid(userOid)
+                .byUserOid(userOid)
                 .companyOid(companyOid)
                 .createdDate(now)
                 .updatedDate(now)
@@ -206,7 +206,7 @@ public class ProductInventoryHandler {
                 .unitRealCost(averageUnitRealCost)
                 .unitPublicCostAtPurchase(request.getUnitPublicCost())
                 .acquisitionDate(savedAcquisition.getAcquisitionDate())
-                .userOid(savedAcquisition.getUserOid())
+                .byUserOid(savedAcquisition.getByUserOid())
                 .companyOid(savedAcquisition.getCompanyOid())
                 .createdDate(LocalDateTime.now())
                 .build();
@@ -217,8 +217,8 @@ public class ProductInventoryHandler {
      *
      * @return Next product code.
      */
-    private String generateNextProductCode() {
-        int maxCode = productRepository.findAll().stream()
+    private String generateNextProductCode(CompanyOid companyOid) {
+        int maxCode = productRepository.findAll(companyOid).stream()
                 .map(Product::getCode)
                 .mapToInt(ProductInventoryHandler::parseNumericCode)
                 .max()

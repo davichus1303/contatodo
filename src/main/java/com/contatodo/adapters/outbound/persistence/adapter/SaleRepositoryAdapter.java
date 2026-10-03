@@ -3,10 +3,8 @@ package com.contatodo.adapters.outbound.persistence.adapter;
 import com.contatodo.adapters.outbound.persistence.document.SaleDocument;
 import com.contatodo.adapters.outbound.persistence.mapper.SalePersistenceMapper;
 import com.contatodo.adapters.outbound.persistence.repository.SaleMongoRepository;
-import com.contatodo.application.port.CompanyContextProvider;
-import com.contatodo.shared.constants.AuthConstants;
-import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.domain.entities.Sale;
+import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.SaleRepository;
 import com.contatodo.shared.utils.DateUtils;
 import org.springframework.data.mongodb.core.MongoTemplate;
@@ -21,8 +19,8 @@ import java.util.List;
 /**
  * Adapter implementing the sale repository port on top of MongoDB.
  *
- * <p>All reads are company-scoped through {@link #buildBaseQuery()}, which
- * combines the existing filters with the current user's company context.</p>
+ * <p>All reads are company-scoped; the owning company is resolved by the
+ * application layer and passed into each query.</p>
  */
 @Repository
 public class SaleRepositoryAdapter implements SaleRepository {
@@ -30,7 +28,6 @@ public class SaleRepositoryAdapter implements SaleRepository {
     private final SaleMongoRepository saleMongoRepository;
     private final SalePersistenceMapper persistenceMapper;
     private final MongoTemplate mongoTemplate;
-    private final CompanyContextProvider companyContextProvider;
 
     /**
      * Creates a sale repository adapter.
@@ -38,18 +35,15 @@ public class SaleRepositoryAdapter implements SaleRepository {
      * @param saleMongoRepository Mongo repository.
      * @param persistenceMapper Persistence mapper.
      * @param mongoTemplate Mongo template.
-     * @param companyContextProvider Company context provider.
      */
     public SaleRepositoryAdapter(
             SaleMongoRepository saleMongoRepository,
             SalePersistenceMapper persistenceMapper,
-            MongoTemplate mongoTemplate,
-            CompanyContextProvider companyContextProvider
+            MongoTemplate mongoTemplate
     ) {
         this.saleMongoRepository = saleMongoRepository;
         this.persistenceMapper = persistenceMapper;
         this.mongoTemplate = mongoTemplate;
-        this.companyContextProvider = companyContextProvider;
     }
 
     /**
@@ -66,18 +60,18 @@ public class SaleRepositoryAdapter implements SaleRepository {
      * {@inheritDoc}
      */
     @Override
-    public List<Sale> findBySaleDate(LocalDate date) {
+    public List<Sale> findBySaleDate(CompanyOid companyOid, LocalDate date) {
         LocalDateTime startOfDay = DateUtils.startOfDay(date);
         LocalDateTime endOfDay = DateUtils.endOfDay(date);
-        return findBySaleDateBetween(startOfDay, endOfDay);
+        return findBySaleDateBetween(companyOid, startOfDay, endOfDay);
     }
 
     /**
      * {@inheritDoc}
      */
     @Override
-    public List<Sale> findBySaleDateBetween(LocalDateTime startOfDay, LocalDateTime endOfDay) {
-        Query query = buildBaseQuery();
+    public List<Sale> findBySaleDateBetween(CompanyOid companyOid, LocalDateTime startOfDay, LocalDateTime endOfDay) {
+        Query query = companyQuery(companyOid);
         query.addCriteria(Criteria.where("saleDate").gte(startOfDay).lte(endOfDay));
         return toEntityList(query);
     }
@@ -89,26 +83,15 @@ public class SaleRepositoryAdapter implements SaleRepository {
     }
 
     /**
-     * Builds the base query applying the current company filter.
+     * Builds the company filter for a query.
      *
-     * <p>Root users (no {@code companyOid} claim) are not filtered. An
-     * authenticated company user must resolve its company or the query is
-     * rejected. When there is no security context (internal or test flows)
-     * the query is returned unfiltered so they keep working.</p>
+     * <p>Records without a company are matched by {@code null}, so the write
+     * path can still count the next sale number for a company-less sale.</p>
      *
-     * @return Base query with the company filter when applicable.
+     * @param companyOid Owning company, {@code null} keeps sales without a company.
+     * @return Query scoped to the given company.
      */
-    private Query buildBaseQuery() {
-        if (companyContextProvider.isRoot()) {
-            return new Query();
-        }
-        return companyContextProvider.currentCompanyOid()
-                .map(companyOid -> Query.query(Criteria.where("companyOid").is(companyOid.value())))
-                .orElseGet(() -> {
-                    if (companyContextProvider.isAuthenticated()) {
-                        throw new ResourceNotFoundException(AuthConstants.COMPANY_CONTEXT_REQUIRED);
-                    }
-                    return new Query();
-                });
+    private Query companyQuery(CompanyOid companyOid) {
+        return Query.query(Criteria.where("companyOid").is(companyOid != null ? companyOid.value() : null));
     }
 }

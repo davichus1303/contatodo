@@ -18,9 +18,10 @@ public class ModuleMapper implements ResponseMapper<Module, ModuleResponse> {
      * Maps a create request to a domain entity.
      *
      * @param request Create module request.
+     * @param byUserOid Authenticated user identifier.
      * @return Module entity.
      */
-    public Module toEntity(CreateModuleRequest request) {
+    public Module toEntity(CreateModuleRequest request, String byUserOid) {
         LocalDateTime now = LocalDateTime.now();
         return Module.builder()
                 .name(request.getName())
@@ -29,6 +30,7 @@ public class ModuleMapper implements ResponseMapper<Module, ModuleResponse> {
                 .isDeleted(false)
                 .createdDate(now)
                 .updatedDate(now)
+                .byUserOid(byUserOid)
                 .build();
     }
 
