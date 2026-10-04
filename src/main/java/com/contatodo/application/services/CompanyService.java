@@ -177,6 +177,29 @@ public class CompanyService {
     }
 
     /**
+     * Resolves the owning company of a write that cannot exist without one.
+     *
+     * <p>Resolution follows the same precedence as
+     * {@link #resolveCompanyOid(String)}: the company of the session wins and
+     * only a session without a company falls back to the requested value. The
+     * difference is the outcome when neither source provides one. A write whose
+     * owning company also scopes the records it reads, such as creating a sale,
+     * has nothing coherent to fall back to, so it is rejected instead of being
+     * written without a company.</p>
+     *
+     * @param requestedCompanyOid Optional company identifier supplied in the request.
+     * @return Company identifier, never {@code null}.
+     * @throws ResourceNotFoundException when neither source provides a company or the requested one cannot be used.
+     */
+    public CompanyOid resolveRequiredCompanyOid(String requestedCompanyOid) {
+        CompanyOid companyOid = resolveCompanyOid(requestedCompanyOid);
+        if (companyOid == null) {
+            throw new ResourceNotFoundException(AuthConstants.COMPANY_CONTEXT_REQUIRED);
+        }
+        return companyOid;
+    }
+
+    /**
      * Resolves the owning company of a read query from the requested value.
      *
      * <p>The company of the session always wins. Only when the token carries

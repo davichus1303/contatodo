@@ -77,6 +77,17 @@ public class ProductRepositoryAdapter implements ProductRepository {
      * {@inheritDoc}
      */
     @Override
+    public Optional<Product> findByIdAndCompany(CompanyOid companyOid, String id) {
+        Query query = companyQuery(companyOid);
+        query.addCriteria(Criteria.where("_id").is(id));
+        ProductDocument document = mongoTemplate.findOne(query, ProductDocument.class);
+        return document != null ? Optional.of(persistenceMapper.toEntity(document)) : Optional.empty();
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
     public List<Product> findAll(CompanyOid companyOid) {
         return toEntityList(companyQuery(companyOid));
     }
