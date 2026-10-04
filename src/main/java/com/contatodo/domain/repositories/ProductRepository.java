@@ -28,6 +28,19 @@ public interface ProductRepository {
     Optional<Product> findById(String id);
 
     /**
+     * Finds a product by identifier within the given company.
+     *
+     * <p>Unlike {@link #findById(String)} this never crosses the company
+     * boundary, so a session scoped to one company cannot reach the catalog of
+     * another one through a write flow such as creating a sale.</p>
+     *
+     * @param companyOid Owning company, {@code null} keeps products without a company.
+     * @param id Product identifier.
+     * @return Optional product owned by that company.
+     */
+    Optional<Product> findByIdAndCompany(CompanyOid companyOid, String id);
+
+    /**
      * Finds all products for the given company.
      *
      * @param companyOid Owning company, {@code null} keeps products without a company.

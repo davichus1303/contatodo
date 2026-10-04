@@ -69,8 +69,17 @@ public class SaleService {
     /**
      * Creates a new sale.
      *
+     * <p>The sale belongs to the company of the session; only a session without
+     * a company falls back to the identifier supplied in the request. The
+     * product is then resolved inside that same company, so a sale can never
+     * decrement the stock of a product owned by another company nor mix a
+     * product of one company with a sale recorded under another. When neither
+     * source provides a company the sale is rejected, keeping the sales page
+     * and this write scoped identically.</p>
+     *
      * @param request Create sale request.
      * @return Created sale response.
+     * @throws ResourceNotFoundException when no company can be resolved, the product is missing from it or the user does not exist.
      */
     public SaleResponse createSale(CreateSaleRequest request) {
         saleValidator.validateCreateRequest(request);
@@ -79,7 +88,9 @@ public class SaleService {
         User user = userRepository.findById(userOid)
                 .orElseThrow(() -> new ResourceNotFoundException(SaleConstants.USER_NOT_FOUND));
 
-        Product product = productRepository.findById(request.getProductOid())
+        CompanyOid companyOid = companyService.resolveRequiredCompanyOid(request.getCompanyOid());
+
+        Product product = productRepository.findByIdAndCompany(companyOid, request.getProductOid())
                 .orElseThrow(() -> new ResourceNotFoundException(SaleConstants.PRODUCT_NOT_FOUND));
 
         String productName = product.getName();
@@ -88,7 +99,6 @@ public class SaleService {
         Money unitRealCost = Money.of(product.getUnitRealCost() != null ? product.getUnitRealCost() : product.getRealCost());
         Money unitPublicCost = Money.of(product.getUnitPublicCost() != null ? product.getUnitPublicCost() : product.getRealCost());
 
-        CompanyOid companyOid = companyService.resolveCompanyOid(request.getCompanyOid());
         Long saleNumber = generateDailySaleNumber(companyOid);
 
         Sale sale = Sale.place(

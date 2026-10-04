@@ -400,6 +400,39 @@ class CompanyServiceTest {
     }
 
     @Test
+    void resolveRequiredCompanyOidUsesTheCompanyFromTheTokenWhenPresent() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.of(CompanyOid.of("claim-company")));
+
+        CompanyOid resolved = companyService.resolveRequiredCompanyOid("param-company");
+
+        assertEquals(CompanyOid.of("claim-company"), resolved);
+    }
+
+    @Test
+    void resolveRequiredCompanyOidUsesTheRequestedCompanyWhenTheTokenHasNone() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+        when(companyRepository.findById("param-company")).thenReturn(Optional.of(usableCompany("param-company")));
+
+        CompanyOid resolved = companyService.resolveRequiredCompanyOid("param-company");
+
+        assertEquals(CompanyOid.of("param-company"), resolved);
+    }
+
+    @Test
+    void resolveRequiredCompanyOidRejectsAMissingCompanyInsteadOfReturningNull() {
+        when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> companyService.resolveRequiredCompanyOid(null)
+        );
+
+        assertEquals(AuthConstants.COMPANY_CONTEXT_REQUIRED, exception.getMessage());
+        assertThrows(ResourceNotFoundException.class, () -> companyService.resolveRequiredCompanyOid("   "));
+        verify(companyRepository, never()).findById(any());
+    }
+
+    @Test
     void resolveCompanyOidRejectsAnUnusableRequestedCompanyWhenTheTokenHasNone() {
         when(companyContextProvider.currentCompanyOid()).thenReturn(Optional.empty());
         when(companyRepository.findById("inactive-company")).thenReturn(

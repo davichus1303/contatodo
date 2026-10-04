@@ -44,6 +44,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -155,6 +156,13 @@ class UserServiceTest {
                 .id(id)
                 .name(name)
                 .build();
+    }
+
+    private RoleResponse roleResponse(String id, String name) {
+        RoleResponse response = new RoleResponse();
+        response.setId(id);
+        response.setName(name);
+        return response;
     }
 
     @Test
@@ -413,6 +421,57 @@ class UserServiceTest {
         LoginResponse response = userService.login(request);
 
         assertEquals("jwt-token", response.getToken());
+    }
+
+    @Test
+    void loginOmitsTheCompanyClaimForARootSessionSoTheRequestedCompanyIsUsed() {
+        LoginRequest request = new LoginRequest();
+        request.setEmail("david-root@example.com");
+        request.setPassword("secret123");
+
+        when(userRepository.findByEmail("david-root@example.com")).thenReturn(Optional.of(
+                activeUserWithRoleAndCompany("role-root", "company-home")
+        ));
+        when(passwordEncoder.matches("secret123", "hashed")).thenReturn(true);
+        when(roleRepository.findById("role-root")).thenReturn(Optional.of(role("role-root", AuthConstants.ROOT_ROLE_NAME)));
+        when(roleMapper.toResponse(any())).thenReturn(roleResponse("role-root", AuthConstants.ROOT_ROLE_NAME));
+        when(companyRepository.findById("company-home")).thenReturn(Optional.empty());
+        when(userMapper.toResponse(any(), any(), any())).thenReturn(new UserResponse());
+
+        userService.login(request);
+
+        assertFalse(claimsOfLastToken().containsKey(AuthConstants.JWT_CLAIM_COMPANY_OID));
+        assertEquals(AuthConstants.ROOT_ROLE_CLAIM, claimsOfLastToken().get(AuthConstants.JWT_CLAIM_ROLE));
+    }
+
+    @Test
+    void loginKeepsTheCompanyClaimForANonRootSession() {
+        LoginRequest request = new LoginRequest();
+        request.setEmail("david-admin@example.com");
+        request.setPassword("secret123");
+
+        when(userRepository.findByEmail("david-admin@example.com")).thenReturn(Optional.of(
+                activeUserWithRoleAndCompany("role-admin", "company-1")
+        ));
+        when(passwordEncoder.matches("secret123", "hashed")).thenReturn(true);
+        when(roleRepository.findById("role-admin")).thenReturn(Optional.of(role("role-admin", "Admin")));
+        when(roleMapper.toResponse(any())).thenReturn(roleResponse("role-admin", "Admin"));
+        when(companyRepository.findById("company-1")).thenReturn(Optional.of(
+                Company.builder().id("company-1").name("VichoBox").isActive(true).isDeleted(false).build()
+        ));
+        when(userMapper.toResponse(any(), any(), any())).thenReturn(new UserResponse());
+
+        userService.login(request);
+
+        assertEquals("company-1", claimsOfLastToken().get(AuthConstants.JWT_CLAIM_COMPANY_OID));
+        assertEquals("Admin", claimsOfLastToken().get(AuthConstants.JWT_CLAIM_ROLE));
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Object> claimsOfLastToken() {
+        ArgumentCaptor<Map<String, Object>> captor = ArgumentCaptor.forClass(Map.class);
+        verify(tokenProvider).generateToken(any(), captor.capture());
+        return captor.getValue();
     }
 
     @Test
