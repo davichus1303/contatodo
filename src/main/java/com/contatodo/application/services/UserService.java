@@ -374,19 +374,26 @@ public class UserService {
 
         // Build token claims with role info and permissions
         Map<String, Object> claims = new HashMap<>();
+        boolean rootSession = false;
         if (roleResponse != null) {
+            rootSession = AuthConstants.ROOT_ROLE_NAME.equalsIgnoreCase(roleResponse.getName());
             claims.put("roleId", roleResponse.getId());
             claims.put("roleName", roleResponse.getName());
             claims.put(AuthConstants.JWT_CLAIM_ROLE,
-                    AuthConstants.ROOT_ROLE_NAME.equalsIgnoreCase(roleResponse.getName())
-                            ? AuthConstants.ROOT_ROLE_CLAIM
-                            : roleResponse.getName());
+                    rootSession ? AuthConstants.ROOT_ROLE_CLAIM : roleResponse.getName());
 
             if (roleResponse.getPermissions() != null) {
                 claims.put(AuthConstants.JWT_CLAIM_PERMISSION_OF_ROLE, roleResponse.getPermissions());
             }
         }
-        if (user.getCompanyOid() != null) {
+
+        // A root session is not scoped to the company stored on its user
+        // document: it picks the company to work on, and every company scoped
+        // query resolves it from the request when the claim is absent. Emitting
+        // the claim here would win over that choice and pin the session to the
+        // home company, leaving the company selector without any products to
+        // show. Every other session stays scoped to its own company.
+        if (user.getCompanyOid() != null && !rootSession) {
             claims.put(AuthConstants.JWT_CLAIM_COMPANY_OID, user.getCompanyOid());
         }
 

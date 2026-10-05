@@ -98,10 +98,16 @@ class SaleServiceTest {
         ));
     }
 
+    private void stubCompany(CompanyOid companyOid) {
+        when(companyService.resolveRequiredCompanyOid(any())).thenReturn(companyOid);
+    }
+
     @Test
     void createSaleRejectsSaleWithoutStock() {
         stubAuthenticatedContext();
-        when(productRepository.findById("product-1")).thenReturn(Optional.of(productWithStock(0)));
+        stubCompany(CompanyOid.of("company-1"));
+        when(productRepository.findByIdAndCompany(CompanyOid.of("company-1"), "product-1"))
+                .thenReturn(Optional.of(productWithStock(0)));
 
         InsufficientStockException exception = assertThrows(
                 InsufficientStockException.class,
@@ -115,9 +121,65 @@ class SaleServiceTest {
     @Test
     void createSaleRejectsUnknownProduct() {
         stubAuthenticatedContext();
-        when(productRepository.findById("product-1")).thenReturn(Optional.empty());
+        stubCompany(CompanyOid.of("company-1"));
+        when(productRepository.findByIdAndCompany(CompanyOid.of("company-1"), "product-1")).thenReturn(Optional.empty());
 
         assertThrows(ResourceNotFoundException.class, () -> saleService.createSale(saleRequest(40.0)));
+        verify(saleRepository, never()).save(any());
+    }
+
+    @Test
+    void createSaleLooksTheProductUpInsideTheResolvedCompany() {
+        stubAuthenticatedContext();
+        when(companyService.resolveRequiredCompanyOid("param-company")).thenReturn(CompanyOid.of("company-1"));
+        when(productRepository.findByIdAndCompany(CompanyOid.of("company-1"), "product-1"))
+                .thenReturn(Optional.of(productWithStock(5)));
+        when(saleRepository.findBySaleDateBetween(any(), any(), any())).thenReturn(java.util.List.of());
+        when(saleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(saleMapper.toResponse(any())).thenReturn(new SaleResponse());
+
+        CreateSaleRequest request = saleRequest(40.0);
+        request.setCompanyOid("param-company");
+        saleService.createSale(request);
+
+        verify(companyService).resolveRequiredCompanyOid("param-company");
+        verify(productRepository).findByIdAndCompany(CompanyOid.of("company-1"), "product-1");
+    }
+
+    @Test
+    void createSaleRejectsAProductOwnedByAnotherCompany() {
+        stubAuthenticatedContext();
+        stubCompany(CompanyOid.of("company-1"));
+        when(productRepository.findByIdAndCompany(CompanyOid.of("company-1"), "product-1")).thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> saleService.createSale(saleRequest(40.0))
+        );
+
+        assertEquals(SaleConstants.PRODUCT_NOT_FOUND, exception.getMessage());
+        verify(productRepository, never()).findById("product-1");
+        verify(saleRepository, never()).save(any());
+        verify(productRepository, never()).save(any());
+    }
+
+    @Test
+    void createSaleRejectsASaleWithoutSessionCompanyNorParameter() {
+        when(authenticatedUserProvider.getCurrentUserOid()).thenReturn("user-1");
+        when(userRepository.findById("user-1")).thenReturn(Optional.of(
+                User.builder().id("user-1").userName("david").email("d@example.com").password("x").name("D").build()
+        ));
+        when(companyService.resolveRequiredCompanyOid(any())).thenThrow(
+                new ResourceNotFoundException(AuthConstants.COMPANY_CONTEXT_REQUIRED)
+        );
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> saleService.createSale(saleRequest(40.0))
+        );
+
+        assertEquals(AuthConstants.COMPANY_CONTEXT_REQUIRED, exception.getMessage());
+        verify(productRepository, never()).findByIdAndCompany(any(), any());
         verify(saleRepository, never()).save(any());
     }
 
@@ -164,7 +226,9 @@ class SaleServiceTest {
     @Test
     void createSalePlacesSaleAndDecreasesStock() {
         stubAuthenticatedContext();
-        when(productRepository.findById("product-1")).thenReturn(Optional.of(productWithStock(5)));
+        stubCompany(CompanyOid.of("company-1"));
+        when(productRepository.findByIdAndCompany(CompanyOid.of("company-1"), "product-1"))
+                .thenReturn(Optional.of(productWithStock(5)));
         when(saleRepository.findBySaleDateBetween(any(), any(), any())).thenReturn(java.util.List.of());
         when(saleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         SaleResponse expected = new SaleResponse();
