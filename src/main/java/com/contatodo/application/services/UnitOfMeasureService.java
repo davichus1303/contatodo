@@ -1,6 +1,7 @@
 package com.contatodo.application.services;
 
 import com.contatodo.application.dto.request.CreateUnitOfMeasureRequest;
+import com.contatodo.application.dto.request.UpdateUnitOfMeasureRequest;
 import com.contatodo.application.dto.response.UnitOfMeasureResponse;
 import com.contatodo.application.mapper.UnitOfMeasureMapper;
 import com.contatodo.domain.entities.UnitOfMeasure;
@@ -92,5 +93,69 @@ public class UnitOfMeasureService {
      */
     public Optional<UnitOfMeasure> findExistingUnitOfMeasure(CompanyOid companyOid, String name) {
         return unitOfMeasureRepository.findActiveByCompanyAndName(companyOid, name);
+    }
+
+    /**
+     * Finds the active, non-deleted unit of measure with the given identifier
+     * inside the given company.
+     *
+     * <p>Reusable by the update, delete and read flows. A unit is only returned
+     * when it is active, not deleted and belongs to the company.</p>
+     *
+     * @param companyOid Owning company.
+     * @param unitOfMeasuresOid Unit of measure identifier.
+     * @return Optional matching unit of measure, empty when it does not exist.
+     */
+    public Optional<UnitOfMeasure> getUnitOfMeasuresByOid(CompanyOid companyOid, String unitOfMeasuresOid) {
+        return unitOfMeasureRepository.findActiveByCompanyAndOid(companyOid, unitOfMeasuresOid);
+    }
+
+    /**
+     * Updates the given unit of measure.
+     *
+     * <p>Returns {@code true} when the unit was saved without error. Persistence
+     * failures propagate to the exception handler so the caller receives a
+     * formatted error.</p>
+     *
+     * @param unitOfMeasure Unit of measure to update.
+     * @return {@code true} when the save succeeded.
+     */
+    public boolean updateUnitOfMeasure(UnitOfMeasure unitOfMeasure) {
+        unitOfMeasureRepository.save(unitOfMeasure);
+        return true;
+    }
+
+    /**
+     * Controls an update, merging the requested fields over the existing unit.
+     *
+     * <p>The owning company is resolved from the session claim, falling back to
+     * the requested company. When no active, non-deleted unit of that company
+     * matches the given identifier a formatted validation error is returned.
+     * Otherwise the updated unit is saved and returned.</p>
+     *
+     * @param requestedCompanyOid Optional company identifier supplied in the request.
+     * @param request Update unit of measure request.
+     * @param unitOfMeasuresOid Unit of measure identifier to update.
+     * @return Updated unit of measure response.
+     * @throws com.contatodo.shared.exceptions.InvalidRequestException when the unit is missing or the update fails.
+     */
+    public UnitOfMeasureResponse updateUnitOfMeasureControl(
+            String requestedCompanyOid, UpdateUnitOfMeasureRequest request, String unitOfMeasuresOid
+    ) {
+        CompanyOid companyOid = companyService.resolveRequiredCompanyOid(requestedCompanyOid);
+        UnitOfMeasure unitOfMeasure = getUnitOfMeasuresByOid(companyOid, unitOfMeasuresOid)
+                .orElseThrow(() -> new InvalidRequestException(
+                        ResponseConstants.VALIDATION_ERROR_MESSAGE,
+                        List.of(UnitOfMeasureConstants.NOT_FOUND_ERROR)
+                ));
+
+        UnitOfMeasure updatedUnitOfMeasure = unitOfMeasureMapper.updateEntityFromRequest(unitOfMeasure, request);
+        if (updateUnitOfMeasure(updatedUnitOfMeasure)) {
+            return unitOfMeasureMapper.toResponse(updatedUnitOfMeasure);
+        }
+        throw new InvalidRequestException(
+                ResponseConstants.VALIDATION_ERROR_MESSAGE,
+                List.of(UnitOfMeasureConstants.UPDATE_ERROR)
+        );
     }
 }

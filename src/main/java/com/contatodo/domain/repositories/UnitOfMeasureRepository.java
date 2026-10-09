@@ -37,4 +37,14 @@ public interface UnitOfMeasureRepository {
      * @return Optional matching unit of measure.
      */
     Optional<UnitOfMeasure> findActiveByCompanyAndName(CompanyOid companyOid, String name);
+
+    /**
+     * Finds the active, non-deleted unit of measure with the given identifier
+     * inside the given company.
+     *
+     * @param companyOid Owning company, {@code null} keeps units without a company.
+     * @param unitOfMeasuresOid Unit of measure identifier.
+     * @return Optional matching unit of measure.
+     */
+    Optional<UnitOfMeasure> findActiveByCompanyAndOid(CompanyOid companyOid, String unitOfMeasuresOid);
 }

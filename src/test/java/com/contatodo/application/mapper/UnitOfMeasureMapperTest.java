@@ -1,6 +1,7 @@
 package com.contatodo.application.mapper;
 
 import com.contatodo.application.dto.request.CreateUnitOfMeasureRequest;
+import com.contatodo.application.dto.request.UpdateUnitOfMeasureRequest;
 import com.contatodo.application.dto.response.UnitOfMeasureResponse;
 import com.contatodo.domain.entities.UnitOfMeasure;
 import org.junit.jupiter.api.Test;
@@ -52,5 +53,53 @@ class UnitOfMeasureMapperTest {
         assertEquals("company-1", response.getCompanyOid());
         assertTrue(response.getIsActive());
         assertFalse(response.getIsDeleted());
+    }
+
+    @Test
+    void updateEntityFromRequestOverridesTheEditableFieldsAndPreservesTheRest() {
+        UnitOfMeasure existing = UnitOfMeasure.builder()
+                .id("u-1")
+                .name("Kilogram")
+                .abrev("kg")
+                .companyOid("company-1")
+                .isActive(true)
+                .isDeleted(false)
+                .build();
+        UpdateUnitOfMeasureRequest request = new UpdateUnitOfMeasureRequest();
+        request.setName("Gram");
+        request.setAbrev("g");
+        request.setIsActive(false);
+        request.setIsDeleted(true);
+
+        UnitOfMeasure updated = mapper.updateEntityFromRequest(existing, request);
+
+        assertEquals("u-1", updated.getId());
+        assertEquals("Gram", updated.getName());
+        assertEquals("g", updated.getAbrev());
+        assertEquals("company-1", updated.getCompanyOid());
+        assertFalse(updated.getIsActive());
+        assertTrue(updated.getIsDeleted());
+    }
+
+    @Test
+    void updateEntityFromRequestKeepsTheExistingValuesWhenTheRequestFieldIsNull() {
+        UnitOfMeasure existing = UnitOfMeasure.builder()
+                .id("u-1")
+                .name("Kilogram")
+                .abrev("kg")
+                .companyOid("company-1")
+                .isActive(true)
+                .isDeleted(false)
+                .build();
+        UpdateUnitOfMeasureRequest request = new UpdateUnitOfMeasureRequest();
+
+        UnitOfMeasure updated = mapper.updateEntityFromRequest(existing, request);
+
+        assertEquals("u-1", updated.getId());
+        assertEquals("Kilogram", updated.getName());
+        assertEquals("kg", updated.getAbrev());
+        assertEquals("company-1", updated.getCompanyOid());
+        assertTrue(updated.getIsActive());
+        assertFalse(updated.getIsDeleted());
     }
 }

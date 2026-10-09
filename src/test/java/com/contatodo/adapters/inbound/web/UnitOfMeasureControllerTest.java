@@ -13,9 +13,11 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -83,6 +85,24 @@ class UnitOfMeasureControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("Unit of measure created successfully."))
+                .andExpect(jsonPath("$.data.name").value("Kilogram"))
+                .andExpect(jsonPath("$.data.abrev").value("kg"))
+                .andExpect(jsonPath("$.data.companyOid").value("c1"));
+    }
+
+    @Test
+    void updateUnitOfMeasureReturnsOkWithEnvelope() throws Exception {
+        when(unitOfMeasureService.updateUnitOfMeasureControl(anyString(), any(), anyString()))
+                .thenReturn(unitOfMeasureResponse());
+
+        mockMvc.perform(put("/units-of-measure/u1")
+                        .param("companyOid", "c1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Gram\",\"abrev\":\"g\",\"isActive\":true}")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value("Unit of measure updated successfully."))
                 .andExpect(jsonPath("$.data.name").value("Kilogram"))
                 .andExpect(jsonPath("$.data.abrev").value("kg"))
                 .andExpect(jsonPath("$.data.companyOid").value("c1"));

@@ -1,6 +1,7 @@
 package com.contatodo.application.mapper;
 
 import com.contatodo.application.dto.request.CreateUnitOfMeasureRequest;
+import com.contatodo.application.dto.request.UpdateUnitOfMeasureRequest;
 import com.contatodo.application.dto.response.UnitOfMeasureResponse;
 import com.contatodo.domain.entities.UnitOfMeasure;
 import org.springframework.stereotype.Component;
@@ -43,5 +44,25 @@ public class UnitOfMeasureMapper implements ResponseMapper<UnitOfMeasure, UnitOf
         response.setIsActive(unitOfMeasure.getIsActive());
         response.setIsDeleted(unitOfMeasure.getIsDeleted());
         return response;
+    }
+
+    /**
+     * Updates an existing unit of measure entity from an update request.
+     * Only updates editable fields (name, abbreviation, active flag and
+     * logical delete flag).
+     *
+     * @param existing Existing unit of measure entity.
+     * @param request Update unit of measure request.
+     * @return Updated unit of measure entity.
+     */
+    public UnitOfMeasure updateEntityFromRequest(UnitOfMeasure existing, UpdateUnitOfMeasureRequest request) {
+        return UnitOfMeasure.builder()
+                .id(existing.getId())
+                .name(request.getName() != null ? request.getName() : existing.getName())
+                .abrev(request.getAbrev() != null ? request.getAbrev() : existing.getAbrev())
+                .companyOid(existing.getCompanyOid())
+                .isActive(request.getIsActive() != null ? request.getIsActive() : existing.getIsActive())
+                .isDeleted(request.getIsDeleted() != null ? request.getIsDeleted() : existing.getIsDeleted())
+                .build();
     }
 }

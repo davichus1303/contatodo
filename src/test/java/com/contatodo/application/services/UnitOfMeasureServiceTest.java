@@ -1,6 +1,7 @@
 package com.contatodo.application.services;
 
 import com.contatodo.application.dto.request.CreateUnitOfMeasureRequest;
+import com.contatodo.application.dto.request.UpdateUnitOfMeasureRequest;
 import com.contatodo.application.dto.response.UnitOfMeasureResponse;
 import com.contatodo.application.mapper.UnitOfMeasureMapper;
 import com.contatodo.domain.entities.UnitOfMeasure;
@@ -182,5 +183,140 @@ class UnitOfMeasureServiceTest {
 
         assertTrue(result.isPresent());
         verify(unitOfMeasureRepository).findActiveByCompanyAndName(CompanyOid.of("company-1"), "Kilogram");
+    }
+
+    @Test
+    void getUnitOfMeasuresByOidDelegatesToTheRepository() {
+        UnitOfMeasure unitOfMeasure = UnitOfMeasure.builder()
+                .id("u-1")
+                .name("Kilogram")
+                .abrev("kg")
+                .isActive(true)
+                .isDeleted(false)
+                .build();
+        when(unitOfMeasureRepository.findActiveByCompanyAndOid(CompanyOid.of("company-1"), "u-1"))
+                .thenReturn(Optional.of(unitOfMeasure));
+
+        Optional<UnitOfMeasure> result =
+                unitOfMeasureService.getUnitOfMeasuresByOid(CompanyOid.of("company-1"), "u-1");
+
+        assertTrue(result.isPresent());
+        assertEquals("kg", result.get().getAbrev());
+        verify(unitOfMeasureRepository).findActiveByCompanyAndOid(CompanyOid.of("company-1"), "u-1");
+    }
+
+    @Test
+    void getUnitOfMeasuresByOidReturnsEmptyWhenTheUnitDoesNotExist() {
+        when(unitOfMeasureRepository.findActiveByCompanyAndOid(CompanyOid.of("company-1"), "u-99"))
+                .thenReturn(Optional.empty());
+
+        Optional<UnitOfMeasure> result =
+                unitOfMeasureService.getUnitOfMeasuresByOid(CompanyOid.of("company-1"), "u-99");
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void updateUnitOfMeasureReturnsTrueWhenTheUnitIsSaved() {
+        UnitOfMeasure unitOfMeasure = UnitOfMeasure.builder()
+                .id("u-1")
+                .name("Kilogram")
+                .abrev("kg")
+                .isActive(true)
+                .isDeleted(false)
+                .build();
+
+        boolean result = unitOfMeasureService.updateUnitOfMeasure(unitOfMeasure);
+
+        assertTrue(result);
+        verify(unitOfMeasureRepository).save(unitOfMeasure);
+    }
+
+    @Test
+    void updateUnitOfMeasureControlResolvesCompanyFindsMergesAndSaves() {
+        UpdateUnitOfMeasureRequest request = new UpdateUnitOfMeasureRequest();
+        request.setName("Gram");
+        UnitOfMeasure existing = UnitOfMeasure.builder()
+                .id("u-1")
+                .name("Kilogram")
+                .abrev("kg")
+                .companyOid("company-1")
+                .isActive(true)
+                .isDeleted(false)
+                .build();
+        UnitOfMeasure updated = UnitOfMeasure.builder()
+                .id("u-1")
+                .name("Gram")
+                .abrev("kg")
+                .companyOid("company-1")
+                .isActive(true)
+                .isDeleted(false)
+                .build();
+        UnitOfMeasureResponse response = new UnitOfMeasureResponse();
+        response.setId("u-1");
+        when(companyService.resolveRequiredCompanyOid("company-9")).thenReturn(CompanyOid.of("company-1"));
+        when(unitOfMeasureRepository.findActiveByCompanyAndOid(CompanyOid.of("company-1"), "u-1"))
+                .thenReturn(Optional.of(existing));
+        when(unitOfMeasureMapper.updateEntityFromRequest(existing, request)).thenReturn(updated);
+        when(unitOfMeasureMapper.toResponse(updated)).thenReturn(response);
+
+        UnitOfMeasureResponse result = unitOfMeasureService.updateUnitOfMeasureControl("company-9", request, "u-1");
+
+        assertEquals(response, result);
+        verify(companyService).resolveRequiredCompanyOid("company-9");
+        verify(unitOfMeasureRepository).findActiveByCompanyAndOid(CompanyOid.of("company-1"), "u-1");
+        verify(unitOfMeasureRepository).save(updated);
+    }
+
+    @Test
+    void updateUnitOfMeasureControlRejectsMissingUnitWithoutSaving() {
+        UpdateUnitOfMeasureRequest request = new UpdateUnitOfMeasureRequest();
+        request.setName("Gram");
+        when(companyService.resolveRequiredCompanyOid(any())).thenReturn(CompanyOid.of("company-1"));
+        when(unitOfMeasureRepository.findActiveByCompanyAndOid(CompanyOid.of("company-1"), "u-99"))
+                .thenReturn(Optional.empty());
+
+        InvalidRequestException exception = assertThrows(
+                InvalidRequestException.class,
+                () -> unitOfMeasureService.updateUnitOfMeasureControl(null, request, "u-99")
+        );
+
+        assertEquals(List.of(UnitOfMeasureConstants.NOT_FOUND_ERROR), exception.getDetails());
+        verify(unitOfMeasureRepository, never()).save(any());
+    }
+
+    @Test
+    void updateUnitOfMeasureControlAllowsTheLogicalDeleteFlagToBeUpdated() {
+        UpdateUnitOfMeasureRequest request = new UpdateUnitOfMeasureRequest();
+        request.setIsDeleted(true);
+        UnitOfMeasure existing = UnitOfMeasure.builder()
+                .id("u-1")
+                .name("Kilogram")
+                .abrev("kg")
+                .companyOid("company-1")
+                .isActive(true)
+                .isDeleted(false)
+                .build();
+        UnitOfMeasure deleted = UnitOfMeasure.builder()
+                .id("u-1")
+                .name("Kilogram")
+                .abrev("kg")
+                .companyOid("company-1")
+                .isActive(false)
+                .isDeleted(true)
+                .build();
+        UnitOfMeasureResponse response = new UnitOfMeasureResponse();
+        response.setIsDeleted(true);
+        when(companyService.resolveRequiredCompanyOid(any())).thenReturn(CompanyOid.of("company-1"));
+        when(unitOfMeasureRepository.findActiveByCompanyAndOid(CompanyOid.of("company-1"), "u-1"))
+                .thenReturn(Optional.of(existing));
+        when(unitOfMeasureMapper.updateEntityFromRequest(existing, request)).thenReturn(deleted);
+        when(unitOfMeasureRepository.save(deleted)).thenReturn(deleted);
+        when(unitOfMeasureMapper.toResponse(deleted)).thenReturn(response);
+
+        UnitOfMeasureResponse result = unitOfMeasureService.updateUnitOfMeasureControl(null, request, "u-1");
+
+        assertEquals(response, result);
+        verify(unitOfMeasureRepository).save(deleted);
     }
 }
