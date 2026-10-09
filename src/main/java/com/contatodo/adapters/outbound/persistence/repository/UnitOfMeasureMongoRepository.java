@@ -4,6 +4,7 @@ import com.contatodo.adapters.outbound.persistence.document.UnitOfMeasureDocumen
 import org.springframework.data.mongodb.repository.MongoRepository;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Spring Data MongoDB repository for units of measure.
@@ -20,4 +21,14 @@ public interface UnitOfMeasureMongoRepository extends MongoRepository<UnitOfMeas
      * @return List of unit of measure documents ordered by name.
      */
     List<UnitOfMeasureDocument> findByIsActiveTrueAndIsDeletedFalseAndCompanyOidOrderByNameAsc(String companyOid);
+
+    /**
+     * Finds the active and non-deleted unit of measure with the given name for
+     * the given company.
+     *
+     * @param companyOid Owning company identifier.
+     * @param name Unit of measure name.
+     * @return Optional matching unit of measure document.
+     */
+    Optional<UnitOfMeasureDocument> findByIsActiveTrueAndIsDeletedFalseAndCompanyOidAndName(String companyOid, String name);
 }
