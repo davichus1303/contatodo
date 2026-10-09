@@ -65,4 +65,15 @@ public class UnitOfMeasureRepositoryAdapter implements UnitOfMeasureRepository {
                 .findByIsActiveTrueAndIsDeletedFalseAndCompanyOidAndName(companyValue, name)
                 .map(persistenceMapper::toEntity);
     }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Optional<UnitOfMeasure> findActiveByCompanyAndOid(CompanyOid companyOid, String unitOfMeasuresOid) {
+        String companyValue = companyOid != null ? companyOid.value() : null;
+        return unitOfMeasureMongoRepository
+                .findByIsActiveTrueAndIsDeletedFalseAndCompanyOidAndId(companyValue, unitOfMeasuresOid)
+                .map(persistenceMapper::toEntity);
+    }
 }

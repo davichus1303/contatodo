@@ -31,4 +31,14 @@ public interface UnitOfMeasureMongoRepository extends MongoRepository<UnitOfMeas
      * @return Optional matching unit of measure document.
      */
     Optional<UnitOfMeasureDocument> findByIsActiveTrueAndIsDeletedFalseAndCompanyOidAndName(String companyOid, String name);
+
+    /**
+     * Finds the active and non-deleted unit of measure with the given
+     * identifier for the given company.
+     *
+     * @param companyOid Owning company identifier.
+     * @param id Unit of measure identifier.
+     * @return Optional matching unit of measure document.
+     */
+    Optional<UnitOfMeasureDocument> findByIsActiveTrueAndIsDeletedFalseAndCompanyOidAndId(String companyOid, String id);
 }

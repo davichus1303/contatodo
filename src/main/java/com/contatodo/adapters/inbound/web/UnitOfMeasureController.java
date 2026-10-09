@@ -1,6 +1,7 @@
 package com.contatodo.adapters.inbound.web;
 
 import com.contatodo.application.dto.request.CreateUnitOfMeasureRequest;
+import com.contatodo.application.dto.request.UpdateUnitOfMeasureRequest;
 import com.contatodo.application.dto.response.UnitOfMeasureResponse;
 import com.contatodo.application.services.UnitOfMeasureService;
 import com.contatodo.shared.constants.ResponseConstants;
@@ -9,7 +10,9 @@ import com.contatodo.shared.response.ApiResponse;
 import com.contatodo.shared.response.WebResponses;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -59,5 +62,23 @@ public class UnitOfMeasureController {
             @RequestBody CreateUnitOfMeasureRequest request) {
         UnitOfMeasureResponse unitOfMeasure = unitOfMeasureService.createUnitOfMeasure(request);
         return WebResponses.ok(UnitOfMeasureConstants.CREATED_SUCCESS, unitOfMeasure);
+    }
+
+    /**
+     * Updates an existing unit of measure.
+     *
+     * @param unitOfMeasuresOid Unit of measure identifier.
+     * @param companyOid Optional company identifier supplied in the request.
+     * @param request Update unit of measure request.
+     * @return Updated unit of measure.
+     */
+    @PutMapping("/{unitOfMeasuresOid}")
+    public ResponseEntity<ApiResponse<UnitOfMeasureResponse>> updateUnitOfMeasure(
+            @PathVariable String unitOfMeasuresOid,
+            @RequestParam(required = false) String companyOid,
+            @RequestBody UpdateUnitOfMeasureRequest request) {
+        UnitOfMeasureResponse unitOfMeasure =
+                unitOfMeasureService.updateUnitOfMeasureControl(companyOid, request, unitOfMeasuresOid);
+        return WebResponses.ok(UnitOfMeasureConstants.UPDATED_SUCCESS, unitOfMeasure);
     }
 }
