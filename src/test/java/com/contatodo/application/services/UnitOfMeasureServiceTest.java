@@ -11,6 +11,7 @@ import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.UnitOfMeasureConstants;
 import com.contatodo.shared.exceptions.InvalidRequestException;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
+import org.mockito.ArgumentCaptor;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,11 +22,13 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -318,5 +321,57 @@ class UnitOfMeasureServiceTest {
 
         assertEquals(response, result);
         verify(unitOfMeasureRepository).save(deleted);
+    }
+
+    @Test
+    void deleteUnitOfMeasureControlResolvesFindsAndDelegatesToTheUpdateControl() {
+        UnitOfMeasure existing = UnitOfMeasure.builder()
+                .id("u-1")
+                .name("Kilogram")
+                .abrev("kg")
+                .companyOid("company-1")
+                .isActive(true)
+                .isDeleted(false)
+                .build();
+        UnitOfMeasure updated = UnitOfMeasure.builder()
+                .id("u-1")
+                .name("Kilogram")
+                .abrev("kg")
+                .companyOid("company-1")
+                .isActive(false)
+                .isDeleted(true)
+                .build();
+        when(companyService.resolveRequiredCompanyOid(any())).thenReturn(CompanyOid.of("company-1"));
+        when(unitOfMeasureRepository.findActiveByCompanyAndOid(CompanyOid.of("company-1"), "u-1"))
+                .thenReturn(Optional.of(existing));
+        when(unitOfMeasureMapper.updateEntityFromRequest(eq(existing), any(UpdateUnitOfMeasureRequest.class)))
+                .thenReturn(updated);
+        when(unitOfMeasureRepository.save(updated)).thenReturn(updated);
+        when(unitOfMeasureMapper.toResponse(updated)).thenReturn(new UnitOfMeasureResponse());
+
+        unitOfMeasureService.deleteUnitOfMeasureControl("u-1", null);
+
+        ArgumentCaptor<UpdateUnitOfMeasureRequest> requestCaptor =
+                ArgumentCaptor.forClass(UpdateUnitOfMeasureRequest.class);
+        verify(unitOfMeasureRepository, times(2)).findActiveByCompanyAndOid(CompanyOid.of("company-1"), "u-1");
+        verify(unitOfMeasureMapper).updateEntityFromRequest(eq(existing), requestCaptor.capture());
+        verify(unitOfMeasureRepository).save(updated);
+        assertFalse(requestCaptor.getValue().getIsActive());
+        assertTrue(requestCaptor.getValue().getIsDeleted());
+    }
+
+    @Test
+    void deleteUnitOfMeasureControlRejectsMissingUnitWithoutSaving() {
+        when(companyService.resolveRequiredCompanyOid(any())).thenReturn(CompanyOid.of("company-1"));
+        when(unitOfMeasureRepository.findActiveByCompanyAndOid(CompanyOid.of("company-1"), "u-99"))
+                .thenReturn(Optional.empty());
+
+        InvalidRequestException exception = assertThrows(
+                InvalidRequestException.class,
+                () -> unitOfMeasureService.deleteUnitOfMeasureControl("u-99", null)
+        );
+
+        assertEquals(List.of(UnitOfMeasureConstants.NOT_FOUND_ERROR), exception.getDetails());
+        verify(unitOfMeasureRepository, never()).save(any());
     }
 }

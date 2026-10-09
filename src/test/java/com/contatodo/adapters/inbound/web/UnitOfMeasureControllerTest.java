@@ -15,6 +15,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -106,5 +107,17 @@ class UnitOfMeasureControllerTest {
                 .andExpect(jsonPath("$.data.name").value("Kilogram"))
                 .andExpect(jsonPath("$.data.abrev").value("kg"))
                 .andExpect(jsonPath("$.data.companyOid").value("c1"));
+    }
+
+    @Test
+    void deleteUnitOfMeasureReturnsOkWithoutData() throws Exception {
+        mockMvc.perform(delete("/units-of-measure/u1")
+                        .param("companyOid", "c1")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value("Deleted successfully."))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data").isEmpty());
     }
 }
