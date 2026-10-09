@@ -15,6 +15,7 @@ import java.util.List;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -69,5 +70,21 @@ class UnitOfMeasureControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.data").isArray());
+    }
+
+    @Test
+    void createUnitOfMeasureReturnsOkWithEnvelope() throws Exception {
+        when(unitOfMeasureService.createUnitOfMeasure(any())).thenReturn(unitOfMeasureResponse());
+
+        mockMvc.perform(post("/units-of-measure")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Kilogram\",\"abrev\":\"kg\",\"companyOid\":\"c1\"}")
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value(200))
+                .andExpect(jsonPath("$.message").value("Unit of measure created successfully."))
+                .andExpect(jsonPath("$.data.name").value("Kilogram"))
+                .andExpect(jsonPath("$.data.abrev").value("kg"))
+                .andExpect(jsonPath("$.data.companyOid").value("c1"));
     }
 }

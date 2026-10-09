@@ -1,11 +1,14 @@
 package com.contatodo.application.services;
 
+import com.contatodo.application.dto.request.CreateUnitOfMeasureRequest;
 import com.contatodo.application.dto.response.UnitOfMeasureResponse;
 import com.contatodo.application.mapper.UnitOfMeasureMapper;
 import com.contatodo.domain.entities.UnitOfMeasure;
 import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.UnitOfMeasureRepository;
 import com.contatodo.shared.constants.AuthConstants;
+import com.contatodo.shared.constants.UnitOfMeasureConstants;
+import com.contatodo.shared.exceptions.InvalidRequestException;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,9 +17,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -101,5 +106,81 @@ class UnitOfMeasureServiceTest {
 
         assertEquals(AuthConstants.COMPANY_CONTEXT_REQUIRED, exception.getMessage());
         verify(unitOfMeasureRepository, never()).findActiveByCompany(any());
+    }
+
+    @Test
+    void createUnitOfMeasureResolvesCompanyChecksExistenceAndSaves() {
+        CreateUnitOfMeasureRequest request = new CreateUnitOfMeasureRequest();
+        request.setName("Kilogram");
+        request.setAbrev("kg");
+        request.setCompanyOid("company-9");
+        UnitOfMeasure entity = UnitOfMeasure.builder()
+                .name("Kilogram")
+                .abrev("kg")
+                .companyOid("company-9")
+                .isActive(true)
+                .isDeleted(false)
+                .build();
+        UnitOfMeasure saved = UnitOfMeasure.builder()
+                .id("u-1")
+                .name("Kilogram")
+                .abrev("kg")
+                .companyOid("company-9")
+                .isActive(true)
+                .isDeleted(false)
+                .build();
+        UnitOfMeasureResponse response = new UnitOfMeasureResponse();
+        response.setId("u-1");
+        when(companyService.resolveRequiredCompanyOid("company-9")).thenReturn(CompanyOid.of("company-9"));
+        when(unitOfMeasureRepository.findActiveByCompanyAndName(CompanyOid.of("company-9"), "Kilogram"))
+                .thenReturn(Optional.empty());
+        when(unitOfMeasureMapper.toEntity(request, "company-9")).thenReturn(entity);
+        when(unitOfMeasureRepository.save(entity)).thenReturn(saved);
+        when(unitOfMeasureMapper.toResponse(saved)).thenReturn(response);
+
+        UnitOfMeasureResponse result = unitOfMeasureService.createUnitOfMeasure(request);
+
+        assertEquals(response, result);
+        verify(companyService).resolveRequiredCompanyOid("company-9");
+        verify(unitOfMeasureRepository).findActiveByCompanyAndName(CompanyOid.of("company-9"), "Kilogram");
+        verify(unitOfMeasureRepository).save(entity);
+    }
+
+    @Test
+    void createUnitOfMeasureRejectsAnExistingNameWithoutSaving() {
+        CreateUnitOfMeasureRequest request = new CreateUnitOfMeasureRequest();
+        request.setName("Kilogram");
+        request.setAbrev("kg");
+        UnitOfMeasure existing = UnitOfMeasure.builder()
+                .name("Kilogram")
+                .abrev("kg")
+                .build();
+        when(companyService.resolveRequiredCompanyOid(any())).thenReturn(CompanyOid.of("company-1"));
+        when(unitOfMeasureRepository.findActiveByCompanyAndName(CompanyOid.of("company-1"), "Kilogram"))
+                .thenReturn(Optional.of(existing));
+
+        InvalidRequestException exception = assertThrows(
+                InvalidRequestException.class,
+                () -> unitOfMeasureService.createUnitOfMeasure(request)
+        );
+
+        assertEquals(List.of(UnitOfMeasureConstants.NAME_ALREADY_EXISTS_ERROR), exception.getDetails());
+        verify(unitOfMeasureRepository, never()).save(any());
+    }
+
+    @Test
+    void findExistingUnitOfMeasureDelegatesToTheRepository() {
+        UnitOfMeasure existing = UnitOfMeasure.builder()
+                .name("Kilogram")
+                .abrev("kg")
+                .build();
+        when(unitOfMeasureRepository.findActiveByCompanyAndName(CompanyOid.of("company-1"), "Kilogram"))
+                .thenReturn(Optional.of(existing));
+
+        Optional<UnitOfMeasure> result =
+                unitOfMeasureService.findExistingUnitOfMeasure(CompanyOid.of("company-1"), "Kilogram");
+
+        assertTrue(result.isPresent());
+        verify(unitOfMeasureRepository).findActiveByCompanyAndName(CompanyOid.of("company-1"), "Kilogram");
     }
 }

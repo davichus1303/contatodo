@@ -1,5 +1,6 @@
 package com.contatodo.application.mapper;
 
+import com.contatodo.application.dto.request.CreateUnitOfMeasureRequest;
 import com.contatodo.application.dto.response.UnitOfMeasureResponse;
 import com.contatodo.domain.entities.UnitOfMeasure;
 import org.springframework.stereotype.Component;
@@ -9,6 +10,23 @@ import org.springframework.stereotype.Component;
  */
 @Component
 public class UnitOfMeasureMapper implements ResponseMapper<UnitOfMeasure, UnitOfMeasureResponse> {
+
+    /**
+     * Maps a create request to a domain entity.
+     *
+     * @param request Create unit of measure request.
+     * @param companyOid Owning company identifier.
+     * @return Unit of measure entity.
+     */
+    public UnitOfMeasure toEntity(CreateUnitOfMeasureRequest request, String companyOid) {
+        return UnitOfMeasure.builder()
+                .name(request.getName())
+                .abrev(request.getAbrev())
+                .companyOid(companyOid)
+                .isActive(true)
+                .isDeleted(false)
+                .build();
+    }
 
     /**
      * Maps a unit of measure entity to a response DTO.
