@@ -158,4 +158,33 @@ public class UnitOfMeasureService {
                 List.of(UnitOfMeasureConstants.UPDATE_ERROR)
         );
     }
+
+    /**
+     * Performs the logical deletion of a unit of measure.
+     *
+     * <p>The owning company is resolved from the session claim, falling back to
+     * the requested company. The existing unit is fetched through
+     * {@link #getUnitOfMeasuresByOid(CompanyOid, String)} and, when present, the
+     * deletion is delegated to
+     * {@link #updateUnitOfMeasureControl(String, UpdateUnitOfMeasureRequest, String)}
+     * with the active flag set to {@code false} and the logical delete flag set
+     * to {@code true}.</p>
+     *
+     * @param unitOfMeasuresOid Unit of measure identifier to delete.
+     * @param requestedCompanyOid Optional company identifier supplied in the request.
+     * @throws com.contatodo.shared.exceptions.InvalidRequestException when the unit is missing.
+     */
+    public void deleteUnitOfMeasureControl(String unitOfMeasuresOid, String requestedCompanyOid) {
+        CompanyOid companyOid = companyService.resolveRequiredCompanyOid(requestedCompanyOid);
+        getUnitOfMeasuresByOid(companyOid, unitOfMeasuresOid)
+                .orElseThrow(() -> new InvalidRequestException(
+                        ResponseConstants.VALIDATION_ERROR_MESSAGE,
+                        List.of(UnitOfMeasureConstants.NOT_FOUND_ERROR)
+                ));
+
+        UpdateUnitOfMeasureRequest request = new UpdateUnitOfMeasureRequest();
+        request.setIsActive(false);
+        request.setIsDeleted(true);
+        updateUnitOfMeasureControl(requestedCompanyOid, request, unitOfMeasuresOid);
+    }
 }

@@ -9,6 +9,7 @@ import com.contatodo.shared.constants.UnitOfMeasureConstants;
 import com.contatodo.shared.response.ApiResponse;
 import com.contatodo.shared.response.WebResponses;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -80,5 +81,20 @@ public class UnitOfMeasureController {
         UnitOfMeasureResponse unitOfMeasure =
                 unitOfMeasureService.updateUnitOfMeasureControl(companyOid, request, unitOfMeasuresOid);
         return WebResponses.ok(UnitOfMeasureConstants.UPDATED_SUCCESS, unitOfMeasure);
+    }
+
+    /**
+     * Logically deletes a unit of measure.
+     *
+     * @param unitOfMeasuresOid Unit of measure identifier.
+     * @param companyOid Optional company identifier supplied in the request.
+     * @return Response without the deleted unit data.
+     */
+    @DeleteMapping("/{unitOfMeasuresOid}")
+    public ResponseEntity<ApiResponse<List<Object>>> deleteUnitOfMeasure(
+            @PathVariable String unitOfMeasuresOid,
+            @RequestParam(required = false) String companyOid) {
+        unitOfMeasureService.deleteUnitOfMeasureControl(unitOfMeasuresOid, companyOid);
+        return WebResponses.okNoData(ResponseConstants.DELETED_MESSAGE);
     }
 }
