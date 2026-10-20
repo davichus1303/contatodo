@@ -92,8 +92,6 @@ public class ProductMapper implements ResponseMapper<Product, ProductResponse> {
         response.setIsActive(product.getIsActive());
         response.setByUserOid(product.getByUserOid());
         response.setUpdatedByUserOid(product.getUpdatedByUserOid());
-        response.setCreatedDate(product.getCreatedDate());
-        response.setUpdatedDate(product.getUpdatedDate());
         return response;
     }
 }
