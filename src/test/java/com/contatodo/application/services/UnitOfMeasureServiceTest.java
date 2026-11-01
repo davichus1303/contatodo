@@ -136,7 +136,7 @@ class UnitOfMeasureServiceTest {
         UnitOfMeasureResponse response = new UnitOfMeasureResponse();
         response.setId("u-1");
         when(companyService.resolveRequiredCompanyOid("company-9")).thenReturn(CompanyOid.of("company-9"));
-        when(unitOfMeasureRepository.findActiveByCompanyAndName(CompanyOid.of("company-9"), "Kilogram"))
+        when(unitOfMeasureRepository.findNotDeletedByCompanyAndName(CompanyOid.of("company-9"), "Kilogram"))
                 .thenReturn(Optional.empty());
         when(unitOfMeasureMapper.toEntity(request, "company-9")).thenReturn(entity);
         when(unitOfMeasureRepository.save(entity)).thenReturn(saved);
@@ -146,7 +146,7 @@ class UnitOfMeasureServiceTest {
 
         assertEquals(response, result);
         verify(companyService).resolveRequiredCompanyOid("company-9");
-        verify(unitOfMeasureRepository).findActiveByCompanyAndName(CompanyOid.of("company-9"), "Kilogram");
+        verify(unitOfMeasureRepository).findNotDeletedByCompanyAndName(CompanyOid.of("company-9"), "Kilogram");
         verify(unitOfMeasureRepository).save(entity);
     }
 
@@ -160,8 +160,32 @@ class UnitOfMeasureServiceTest {
                 .abrev("kg")
                 .build();
         when(companyService.resolveRequiredCompanyOid(any())).thenReturn(CompanyOid.of("company-1"));
-        when(unitOfMeasureRepository.findActiveByCompanyAndName(CompanyOid.of("company-1"), "Kilogram"))
+        when(unitOfMeasureRepository.findNotDeletedByCompanyAndName(CompanyOid.of("company-1"), "Kilogram"))
                 .thenReturn(Optional.of(existing));
+
+        InvalidRequestException exception = assertThrows(
+                InvalidRequestException.class,
+                () -> unitOfMeasureService.createUnitOfMeasure(request)
+        );
+
+        assertEquals(List.of(UnitOfMeasureConstants.NAME_ALREADY_EXISTS_ERROR), exception.getDetails());
+        verify(unitOfMeasureRepository, never()).save(any());
+    }
+
+    @Test
+    void createUnitOfMeasureRejectsAnInactiveButNotDeletedNameWithoutSaving() {
+        CreateUnitOfMeasureRequest request = new CreateUnitOfMeasureRequest();
+        request.setName("Kilogram");
+        request.setAbrev("kg");
+        UnitOfMeasure inactiveExisting = UnitOfMeasure.builder()
+                .name("Kilogram")
+                .abrev("kg")
+                .isActive(false)
+                .isDeleted(false)
+                .build();
+        when(companyService.resolveRequiredCompanyOid(any())).thenReturn(CompanyOid.of("company-1"));
+        when(unitOfMeasureRepository.findNotDeletedByCompanyAndName(CompanyOid.of("company-1"), "Kilogram"))
+                .thenReturn(Optional.of(inactiveExisting));
 
         InvalidRequestException exception = assertThrows(
                 InvalidRequestException.class,
@@ -178,14 +202,14 @@ class UnitOfMeasureServiceTest {
                 .name("Kilogram")
                 .abrev("kg")
                 .build();
-        when(unitOfMeasureRepository.findActiveByCompanyAndName(CompanyOid.of("company-1"), "Kilogram"))
+        when(unitOfMeasureRepository.findNotDeletedByCompanyAndName(CompanyOid.of("company-1"), "Kilogram"))
                 .thenReturn(Optional.of(existing));
 
         Optional<UnitOfMeasure> result =
                 unitOfMeasureService.findExistingUnitOfMeasure(CompanyOid.of("company-1"), "Kilogram");
 
         assertTrue(result.isPresent());
-        verify(unitOfMeasureRepository).findActiveByCompanyAndName(CompanyOid.of("company-1"), "Kilogram");
+        verify(unitOfMeasureRepository).findNotDeletedByCompanyAndName(CompanyOid.of("company-1"), "Kilogram");
     }
 
     @Test
@@ -258,7 +282,7 @@ class UnitOfMeasureServiceTest {
         UnitOfMeasureResponse response = new UnitOfMeasureResponse();
         response.setId("u-1");
         when(companyService.resolveRequiredCompanyOid("company-9")).thenReturn(CompanyOid.of("company-1"));
-        when(unitOfMeasureRepository.findActiveByCompanyAndOid(CompanyOid.of("company-1"), "u-1"))
+        when(unitOfMeasureRepository.findNotDeletedByCompanyAndOid(CompanyOid.of("company-1"), "u-1"))
                 .thenReturn(Optional.of(existing));
         when(unitOfMeasureMapper.updateEntityFromRequest(existing, request)).thenReturn(updated);
         when(unitOfMeasureMapper.toResponse(updated)).thenReturn(response);
@@ -267,7 +291,7 @@ class UnitOfMeasureServiceTest {
 
         assertEquals(response, result);
         verify(companyService).resolveRequiredCompanyOid("company-9");
-        verify(unitOfMeasureRepository).findActiveByCompanyAndOid(CompanyOid.of("company-1"), "u-1");
+        verify(unitOfMeasureRepository).findNotDeletedByCompanyAndOid(CompanyOid.of("company-1"), "u-1");
         verify(unitOfMeasureRepository).save(updated);
     }
 
@@ -276,7 +300,7 @@ class UnitOfMeasureServiceTest {
         UpdateUnitOfMeasureRequest request = new UpdateUnitOfMeasureRequest();
         request.setName("Gram");
         when(companyService.resolveRequiredCompanyOid(any())).thenReturn(CompanyOid.of("company-1"));
-        when(unitOfMeasureRepository.findActiveByCompanyAndOid(CompanyOid.of("company-1"), "u-99"))
+        when(unitOfMeasureRepository.findNotDeletedByCompanyAndOid(CompanyOid.of("company-1"), "u-99"))
                 .thenReturn(Optional.empty());
 
         InvalidRequestException exception = assertThrows(
@@ -311,7 +335,7 @@ class UnitOfMeasureServiceTest {
         UnitOfMeasureResponse response = new UnitOfMeasureResponse();
         response.setIsDeleted(true);
         when(companyService.resolveRequiredCompanyOid(any())).thenReturn(CompanyOid.of("company-1"));
-        when(unitOfMeasureRepository.findActiveByCompanyAndOid(CompanyOid.of("company-1"), "u-1"))
+        when(unitOfMeasureRepository.findNotDeletedByCompanyAndOid(CompanyOid.of("company-1"), "u-1"))
                 .thenReturn(Optional.of(existing));
         when(unitOfMeasureMapper.updateEntityFromRequest(existing, request)).thenReturn(deleted);
         when(unitOfMeasureRepository.save(deleted)).thenReturn(deleted);
@@ -342,7 +366,7 @@ class UnitOfMeasureServiceTest {
                 .isDeleted(true)
                 .build();
         when(companyService.resolveRequiredCompanyOid(any())).thenReturn(CompanyOid.of("company-1"));
-        when(unitOfMeasureRepository.findActiveByCompanyAndOid(CompanyOid.of("company-1"), "u-1"))
+        when(unitOfMeasureRepository.findNotDeletedByCompanyAndOid(CompanyOid.of("company-1"), "u-1"))
                 .thenReturn(Optional.of(existing));
         when(unitOfMeasureMapper.updateEntityFromRequest(eq(existing), any(UpdateUnitOfMeasureRequest.class)))
                 .thenReturn(updated);
@@ -353,8 +377,44 @@ class UnitOfMeasureServiceTest {
 
         ArgumentCaptor<UpdateUnitOfMeasureRequest> requestCaptor =
                 ArgumentCaptor.forClass(UpdateUnitOfMeasureRequest.class);
-        verify(unitOfMeasureRepository, times(2)).findActiveByCompanyAndOid(CompanyOid.of("company-1"), "u-1");
+        verify(unitOfMeasureRepository, times(2)).findNotDeletedByCompanyAndOid(CompanyOid.of("company-1"), "u-1");
         verify(unitOfMeasureMapper).updateEntityFromRequest(eq(existing), requestCaptor.capture());
+        verify(unitOfMeasureRepository).save(updated);
+        assertFalse(requestCaptor.getValue().getIsActive());
+        assertTrue(requestCaptor.getValue().getIsDeleted());
+    }
+
+    @Test
+    void deleteUnitOfMeasureControlDeletesAnInactiveUnit() {
+        UnitOfMeasure inactive = UnitOfMeasure.builder()
+                .id("u-1")
+                .name("Kilogram")
+                .abrev("kg")
+                .companyOid("company-1")
+                .isActive(false)
+                .isDeleted(false)
+                .build();
+        UnitOfMeasure updated = UnitOfMeasure.builder()
+                .id("u-1")
+                .name("Kilogram")
+                .abrev("kg")
+                .companyOid("company-1")
+                .isActive(false)
+                .isDeleted(true)
+                .build();
+        when(companyService.resolveRequiredCompanyOid(any())).thenReturn(CompanyOid.of("company-1"));
+        when(unitOfMeasureRepository.findNotDeletedByCompanyAndOid(CompanyOid.of("company-1"), "u-1"))
+                .thenReturn(Optional.of(inactive));
+        when(unitOfMeasureMapper.updateEntityFromRequest(eq(inactive), any(UpdateUnitOfMeasureRequest.class)))
+                .thenReturn(updated);
+        when(unitOfMeasureRepository.save(updated)).thenReturn(updated);
+        when(unitOfMeasureMapper.toResponse(updated)).thenReturn(new UnitOfMeasureResponse());
+
+        unitOfMeasureService.deleteUnitOfMeasureControl("u-1", null);
+
+        ArgumentCaptor<UpdateUnitOfMeasureRequest> requestCaptor =
+                ArgumentCaptor.forClass(UpdateUnitOfMeasureRequest.class);
+        verify(unitOfMeasureMapper).updateEntityFromRequest(eq(inactive), requestCaptor.capture());
         verify(unitOfMeasureRepository).save(updated);
         assertFalse(requestCaptor.getValue().getIsActive());
         assertTrue(requestCaptor.getValue().getIsDeleted());
@@ -363,7 +423,7 @@ class UnitOfMeasureServiceTest {
     @Test
     void deleteUnitOfMeasureControlRejectsMissingUnitWithoutSaving() {
         when(companyService.resolveRequiredCompanyOid(any())).thenReturn(CompanyOid.of("company-1"));
-        when(unitOfMeasureRepository.findActiveByCompanyAndOid(CompanyOid.of("company-1"), "u-99"))
+        when(unitOfMeasureRepository.findNotDeletedByCompanyAndOid(CompanyOid.of("company-1"), "u-99"))
                 .thenReturn(Optional.empty());
 
         InvalidRequestException exception = assertThrows(
