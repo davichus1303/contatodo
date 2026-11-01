@@ -76,4 +76,31 @@ public class UnitOfMeasureRepositoryAdapter implements UnitOfMeasureRepository {
                 .findByIsActiveTrueAndIsDeletedFalseAndCompanyOidAndId(companyValue, unitOfMeasuresOid)
                 .map(persistenceMapper::toEntity);
     }
+
+    @Override
+    public List<UnitOfMeasure> findAllNotDeletedByCompany(CompanyOid companyOid) {
+        String companyOidValue = companyOid != null ? companyOid.value() : null;
+        List<UnitOfMeasureDocument> documents = unitOfMeasureMongoRepository.findByIsDeletedFalseAndCompanyOidOrderByNameAsc(companyOidValue);
+        return documents.stream()
+                .map(persistenceMapper::toEntity)
+                .toList();
+    }
+
+    @Override
+    public Optional<UnitOfMeasure> findNotDeletedByCompanyAndOid(CompanyOid companyOid, String unitOfMeasuresOid) {
+        String companyOidValue = companyOid != null ? companyOid.value() : null;
+        return unitOfMeasureMongoRepository.findByIsDeletedFalseAndCompanyOidAndId(companyOidValue, unitOfMeasuresOid)
+                .map(persistenceMapper::toEntity);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Optional<UnitOfMeasure> findNotDeletedByCompanyAndName(CompanyOid companyOid, String name) {
+        String companyOidValue = companyOid != null ? companyOid.value() : null;
+        return unitOfMeasureMongoRepository.findByIsDeletedFalseAndCompanyOidAndName(companyOidValue, name)
+                .map(persistenceMapper::toEntity);
+    }
+
 }

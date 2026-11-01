@@ -58,9 +58,10 @@ public class UnitOfMeasureService {
      * Creates a new unit of measure for the resolved company.
      *
      * <p>The owning company is resolved from the session claim, falling back to
-     * the requested company. When an active, non-deleted unit with the same
-     * name already exists in that company nothing is written and a formatted
-     * validation error is returned.</p>
+     * the requested company. When a non-deleted unit with the same name
+     * already exists in that company nothing is written and a formatted
+     * validation error is returned. Deactivated units still reserve their
+     * name, so only deleted units free it.</p>
      *
      * @param request Create unit of measure request.
      * @return Created unit of measure response.
@@ -84,15 +85,17 @@ public class UnitOfMeasureService {
     /**
      * Finds the existing unit of measure with the given name inside the company.
      *
-     * <p>Reusable by the create, update and delete flows. A unit is considered
-     * to exist when it is active, not deleted and belongs to the company.</p>
+     * <p>Used by the create flow to enforce name uniqueness. A unit is
+     * considered to exist when it is not deleted and belongs to the company,
+     * regardless of its active flag: deactivated units still reserve the
+     * name.</p>
      *
      * @param companyOid Owning company.
      * @param name Unit of measure name.
      * @return Optional matching unit of measure, empty when it does not exist.
      */
     public Optional<UnitOfMeasure> findExistingUnitOfMeasure(CompanyOid companyOid, String name) {
-        return unitOfMeasureRepository.findActiveByCompanyAndName(companyOid, name);
+        return unitOfMeasureRepository.findNotDeletedByCompanyAndName(companyOid, name);
     }
 
     /**
@@ -129,7 +132,7 @@ public class UnitOfMeasureService {
      * Controls an update, merging the requested fields over the existing unit.
      *
      * <p>The owning company is resolved from the session claim, falling back to
-     * the requested company. When no active, non-deleted unit of that company
+     * the requested company. When no non-deleted unit of that company
      * matches the given identifier a formatted validation error is returned.
      * Otherwise the updated unit is saved and returned.</p>
      *
@@ -143,7 +146,7 @@ public class UnitOfMeasureService {
             String requestedCompanyOid, UpdateUnitOfMeasureRequest request, String unitOfMeasuresOid
     ) {
         CompanyOid companyOid = companyService.resolveRequiredCompanyOid(requestedCompanyOid);
-        UnitOfMeasure unitOfMeasure = getUnitOfMeasuresByOid(companyOid, unitOfMeasuresOid)
+        UnitOfMeasure unitOfMeasure = unitOfMeasureRepository.findNotDeletedByCompanyAndOid(companyOid, unitOfMeasuresOid)
                 .orElseThrow(() -> new InvalidRequestException(
                         ResponseConstants.VALIDATION_ERROR_MESSAGE,
                         List.of(UnitOfMeasureConstants.NOT_FOUND_ERROR)
@@ -163,9 +166,9 @@ public class UnitOfMeasureService {
      * Performs the logical deletion of a unit of measure.
      *
      * <p>The owning company is resolved from the session claim, falling back to
-     * the requested company. The existing unit is fetched through
-     * {@link #getUnitOfMeasuresByOid(CompanyOid, String)} and, when present, the
-     * deletion is delegated to
+     * the requested company. The existing unit is fetched regardless of its
+     * active flag (inactive units can also be deleted) as long as it is not
+     * already deleted and, when present, the deletion is delegated to
      * {@link #updateUnitOfMeasureControl(String, UpdateUnitOfMeasureRequest, String)}
      * with the active flag set to {@code false} and the logical delete flag set
      * to {@code true}.</p>
@@ -176,7 +179,7 @@ public class UnitOfMeasureService {
      */
     public void deleteUnitOfMeasureControl(String unitOfMeasuresOid, String requestedCompanyOid) {
         CompanyOid companyOid = companyService.resolveRequiredCompanyOid(requestedCompanyOid);
-        getUnitOfMeasuresByOid(companyOid, unitOfMeasuresOid)
+        unitOfMeasureRepository.findNotDeletedByCompanyAndOid(companyOid, unitOfMeasuresOid)
                 .orElseThrow(() -> new InvalidRequestException(
                         ResponseConstants.VALIDATION_ERROR_MESSAGE,
                         List.of(UnitOfMeasureConstants.NOT_FOUND_ERROR)
@@ -187,4 +190,17 @@ public class UnitOfMeasureService {
         request.setIsDeleted(true);
         updateUnitOfMeasureControl(requestedCompanyOid, request, unitOfMeasuresOid);
     }
+
+    /**
+     * Retrieves all non-deleted units of measure for administration (both active and inactive).
+     *
+     * @param companyOid Optional company identifier supplied in the request.
+     * @return List of units of measure.
+     */
+    public List<UnitOfMeasureResponse> getAllNotDeletedUnitOfMeasures(String companyOid) {
+        CompanyOid resolvedCompanyOid = companyService.resolveReadCompanyOid(companyOid);
+        List<UnitOfMeasure> unitsOfMeasure = unitOfMeasureRepository.findAllNotDeletedByCompany(resolvedCompanyOid);
+        return unitOfMeasureMapper.toResponseList(unitsOfMeasure);
+    }
+
 }

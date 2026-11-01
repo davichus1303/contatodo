@@ -52,6 +52,20 @@ public class UnitOfMeasureController {
         return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, unitsOfMeasure);
     }
 
+
+    /**
+     * Retrieves all non-deleted units of measure (both active and inactive) for administration.
+     *
+     * @param companyOid Optional company identifier supplied in the request.
+     * @return List of units of measure.
+     */
+    @GetMapping("/admin/all")
+    public ResponseEntity<ApiResponse<List<UnitOfMeasureResponse>>> getAllNotDeletedUnitOfMeasures(
+            @RequestParam(required = false) String companyOid) {
+        List<UnitOfMeasureResponse> unitsOfMeasure = unitOfMeasureService.getAllNotDeletedUnitOfMeasures(companyOid);
+        return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, unitsOfMeasure);
+    }
+
     /**
      * Creates a new unit of measure for the resolved company.
      *
