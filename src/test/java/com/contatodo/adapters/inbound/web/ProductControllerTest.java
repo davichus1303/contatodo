@@ -39,6 +39,7 @@ class ProductControllerTest {
         ProductResponse response = new ProductResponse();
         response.setId("p1");
         response.setName("Cafe");
+        response.setUnitOfMeasures(List.of("uom-1"));
         response.setStock(10);
         response.setCode("1");
         response.setRealCost(100.0);
@@ -57,7 +58,8 @@ class ProductControllerTest {
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("Success."))
                 .andExpect(jsonPath("$.data[0].id").value("p1"))
-                .andExpect(jsonPath("$.data[0].name").value("Cafe"));
+                .andExpect(jsonPath("$.data[0].name").value("Cafe"))
+                .andExpect(jsonPath("$.data[0].unitOfMeasures[0]").value("uom-1"));
     }
 
     @Test

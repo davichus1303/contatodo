@@ -1,6 +1,7 @@
 package com.contatodo.application.dto.response;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Response DTO for product data.
@@ -10,6 +11,7 @@ public class ProductResponse {
     private String id;
     private String name;
     private String description;
+    private List<String> unitOfMeasures;
     private Integer stock;
     private String code;
     private Double realCost;
@@ -42,6 +44,14 @@ public class ProductResponse {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public List<String> getUnitOfMeasures() {
+        return unitOfMeasures;
+    }
+
+    public void setUnitOfMeasures(List<String> unitOfMeasures) {
+        this.unitOfMeasures = unitOfMeasures;
     }
 
     public Integer getStock() {

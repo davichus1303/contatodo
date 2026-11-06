@@ -4,6 +4,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * MongoDB document for products.
@@ -15,6 +16,7 @@ public class ProductDocument {
     private String id;
     private String name;
     private String description;
+    private List<String> unitOfMeasures;
     private Integer stock;
     private String code;
     private Double realCost;
@@ -50,6 +52,14 @@ public class ProductDocument {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public List<String> getUnitOfMeasures() {
+        return unitOfMeasures;
+    }
+
+    public void setUnitOfMeasures(List<String> unitOfMeasures) {
+        this.unitOfMeasures = unitOfMeasures;
     }
 
     public Integer getStock() {

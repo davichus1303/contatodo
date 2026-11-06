@@ -8,6 +8,7 @@ import com.contatodo.shared.exceptions.InsufficientStockException;
 import com.contatodo.shared.utils.EntityValidation;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -23,6 +24,7 @@ public final class Product {
     private final String id;
     private final String name;
     private final String description;
+    private final List<String> unitOfMeasures;
     private final Integer stock;
     private final String code;
     private final Double realCost;
@@ -45,6 +47,7 @@ public final class Product {
         this.id = builder.id;
         this.name = builder.name;
         this.description = builder.description;
+        this.unitOfMeasures = builder.unitOfMeasures == null ? List.of() : List.copyOf(builder.unitOfMeasures);
         this.stock = builder.stock;
         this.code = builder.code;
         this.realCost = builder.realCost;
@@ -78,6 +81,15 @@ public final class Product {
 
     public String getDescription() {
         return description;
+    }
+
+    /**
+     * Gets the identifiers of the units of measure in which the product can be sold.
+     *
+     * @return Unmodifiable list of unit of measure identifiers.
+     */
+    public List<String> getUnitOfMeasures() {
+        return unitOfMeasures;
     }
 
     public Integer getStock() {
@@ -212,6 +224,7 @@ public final class Product {
                 .id(id)
                 .name(name)
                 .description(description)
+                .unitOfMeasures(unitOfMeasures)
                 .stock(stock)
                 .code(code)
                 .realCost(realCost)
@@ -234,6 +247,7 @@ public final class Product {
         private String id;
         private String name;
         private String description;
+        private List<String> unitOfMeasures;
         private Integer stock;
         private String code;
         private Double realCost;
@@ -277,6 +291,17 @@ public final class Product {
          */
         public Builder description(String description) {
             this.description = description;
+            return this;
+        }
+
+        /**
+         * Sets the identifiers of the units of measure in which the product can be sold.
+         *
+         * @param unitOfMeasures Unit of measure identifiers.
+         * @return This builder.
+         */
+        public Builder unitOfMeasures(List<String> unitOfMeasures) {
+            this.unitOfMeasures = unitOfMeasures;
             return this;
         }
 
