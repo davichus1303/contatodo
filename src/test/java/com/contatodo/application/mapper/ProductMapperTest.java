@@ -77,6 +77,16 @@ class ProductMapperTest {
     }
 
     @Test
+    void applyUpdateKeepsExistingUnitsOfMeasureWhenTheListIsEmpty() {
+        UpdateProductRequest request = new UpdateProductRequest();
+        request.setUnitOfMeasures(List.of());
+
+        Product updated = mapper.applyUpdate(existingProduct(), request, "editor-1");
+
+        assertEquals(List.of("uom-1"), updated.getUnitOfMeasures());
+    }
+
+    @Test
     void toResponseExposesUnitsOfMeasure() {
         ProductResponse response = mapper.toResponse(existingProduct());
 

@@ -1,6 +1,7 @@
 package com.contatodo.application.services;
 
 import com.contatodo.application.dto.request.CreateAcquisitionRequest;
+import com.contatodo.application.validators.ProductValidator;
 import com.contatodo.domain.entities.Acquisition;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.entities.ProductCostHistory;
@@ -8,6 +9,9 @@ import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.AcquisitionRepository;
 import com.contatodo.domain.repositories.ProductCostHistoryRepository;
 import com.contatodo.domain.repositories.ProductRepository;
+import com.contatodo.shared.constants.ProductConstants;
+import com.contatodo.shared.exceptions.InvalidRequestException;
+import com.contatodo.shared.validators.FieldValidator;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,7 +24,10 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -44,16 +51,26 @@ class ProductInventoryHandlerTest {
 
     @BeforeEach
     void setUp() {
-        handler = new ProductInventoryHandler(productRepository, acquisitionRepository, productCostHistoryRepository);
+        handler = new ProductInventoryHandler(
+                productRepository,
+                acquisitionRepository,
+                productCostHistoryRepository,
+                new ProductValidator(new FieldValidator())
+        );
     }
 
     private CreateAcquisitionRequest request(Double realCost, Integer quantity) {
+        return request(realCost, quantity, List.of("uom-1"));
+    }
+
+    private CreateAcquisitionRequest request(Double realCost, Integer quantity, List<String> unitOfMeasures) {
         CreateAcquisitionRequest request = new CreateAcquisitionRequest();
         request.setProductName("Cafe");
         request.setDescription("Grano");
         request.setRealCost(realCost);
         request.setQuantity(quantity);
         request.setUnitPublicCost(20.0);
+        request.setUnitOfMeasures(unitOfMeasures);
         return request;
     }
 
@@ -61,6 +78,7 @@ class ProductInventoryHandlerTest {
         return Product.builder()
                 .id("p-1")
                 .name("Cafe")
+                .unitOfMeasures(List.of("uom-existing"))
                 .stock(4)
                 .code("7")
                 .realCost(40.0)
@@ -81,6 +99,7 @@ class ProductInventoryHandlerTest {
                     .id("p-new")
                     .name(toSave.getName())
                     .description(toSave.getDescription())
+                    .unitOfMeasures(toSave.getUnitOfMeasures())
                     .stock(toSave.getStock())
                     .code(toSave.getCode())
                     .realCost(toSave.getRealCost())
@@ -103,7 +122,21 @@ class ProductInventoryHandlerTest {
         verify(productRepository).save(captor.capture());
         assertEquals(5, captor.getValue().getStock());
         assertEquals("1", captor.getValue().getCode());
+        assertEquals(List.of("uom-1"), captor.getValue().getUnitOfMeasures());
         assertEquals(CompanyOid.of("company-1"), captor.getValue().getCompanyOid());
+    }
+
+    @Test
+    void applyToInventoryRequiresUnitsOfMeasureWhenCreatingAProduct() {
+        when(productRepository.findByNameAndIsActiveTrue("Cafe")).thenReturn(Optional.empty());
+
+        InvalidRequestException exception = assertThrows(
+                InvalidRequestException.class,
+                () -> handler.applyToInventory(request(50.0, 5, null), "user-1", CompanyOid.of("company-1"))
+        );
+
+        assertTrue(exception.getDetails().contains(ProductConstants.PRODUCT_UNIT_OF_MEASURE_REQUIRED));
+        verify(productRepository, never()).save(any());
     }
 
     @Test
@@ -126,6 +159,39 @@ class ProductInventoryHandlerTest {
         assertEquals(10, captor.getValue().getStock());
         assertEquals(100.0, captor.getValue().getRealCost());
         assertEquals(20.0, captor.getValue().getUnitPublicCost());
+        assertEquals(List.of("uom-1"), captor.getValue().getUnitOfMeasures());
+    }
+
+    @Test
+    void applyToInventoryKeepsExistingUnitsOfMeasureWhenTheAcquisitionOmitsThem() {
+        when(productRepository.findByNameAndIsActiveTrue("Cafe"))
+                .thenReturn(Optional.of(existingProduct()));
+        when(acquisitionRepository.findByProductOid("p-1")).thenReturn(List.of(
+                acquisition(40.0, 4)
+        ));
+        when(productRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        handler.applyToInventory(request(60.0, 6, null), "user-1", CompanyOid.of("company-1"));
+
+        ArgumentCaptor<Product> captor = ArgumentCaptor.forClass(Product.class);
+        verify(productRepository).save(captor.capture());
+        assertEquals(List.of("uom-existing"), captor.getValue().getUnitOfMeasures());
+    }
+
+    @Test
+    void applyToInventoryKeepsExistingUnitsOfMeasureWhenTheAcquisitionSendsAnEmptyList() {
+        when(productRepository.findByNameAndIsActiveTrue("Cafe"))
+                .thenReturn(Optional.of(existingProduct()));
+        when(acquisitionRepository.findByProductOid("p-1")).thenReturn(List.of(
+                acquisition(40.0, 4)
+        ));
+        when(productRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        handler.applyToInventory(request(60.0, 6, List.of()), "user-1", CompanyOid.of("company-1"));
+
+        ArgumentCaptor<Product> captor = ArgumentCaptor.forClass(Product.class);
+        verify(productRepository).save(captor.capture());
+        assertEquals(List.of("uom-existing"), captor.getValue().getUnitOfMeasures());
     }
 
     @Test

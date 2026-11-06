@@ -137,4 +137,26 @@ class ProductTest {
         assertEquals(List.of("uom-1"), product.withUnitPublicCost(20.0).getUnitOfMeasures());
         assertEquals(List.of("uom-1"), product.withAverageUnitRealCost(12.0).getUnitOfMeasures());
     }
+
+    @Test
+    void withUnitOfMeasuresReplacesTheUnitsAndPreservesTheOtherFields() {
+        Product product = Product.builder()
+                .id("p-1")
+                .name("Cafe")
+                .unitOfMeasures(List.of("uom-1"))
+                .stock(4)
+                .realCost(10.0)
+                .unitRealCost(10.0)
+                .unitPublicCost(15.0)
+                .build();
+
+        Product updated = product.withUnitOfMeasures(List.of("uom-2", "uom-3"));
+
+        assertEquals(List.of("uom-2", "uom-3"), updated.getUnitOfMeasures());
+        assertEquals("p-1", updated.getId());
+        assertEquals("Cafe", updated.getName());
+        assertEquals(4, updated.getStock());
+        assertEquals(10.0, updated.getRealCost());
+        assertEquals(15.0, updated.getUnitPublicCost());
+    }
 }

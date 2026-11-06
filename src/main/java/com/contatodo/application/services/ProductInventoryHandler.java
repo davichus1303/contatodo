@@ -1,6 +1,7 @@
 package com.contatodo.application.services;
 
 import com.contatodo.application.dto.request.CreateAcquisitionRequest;
+import com.contatodo.application.validators.ProductValidator;
 import com.contatodo.domain.entities.Acquisition;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.entities.ProductCostHistory;
@@ -31,6 +32,7 @@ public class ProductInventoryHandler {
     private final ProductRepository productRepository;
     private final AcquisitionRepository acquisitionRepository;
     private final ProductCostHistoryRepository productCostHistoryRepository;
+    private final ProductValidator productValidator;
 
     /**
      * Creates an inventory handler.
@@ -38,15 +40,18 @@ public class ProductInventoryHandler {
      * @param productRepository Product repository port.
      * @param acquisitionRepository Acquisition repository port.
      * @param productCostHistoryRepository Product cost history repository port.
+     * @param productValidator Product validator reused for unit of measure rules.
      */
     public ProductInventoryHandler(
             ProductRepository productRepository,
             AcquisitionRepository acquisitionRepository,
-            ProductCostHistoryRepository productCostHistoryRepository
+            ProductCostHistoryRepository productCostHistoryRepository,
+            ProductValidator productValidator
     ) {
         this.productRepository = productRepository;
         this.acquisitionRepository = acquisitionRepository;
         this.productCostHistoryRepository = productCostHistoryRepository;
+        this.productValidator = productValidator;
     }
 
     /**
@@ -74,8 +79,11 @@ public class ProductInventoryHandler {
                 .orElse(null);
 
         if (existingProduct == null) {
+            productValidator.validateRequiredUnitOfMeasures(request.getUnitOfMeasures());
             return createProductFromAcquisition(request, userOid, companyOid);
         }
+
+        productValidator.validateOptionalUnitOfMeasures(request.getUnitOfMeasures());
         return replenishExistingProduct(existingProduct, request);
     }
 
@@ -113,6 +121,9 @@ public class ProductInventoryHandler {
                 .replenish(request.getQuantity())
                 .withAverageUnitRealCost(averageUnitRealCost)
                 .withUnitPublicCost(request.getUnitPublicCost());
+        if (request.getUnitOfMeasures() != null && !request.getUnitOfMeasures().isEmpty()) {
+            updatedProduct = updatedProduct.withUnitOfMeasures(request.getUnitOfMeasures());
+        }
         productRepository.save(updatedProduct);
 
         return new InventoryOutcome(updatedProduct.getId(), updatedProduct.getName(), averageUnitRealCost);
@@ -169,6 +180,7 @@ public class ProductInventoryHandler {
         return Product.builder()
                 .name(request.getProductName())
                 .description(request.getDescription() != null ? request.getDescription() : "")
+                .unitOfMeasures(request.getUnitOfMeasures())
                 .stock(request.getQuantity())
                 .code(generateNextProductCode(companyOid))
                 .realCost(request.getRealCost())
