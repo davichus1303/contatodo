@@ -5,9 +5,11 @@ import com.contatodo.domain.entities.Product;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Unit tests for {@link ProductPersistenceMapper}.
@@ -23,6 +25,7 @@ class ProductPersistenceMapperTest {
                 .id("prod-1")
                 .name("Cafe")
                 .description("Grano de cafe")
+                .unitOfMeasures(List.of("uom-1", "uom-2"))
                 .stock(10)
                 .code("42")
                 .realCost(50.0)
@@ -40,6 +43,7 @@ class ProductPersistenceMapperTest {
         assertEquals("prod-1", document.getId());
         assertEquals("Cafe", document.getName());
         assertEquals("Grano de cafe", document.getDescription());
+        assertEquals(List.of("uom-1", "uom-2"), document.getUnitOfMeasures());
         assertEquals(10, document.getStock());
         assertEquals("42", document.getCode());
         assertEquals(50.0, document.getRealCost());
@@ -59,6 +63,7 @@ class ProductPersistenceMapperTest {
         document.setId("prod-1");
         document.setName("Cafe");
         document.setDescription("Grano de cafe");
+        document.setUnitOfMeasures(List.of("uom-1", "uom-2"));
         document.setStock(10);
         document.setCode("42");
         document.setRealCost(50.0);
@@ -75,6 +80,7 @@ class ProductPersistenceMapperTest {
         assertEquals("prod-1", product.getId());
         assertEquals("Cafe", product.getName());
         assertEquals("Grano de cafe", product.getDescription());
+        assertEquals(List.of("uom-1", "uom-2"), product.getUnitOfMeasures());
         assertEquals(10, product.getStock());
         assertEquals("42", product.getCode());
         assertEquals(50.0, product.getRealCost());
@@ -111,12 +117,23 @@ class ProductPersistenceMapperTest {
     }
 
     @Test
+    void toEntityDefaultsNullUnitOfMeasuresToAnEmptyList() {
+        ProductDocument document = new ProductDocument();
+        document.setName("Cafe");
+
+        Product product = mapper.toEntity(document);
+
+        assertTrue(product.getUnitOfMeasures().isEmpty());
+    }
+
+    @Test
     void roundTripPreservesData() {
         LocalDateTime now = LocalDateTime.now();
         Product original = Product.builder()
                 .id("prod-1")
                 .name("Cafe")
                 .description("Grano de cafe")
+                .unitOfMeasures(List.of("uom-1", "uom-2"))
                 .stock(10)
                 .code("42")
                 .realCost(50.0)
@@ -135,6 +152,7 @@ class ProductPersistenceMapperTest {
         assertEquals(original.getId(), roundTripped.getId());
         assertEquals(original.getName(), roundTripped.getName());
         assertEquals(original.getDescription(), roundTripped.getDescription());
+        assertEquals(original.getUnitOfMeasures(), roundTripped.getUnitOfMeasures());
         assertEquals(original.getStock(), roundTripped.getStock());
         assertEquals(original.getCode(), roundTripped.getCode());
         assertEquals(original.getRealCost(), roundTripped.getRealCost());

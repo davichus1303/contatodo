@@ -38,6 +38,7 @@ public class ProductValidator {
         fieldValidator.validateNonNegative(request.getRealCost(), ProductConstants.PRODUCT_REAL_COST_REQUIRED, errors);
         fieldValidator.validateNonNegative(request.getUnitRealCost(), ProductConstants.PRODUCT_REAL_COST_REQUIRED, errors);
         fieldValidator.validateNonNegative(request.getUnitPublicCost(), ProductConstants.PRODUCT_PUBLIC_COST_REQUIRED, errors);
+        validateUnitOfMeasures(request.getUnitOfMeasures(), errors);
         fieldValidator.throwIfHasErrors(errors);
     }
 
@@ -60,6 +61,21 @@ public class ProductValidator {
         if (request.getUnitPublicCost() != null) {
             fieldValidator.validateNonNegative(request.getUnitPublicCost(), ProductConstants.PRODUCT_COST_INVALID, errors);
         }
+        validateUnitOfMeasures(request.getUnitOfMeasures(), errors);
         fieldValidator.throwIfHasErrors(errors);
+    }
+
+    /**
+     * Validates that the product references at least one usable unit of measure.
+     *
+     * @param unitOfMeasures Unit of measure identifiers supplied in the request.
+     * @param errors Error list to append to.
+     */
+    private void validateUnitOfMeasures(List<String> unitOfMeasures, List<String> errors) {
+        if (unitOfMeasures == null
+                || unitOfMeasures.isEmpty()
+                || unitOfMeasures.stream().anyMatch(value -> value == null || value.isBlank())) {
+            errors.add(ProductConstants.PRODUCT_UNIT_OF_MEASURE_REQUIRED);
+        }
     }
 }
