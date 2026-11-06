@@ -9,6 +9,7 @@ public class UpdateUnitOfMeasureRequest {
     private String abrev;
     private Boolean isActive;
     private Boolean isDeleted;
+    private Boolean isDivisible;
 
     public UpdateUnitOfMeasureRequest() {
     }
@@ -43,5 +44,13 @@ public class UpdateUnitOfMeasureRequest {
 
     public void setIsDeleted(Boolean isDeleted) {
         this.isDeleted = isDeleted;
+    }
+
+    public Boolean getIsDivisible() {
+        return isDivisible;
+    }
+
+    public void setIsDivisible(Boolean isDivisible) {
+        this.isDivisible = isDivisible;
     }
 }

@@ -23,6 +23,7 @@ class UnitOfMeasureMapperTest {
         CreateUnitOfMeasureRequest request = new CreateUnitOfMeasureRequest();
         request.setName("Kilogram");
         request.setAbrev("kg");
+        request.setIsDivisible(true);
 
         UnitOfMeasure unitOfMeasure = mapper.toEntity(request, "company-1");
 
@@ -32,6 +33,18 @@ class UnitOfMeasureMapperTest {
         assertEquals("company-1", unitOfMeasure.getCompanyOid());
         assertTrue(unitOfMeasure.getIsActive());
         assertFalse(unitOfMeasure.getIsDeleted());
+        assertTrue(unitOfMeasure.getIsDivisible());
+    }
+
+    @Test
+    void toEntityDefaultsTheDivisibleFlagToFalseWhenTheRequestOmitsIt() {
+        CreateUnitOfMeasureRequest request = new CreateUnitOfMeasureRequest();
+        request.setName("Kilogram");
+        request.setAbrev("kg");
+
+        UnitOfMeasure unitOfMeasure = mapper.toEntity(request, "company-1");
+
+        assertFalse(unitOfMeasure.getIsDivisible());
     }
 
     @Test
@@ -43,6 +56,7 @@ class UnitOfMeasureMapperTest {
                 .companyOid("company-1")
                 .isActive(true)
                 .isDeleted(false)
+                .isDivisible(true)
                 .build();
 
         UnitOfMeasureResponse response = mapper.toResponse(unitOfMeasure);
@@ -53,6 +67,7 @@ class UnitOfMeasureMapperTest {
         assertEquals("company-1", response.getCompanyOid());
         assertTrue(response.getIsActive());
         assertFalse(response.getIsDeleted());
+        assertTrue(response.getIsDivisible());
     }
 
     @Test
@@ -64,12 +79,14 @@ class UnitOfMeasureMapperTest {
                 .companyOid("company-1")
                 .isActive(true)
                 .isDeleted(false)
+                .isDivisible(true)
                 .build();
         UpdateUnitOfMeasureRequest request = new UpdateUnitOfMeasureRequest();
         request.setName("Gram");
         request.setAbrev("g");
         request.setIsActive(false);
         request.setIsDeleted(true);
+        request.setIsDivisible(false);
 
         UnitOfMeasure updated = mapper.updateEntityFromRequest(existing, request);
 
@@ -79,6 +96,7 @@ class UnitOfMeasureMapperTest {
         assertEquals("company-1", updated.getCompanyOid());
         assertFalse(updated.getIsActive());
         assertTrue(updated.getIsDeleted());
+        assertFalse(updated.getIsDivisible());
     }
 
     @Test
@@ -90,6 +108,7 @@ class UnitOfMeasureMapperTest {
                 .companyOid("company-1")
                 .isActive(true)
                 .isDeleted(false)
+                .isDivisible(true)
                 .build();
         UpdateUnitOfMeasureRequest request = new UpdateUnitOfMeasureRequest();
 
@@ -101,5 +120,6 @@ class UnitOfMeasureMapperTest {
         assertEquals("company-1", updated.getCompanyOid());
         assertTrue(updated.getIsActive());
         assertFalse(updated.getIsDeleted());
+        assertTrue(updated.getIsDivisible());
     }
 }

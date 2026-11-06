@@ -8,6 +8,7 @@ public class CreateUnitOfMeasureRequest {
     private String name;
     private String abrev;
     private String companyOid;
+    private Boolean isDivisible;
 
     public CreateUnitOfMeasureRequest() {
     }
@@ -34,5 +35,13 @@ public class CreateUnitOfMeasureRequest {
 
     public void setCompanyOid(String companyOid) {
         this.companyOid = companyOid;
+    }
+
+    public Boolean getIsDivisible() {
+        return isDivisible;
+    }
+
+    public void setIsDivisible(Boolean isDivisible) {
+        this.isDivisible = isDivisible;
     }
 }

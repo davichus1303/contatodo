@@ -46,6 +46,7 @@ class UnitOfMeasureControllerTest {
         response.setCompanyOid("c1");
         response.setIsActive(true);
         response.setIsDeleted(false);
+        response.setIsDivisible(true);
         return response;
     }
 
@@ -62,7 +63,8 @@ class UnitOfMeasureControllerTest {
                 .andExpect(jsonPath("$.data[0].abrev").value("kg"))
                 .andExpect(jsonPath("$.data[0].companyOid").value("c1"))
                 .andExpect(jsonPath("$.data[0].isActive").value(true))
-                .andExpect(jsonPath("$.data[0].isDeleted").value(false));
+                .andExpect(jsonPath("$.data[0].isDeleted").value(false))
+                .andExpect(jsonPath("$.data[0].isDivisible").value(true));
     }
 
     @Test
@@ -81,14 +83,15 @@ class UnitOfMeasureControllerTest {
 
         mockMvc.perform(post("/units-of-measure")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Kilogram\",\"abrev\":\"kg\",\"companyOid\":\"c1\"}")
+                        .content("{\"name\":\"Kilogram\",\"abrev\":\"kg\",\"companyOid\":\"c1\",\"isDivisible\":true}")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("Unit of measure created successfully."))
                 .andExpect(jsonPath("$.data.name").value("Kilogram"))
                 .andExpect(jsonPath("$.data.abrev").value("kg"))
-                .andExpect(jsonPath("$.data.companyOid").value("c1"));
+                .andExpect(jsonPath("$.data.companyOid").value("c1"))
+                .andExpect(jsonPath("$.data.isDivisible").value(true));
     }
 
     @Test
@@ -99,14 +102,15 @@ class UnitOfMeasureControllerTest {
         mockMvc.perform(put("/units-of-measure/u1")
                         .param("companyOid", "c1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Gram\",\"abrev\":\"g\",\"isActive\":true}")
+                        .content("{\"name\":\"Gram\",\"abrev\":\"g\",\"isActive\":true,\"isDivisible\":true}")
                         .accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value(200))
                 .andExpect(jsonPath("$.message").value("Unit of measure updated successfully."))
                 .andExpect(jsonPath("$.data.name").value("Kilogram"))
                 .andExpect(jsonPath("$.data.abrev").value("kg"))
-                .andExpect(jsonPath("$.data.companyOid").value("c1"));
+                .andExpect(jsonPath("$.data.companyOid").value("c1"))
+                .andExpect(jsonPath("$.data.isDivisible").value(true));
     }
 
     @Test

@@ -25,6 +25,7 @@ public class UnitOfMeasurePersistenceMapper implements PersistenceMapper<UnitOfM
         document.setCompanyOid(unitOfMeasure.getCompanyOid());
         document.setIsActive(unitOfMeasure.getIsActive());
         document.setIsDeleted(unitOfMeasure.getIsDeleted());
+        document.setIsDivisible(unitOfMeasure.getIsDivisible());
         return document;
     }
 
@@ -42,6 +43,7 @@ public class UnitOfMeasurePersistenceMapper implements PersistenceMapper<UnitOfM
                 .companyOid(document.getCompanyOid())
                 .isActive(document.getIsActive())
                 .isDeleted(document.getIsDeleted())
+                .isDivisible(document.getIsDivisible())
                 .build();
     }
 }
