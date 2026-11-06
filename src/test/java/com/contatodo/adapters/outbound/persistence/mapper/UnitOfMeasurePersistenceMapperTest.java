@@ -24,6 +24,7 @@ class UnitOfMeasurePersistenceMapperTest {
                 .companyOid("company-1")
                 .isActive(true)
                 .isDeleted(false)
+                .isDivisible(true)
                 .build();
 
         UnitOfMeasureDocument document = mapper.toDocument(unitOfMeasure);
@@ -34,6 +35,7 @@ class UnitOfMeasurePersistenceMapperTest {
         assertEquals("company-1", document.getCompanyOid());
         assertTrue(document.getIsActive());
         assertFalse(document.getIsDeleted());
+        assertTrue(document.getIsDivisible());
     }
 
     @Test
@@ -45,6 +47,7 @@ class UnitOfMeasurePersistenceMapperTest {
         document.setCompanyOid("company-1");
         document.setIsActive(true);
         document.setIsDeleted(false);
+        document.setIsDivisible(true);
 
         UnitOfMeasure unitOfMeasure = mapper.toEntity(document);
 
@@ -54,5 +57,6 @@ class UnitOfMeasurePersistenceMapperTest {
         assertEquals("company-1", unitOfMeasure.getCompanyOid());
         assertTrue(unitOfMeasure.getIsActive());
         assertFalse(unitOfMeasure.getIsDeleted());
+        assertTrue(unitOfMeasure.getIsDivisible());
     }
 }

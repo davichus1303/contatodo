@@ -17,6 +17,7 @@ public final class UnitOfMeasure {
     private final String companyOid;
     private final Boolean isActive;
     private final Boolean isDeleted;
+    private final Boolean isDivisible;
 
     /**
      * Creates a unit of measure from its builder.
@@ -30,6 +31,7 @@ public final class UnitOfMeasure {
         this.companyOid = builder.companyOid;
         this.isActive = builder.isActive;
         this.isDeleted = builder.isDeleted;
+        this.isDivisible = builder.isDivisible;
     }
 
     /**
@@ -39,6 +41,16 @@ public final class UnitOfMeasure {
      */
     public static Builder builder() {
         return new Builder();
+    }
+
+    /**
+     * Resolves whether the unit of measure can be sold in fractions,
+     * treating a missing flag as false.
+     *
+     * @return True when the unit is divisible.
+     */
+    public boolean isDivisible() {
+        return Boolean.TRUE.equals(isDivisible);
     }
 
     /**
@@ -77,6 +89,10 @@ public final class UnitOfMeasure {
         return isDeleted;
     }
 
+    public Boolean getIsDivisible() {
+        return isDivisible;
+    }
+
     /**
      * Creates a builder preloaded with the current state.
      *
@@ -89,7 +105,8 @@ public final class UnitOfMeasure {
                 .abrev(abrev)
                 .companyOid(companyOid)
                 .isActive(isActive)
-                .isDeleted(isDeleted);
+                .isDeleted(isDeleted)
+                .isDivisible(isDivisible);
     }
 
     /**
@@ -103,6 +120,7 @@ public final class UnitOfMeasure {
         private String companyOid;
         private Boolean isActive;
         private Boolean isDeleted;
+        private Boolean isDivisible;
 
         /**
          * Sets the identifier.
@@ -167,6 +185,17 @@ public final class UnitOfMeasure {
          */
         public Builder isDeleted(Boolean isDeleted) {
             this.isDeleted = isDeleted;
+            return this;
+        }
+
+        /**
+         * Sets the divisible flag.
+         *
+         * @param isDivisible Divisible flag.
+         * @return This builder.
+         */
+        public Builder isDivisible(Boolean isDivisible) {
+            this.isDivisible = isDivisible;
             return this;
         }
 

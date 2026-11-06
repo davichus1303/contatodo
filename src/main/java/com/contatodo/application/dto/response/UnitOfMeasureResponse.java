@@ -11,6 +11,7 @@ public class UnitOfMeasureResponse {
     private String companyOid;
     private Boolean isActive;
     private Boolean isDeleted;
+    private Boolean isDivisible;
 
     public UnitOfMeasureResponse() {
     }
@@ -61,5 +62,13 @@ public class UnitOfMeasureResponse {
 
     public void setIsDeleted(Boolean isDeleted) {
         this.isDeleted = isDeleted;
+    }
+
+    public Boolean getIsDivisible() {
+        return isDivisible;
+    }
+
+    public void setIsDivisible(Boolean isDivisible) {
+        this.isDivisible = isDivisible;
     }
 }

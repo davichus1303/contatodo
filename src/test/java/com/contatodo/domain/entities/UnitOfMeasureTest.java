@@ -22,6 +22,7 @@ class UnitOfMeasureTest {
                 .companyOid("company-1")
                 .isActive(true)
                 .isDeleted(false)
+                .isDivisible(true)
                 .build();
     }
 
@@ -35,6 +36,19 @@ class UnitOfMeasureTest {
         assertEquals("company-1", unitOfMeasure.getCompanyOid());
         assertTrue(unitOfMeasure.getIsActive());
         assertFalse(unitOfMeasure.getIsDeleted());
+        assertTrue(unitOfMeasure.getIsDivisible());
+        assertTrue(unitOfMeasure.isDivisible());
+    }
+
+    @Test
+    void treatsAMissingDivisibleFlagAsNotDivisible() {
+        UnitOfMeasure unitOfMeasure = UnitOfMeasure.builder()
+                .name("Kilogram")
+                .abrev("kg")
+                .build();
+
+        assertNull(unitOfMeasure.getIsDivisible());
+        assertFalse(unitOfMeasure.isDivisible());
     }
 
     @Test
@@ -73,5 +87,6 @@ class UnitOfMeasureTest {
         assertEquals("company-1", deleted.getCompanyOid());
         assertFalse(deleted.getIsActive());
         assertTrue(deleted.getIsDeleted());
+        assertTrue(deleted.getIsDivisible());
     }
 }
