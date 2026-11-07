@@ -1,6 +1,7 @@
 package com.contatodo.application.validators;
 
 import com.contatodo.application.dto.request.CreateAcquisitionRequest;
+import com.contatodo.shared.constants.AcquisitionConstants;
 import com.contatodo.shared.validators.FieldValidator;
 import org.springframework.stereotype.Component;
 
@@ -33,19 +34,19 @@ public class AcquisitionValidator {
         List<String> errors = fieldValidator.createErrorList();
 
         if (request.getProductName() == null || request.getProductName().trim().isEmpty()) {
-            errors.add("Product name is required");
+            errors.add(AcquisitionConstants.PRODUCT_NAME_REQUIRED);
         }
         if (request.getQuantity() == null || request.getQuantity() <= 0) {
-            errors.add("Quantity must be greater than zero");
+            errors.add(AcquisitionConstants.QUANTITY_GREATER_THAN_ZERO);
         }
         if (request.getRealCost() == null || request.getRealCost() <= 0) {
-            errors.add("Real cost must be greater than zero");
+            errors.add(AcquisitionConstants.REAL_COST_GREATER_THAN_ZERO);
         }
         if (request.getAcquisitionTypeOid() == null || request.getAcquisitionTypeOid().trim().isEmpty()) {
-            errors.add("Acquisition type is required");
+            errors.add(AcquisitionConstants.ACQUISITION_TYPE_REQUIRED);
         }
         if (request.getUnitOfMeasure() == null || request.getUnitOfMeasure().trim().isEmpty()) {
-            errors.add("Unit of measure is required");
+            errors.add(AcquisitionConstants.UNIT_OF_MEASURE_REQUIRED);
         }
 
         fieldValidator.throwIfHasErrors(errors);
@@ -62,17 +63,17 @@ public class AcquisitionValidator {
         List<String> errors = fieldValidator.createErrorList();
 
         if (request.getProductName() == null || request.getProductName().trim().isEmpty()) {
-            errors.add("Product name is required");
+            errors.add(AcquisitionConstants.PRODUCT_NAME_REQUIRED);
         }
         // Quantity is optional for non-inventory-affecting acquisitions
         if (request.getRealCost() == null || request.getRealCost() <= 0) {
-            errors.add("Real cost must be greater than zero");
+            errors.add(AcquisitionConstants.REAL_COST_GREATER_THAN_ZERO);
         }
         if (request.getAcquisitionTypeOid() == null || request.getAcquisitionTypeOid().trim().isEmpty()) {
-            errors.add("Acquisition type is required");
+            errors.add(AcquisitionConstants.ACQUISITION_TYPE_REQUIRED);
         }
         if (request.getUnitOfMeasure() == null || request.getUnitOfMeasure().trim().isEmpty()) {
-            errors.add("Unit of measure is required");
+            errors.add(AcquisitionConstants.UNIT_OF_MEASURE_REQUIRED);
         }
 
         fieldValidator.throwIfHasErrors(errors);
