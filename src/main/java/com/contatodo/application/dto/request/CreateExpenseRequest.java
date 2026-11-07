@@ -8,6 +8,7 @@ public class CreateExpenseRequest {
     private String acquisitionOid;
     private String acquisitionTypeOid;
     private String name;
+    private String unitOfMeasure;
     private Integer quantity;
     private Double amount;
     private String currency;
@@ -40,6 +41,24 @@ public class CreateExpenseRequest {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    /**
+     * Gets the unit of measure in which the expense was registered.
+     *
+     * @return Expense unit of measure identifier.
+     */
+    public String getUnitOfMeasure() {
+        return unitOfMeasure;
+    }
+
+    /**
+     * Sets the unit of measure in which the expense was registered.
+     *
+     * @param unitOfMeasure Expense unit of measure identifier.
+     */
+    public void setUnitOfMeasure(String unitOfMeasure) {
+        this.unitOfMeasure = unitOfMeasure;
     }
 
     public Integer getQuantity() {

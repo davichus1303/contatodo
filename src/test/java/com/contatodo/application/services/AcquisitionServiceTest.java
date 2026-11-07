@@ -1,9 +1,13 @@
 package com.contatodo.application.services;
 
+import com.contatodo.application.dto.request.CreateAcquisitionRequest;
+import com.contatodo.application.dto.request.CreateExpenseRequest;
 import com.contatodo.application.dto.response.AcquisitionResponse;
 import com.contatodo.application.mapper.AcquisitionMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.validators.AcquisitionValidator;
+import com.contatodo.domain.entities.Acquisition;
+import com.contatodo.domain.entities.AcquisitionType;
 import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.AcquisitionRepository;
 import com.contatodo.domain.repositories.AcquisitionTypeRepository;
@@ -13,10 +17,13 @@ import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -103,5 +110,44 @@ class AcquisitionServiceTest {
 
         assertEquals(AuthConstants.COMPANY_CONTEXT_REQUIRED, exception.getMessage());
         verify(acquisitionRepository, never()).findByAcquisitionDateBetween(any(), any(), any());
+    }
+
+    @Test
+    void registerNonInventoryAffectingAcquisitionPropagatesTheUnitOfMeasureToTheExpense() {
+        CreateAcquisitionRequest request = new CreateAcquisitionRequest();
+        request.setAcquisitionTypeOid("type-1");
+        request.setProductName("Fuel");
+        request.setRealCost(100.0);
+        request.setUnitOfMeasure("uom-1");
+
+        AcquisitionType acquisitionType = AcquisitionType.builder()
+                .id("type-1")
+                .name("Fuel")
+                .byUserOid("user-1")
+                .affectsInventory(false)
+                .build();
+        Acquisition savedAcquisition = Acquisition.builder()
+                .id("a-1")
+                .acquisitionTypeOid("type-1")
+                .productName("Fuel")
+                .unitOfMeasure("uom-1")
+                .quantity(1)
+                .realCost(100.0)
+                .acquisitionDate(LocalDateTime.now())
+                .byUserOid("user-1")
+                .build();
+
+        when(authenticatedUserProvider.getCurrentUserOid()).thenReturn("user-1");
+        when(companyService.resolveCompanyOid(any())).thenReturn(CompanyOid.of("company-1"));
+        when(acquisitionTypeRepository.findById("type-1")).thenReturn(Optional.of(acquisitionType));
+        when(acquisitionMapper.toEntity(any(), any(), any(), any(), any())).thenReturn(savedAcquisition);
+        when(acquisitionRepository.save(any())).thenReturn(savedAcquisition);
+        when(acquisitionMapper.toResponse(any(), any(), any())).thenReturn(new AcquisitionResponse());
+
+        acquisitionService.registerAcquisition(request);
+
+        ArgumentCaptor<CreateExpenseRequest> captor = ArgumentCaptor.forClass(CreateExpenseRequest.class);
+        verify(expenseService).createExpense(captor.capture());
+        assertEquals("uom-1", captor.getValue().getUnitOfMeasure());
     }
 }

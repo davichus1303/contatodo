@@ -79,20 +79,20 @@ class ProductValidatorTest {
     }
 
     @Test
-    void updateRequestRejectsMissingUnitsOfMeasure() {
-        InvalidRequestException exception = assertThrows(
-                InvalidRequestException.class,
-                () -> validator.validateUpdateRequest(updateRequest(null))
-        );
-
-        assertTrue(exception.getDetails().contains(ProductConstants.PRODUCT_UNIT_OF_MEASURE_REQUIRED));
+    void updateRequestAcceptsMissingUnitsOfMeasure() {
+        assertDoesNotThrow(() -> validator.validateUpdateRequest(updateRequest(null)));
     }
 
     @Test
-    void updateRequestRejectsAnEmptyUnitsOfMeasureList() {
+    void updateRequestAcceptsAnEmptyUnitsOfMeasureList() {
+        assertDoesNotThrow(() -> validator.validateUpdateRequest(updateRequest(List.of())));
+    }
+
+    @Test
+    void updateRequestRejectsBlankUnitsOfMeasureEntries() {
         InvalidRequestException exception = assertThrows(
                 InvalidRequestException.class,
-                () -> validator.validateUpdateRequest(updateRequest(List.of()))
+                () -> validator.validateUpdateRequest(updateRequest(List.of("uom-1", "  ")))
         );
 
         assertTrue(exception.getDetails().contains(ProductConstants.PRODUCT_UNIT_OF_MEASURE_REQUIRED));

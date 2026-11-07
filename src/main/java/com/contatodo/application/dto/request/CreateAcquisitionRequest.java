@@ -1,5 +1,7 @@
 package com.contatodo.application.dto.request;
 
+import java.util.List;
+
 /**
  * Request DTO for creating an acquisition.
  */
@@ -8,6 +10,8 @@ public class CreateAcquisitionRequest {
     private String acquisitionTypeOid;
     private String productName;
     private String description;
+    private List<String> unitOfMeasures;
+    private String unitOfMeasure;
     private Integer quantity;
     private Double realCost;
     private Double unitPublicCost;
@@ -43,6 +47,47 @@ public class CreateAcquisitionRequest {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    /**
+     * Gets the units of measure that the product can use.
+     *
+     * <p>Required when the acquisition creates a new product. Ignored when
+     * the product already exists; the product keeps its stored units.</p>
+     *
+     * @return Unit of measure identifiers, or null when omitted.
+     */
+    public List<String> getUnitOfMeasures() {
+        return unitOfMeasures;
+    }
+
+    /**
+     * Sets the units of measure that the product can use.
+     *
+     * @param unitOfMeasures Unit of measure identifiers.
+     */
+    public void setUnitOfMeasures(List<String> unitOfMeasures) {
+        this.unitOfMeasures = unitOfMeasures;
+    }
+
+    /**
+     * Gets the unit of measure in which the acquisition was registered.
+     *
+     * <p>Required for every acquisition, whether it affects inventory or not.</p>
+     *
+     * @return Acquisition unit of measure identifier.
+     */
+    public String getUnitOfMeasure() {
+        return unitOfMeasure;
+    }
+
+    /**
+     * Sets the unit of measure in which the acquisition was registered.
+     *
+     * @param unitOfMeasure Acquisition unit of measure identifier.
+     */
+    public void setUnitOfMeasure(String unitOfMeasure) {
+        this.unitOfMeasure = unitOfMeasure;
     }
 
     public Integer getQuantity() {

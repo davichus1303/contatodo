@@ -186,6 +186,7 @@ public class AcquisitionService {
         expenseRequest.setAcquisitionOid(savedAcquisition.getId());
         expenseRequest.setAcquisitionTypeOid(acquisitionType.getId());
         expenseRequest.setName(request.getProductName());
+        expenseRequest.setUnitOfMeasure(request.getUnitOfMeasure());
         expenseRequest.setQuantity(request.getQuantity() != null ? request.getQuantity() : 1);
         expenseRequest.setAmount(request.getRealCost());
         expenseRequest.setCurrency(ExpenseConstants.DEFAULT_CURRENCY);
