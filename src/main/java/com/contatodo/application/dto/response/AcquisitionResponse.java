@@ -10,6 +10,7 @@ public class AcquisitionResponse {
     private String id;
     private String productName;
     private String acquisitionType;
+    private String unitOfMeasure;
     private Integer quantity;
     private Double realCost;
     private Double unitRealCost;
@@ -44,6 +45,14 @@ public class AcquisitionResponse {
 
     public void setAcquisitionType(String acquisitionType) {
         this.acquisitionType = acquisitionType;
+    }
+
+    public String getUnitOfMeasure() {
+        return unitOfMeasure;
+    }
+
+    public void setUnitOfMeasure(String unitOfMeasure) {
+        this.unitOfMeasure = unitOfMeasure;
     }
 
     public Integer getQuantity() {

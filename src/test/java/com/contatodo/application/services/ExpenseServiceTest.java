@@ -66,6 +66,7 @@ class ExpenseServiceTest {
         CreateExpenseRequest request = new CreateExpenseRequest();
         request.setAmount(100.0);
         request.setName("Papeleria");
+        request.setUnitOfMeasure("uom-1");
         return request;
     }
 

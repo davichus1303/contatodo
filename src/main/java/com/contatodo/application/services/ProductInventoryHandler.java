@@ -83,7 +83,6 @@ public class ProductInventoryHandler {
             return createProductFromAcquisition(request, userOid, companyOid);
         }
 
-        productValidator.validateOptionalUnitOfMeasures(request.getUnitOfMeasures());
         return replenishExistingProduct(existingProduct, request);
     }
 
@@ -121,9 +120,6 @@ public class ProductInventoryHandler {
                 .replenish(request.getQuantity())
                 .withAverageUnitRealCost(averageUnitRealCost)
                 .withUnitPublicCost(request.getUnitPublicCost());
-        if (request.getUnitOfMeasures() != null && !request.getUnitOfMeasures().isEmpty()) {
-            updatedProduct = updatedProduct.withUnitOfMeasures(request.getUnitOfMeasures());
-        }
         productRepository.save(updatedProduct);
 
         return new InventoryOutcome(updatedProduct.getId(), updatedProduct.getName(), averageUnitRealCost);

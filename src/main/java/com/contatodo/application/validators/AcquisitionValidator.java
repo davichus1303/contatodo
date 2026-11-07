@@ -44,6 +44,9 @@ public class AcquisitionValidator {
         if (request.getAcquisitionTypeOid() == null || request.getAcquisitionTypeOid().trim().isEmpty()) {
             errors.add("Acquisition type is required");
         }
+        if (request.getUnitOfMeasure() == null || request.getUnitOfMeasure().trim().isEmpty()) {
+            errors.add("Unit of measure is required");
+        }
 
         fieldValidator.throwIfHasErrors(errors);
     }
@@ -67,6 +70,9 @@ public class AcquisitionValidator {
         }
         if (request.getAcquisitionTypeOid() == null || request.getAcquisitionTypeOid().trim().isEmpty()) {
             errors.add("Acquisition type is required");
+        }
+        if (request.getUnitOfMeasure() == null || request.getUnitOfMeasure().trim().isEmpty()) {
+            errors.add("Unit of measure is required");
         }
 
         fieldValidator.throwIfHasErrors(errors);

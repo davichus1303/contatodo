@@ -23,4 +23,14 @@ class CreateAcquisitionRequestTest {
 
         assertEquals(List.of("uom-1", "uom-2"), request.getUnitOfMeasures());
     }
+
+    @Test
+    void deserializesTheAcquisitionUnitOfMeasure() throws Exception {
+        CreateAcquisitionRequest request = objectMapper.readValue(
+                "{\"unitOfMeasure\":\"uom-1\"}",
+                CreateAcquisitionRequest.class
+        );
+
+        assertEquals("uom-1", request.getUnitOfMeasure());
+    }
 }

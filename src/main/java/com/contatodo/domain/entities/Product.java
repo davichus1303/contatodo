@@ -182,19 +182,6 @@ public final class Product {
     }
 
     /**
-     * Updates the units of measure in which the product can be sold.
-     *
-     * @param unitOfMeasures Unit of measure identifiers.
-     * @return New product instance with updated units and timestamp.
-     */
-    public Product withUnitOfMeasures(List<String> unitOfMeasures) {
-        Builder builder = copyBase();
-        builder.unitOfMeasures = unitOfMeasures;
-        builder.updatedDate = LocalDateTime.now();
-        return new Product(builder);
-    }
-
-    /**
      * Recalculates costs using a new weighted average real unit cost.
      *
      * <p>The total real cost becomes the average multiplied by current

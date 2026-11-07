@@ -16,6 +16,7 @@ public class AcquisitionDocument {
     private String acquisitionTypeOid;
     private String productOid;
     private String productName;
+    private String unitOfMeasure;
     private Integer quantity;
     private Double realCost;
     private Double unitRealCost;
@@ -61,6 +62,14 @@ public class AcquisitionDocument {
 
     public void setProductName(String productName) {
         this.productName = productName;
+    }
+
+    public String getUnitOfMeasure() {
+        return unitOfMeasure;
+    }
+
+    public void setUnitOfMeasure(String unitOfMeasure) {
+        this.unitOfMeasure = unitOfMeasure;
     }
 
     public Integer getQuantity() {

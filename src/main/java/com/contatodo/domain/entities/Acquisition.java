@@ -17,6 +17,7 @@ public final class Acquisition {
     private final String acquisitionTypeOid;
     private final String productOid;
     private final String productName;
+    private final String unitOfMeasure;
     private final Integer quantity;
     private final Double realCost;
     private final Double unitRealCost;
@@ -42,6 +43,7 @@ public final class Acquisition {
         this.acquisitionTypeOid = builder.acquisitionTypeOid;
         this.productOid = builder.productOid;
         this.productName = builder.productName;
+        this.unitOfMeasure = builder.unitOfMeasure;
         this.quantity = builder.quantity;
         this.realCost = builder.realCost;
         this.unitRealCost = builder.unitRealCost;
@@ -81,6 +83,10 @@ public final class Acquisition {
 
     public String getProductName() {
         return productName;
+    }
+
+    public String getUnitOfMeasure() {
+        return unitOfMeasure;
     }
 
     public Integer getQuantity() {
@@ -148,6 +154,7 @@ public final class Acquisition {
         private String acquisitionTypeOid;
         private String productOid;
         private String productName;
+        private String unitOfMeasure;
         private Integer quantity;
         private Double realCost;
         private Double unitRealCost;
@@ -204,6 +211,17 @@ public final class Acquisition {
          */
         public Builder productName(String productName) {
             this.productName = productName;
+            return this;
+        }
+
+        /**
+         * Sets the unit of measure in which the acquisition was registered.
+         *
+         * @param unitOfMeasure Acquisition unit of measure identifier.
+         * @return This builder.
+         */
+        public Builder unitOfMeasure(String unitOfMeasure) {
+            this.unitOfMeasure = unitOfMeasure;
             return this;
         }
 
@@ -364,14 +382,21 @@ public final class Acquisition {
         /**
          * Builds the acquisition validating its invariants.
          *
+         * <p>The acquisition unit of measure is required for new records. It is
+         * not enforced when rebuilding persisted records, so historical
+         * acquisitions without the field can still be read.</p>
+         *
          * @return Immutable acquisition.
-         * @throws com.contatodo.domain.exception.InvalidEntityStateException if type, owner, quantity or real cost are missing or invalid.
+         * @throws com.contatodo.domain.exception.InvalidEntityStateException if type, owner, quantity, real cost or the unit of measure of a new record are missing or invalid.
          */
         public Acquisition build() {
             EntityValidation.requireNotBlank(acquisitionTypeOid, ValidationConstants.FIELD_REQUIRED);
             EntityValidation.requireNotBlank(byUserOid, ValidationConstants.FIELD_REQUIRED);
             EntityValidation.requirePositive(quantity, ValidationConstants.FIELD_INVALID_TYPE);
             EntityValidation.requireNonNegative(realCost, ValidationConstants.FIELD_INVALID_RANGE);
+            if (id == null) {
+                EntityValidation.requireNotBlank(unitOfMeasure, ValidationConstants.FIELD_REQUIRED);
+            }
             return new Acquisition(this);
         }
     }

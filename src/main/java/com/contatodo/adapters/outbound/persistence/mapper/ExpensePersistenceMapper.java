@@ -26,6 +26,7 @@ public class ExpensePersistenceMapper implements PersistenceMapper<ExpenseDocume
         document.setAcquisitionOid(expense.getAcquisitionOid());
         document.setAcquisitionTypeOid(expense.getAcquisitionTypeOid());
         document.setName(expense.getName());
+        document.setUnitOfMeasure(expense.getUnitOfMeasure());
         document.setQuantity(expense.getQuantity());
         document.setAmount(expense.getAmount());
         document.setCurrency(expense.getCurrency());
@@ -53,6 +54,7 @@ public class ExpensePersistenceMapper implements PersistenceMapper<ExpenseDocume
                 .acquisitionOid(document.getAcquisitionOid())
                 .acquisitionTypeOid(document.getAcquisitionTypeOid())
                 .name(document.getName())
+                .unitOfMeasure(document.getUnitOfMeasure())
                 .quantity(document.getQuantity())
                 .amount(document.getAmount())
                 .currency(document.getCurrency())

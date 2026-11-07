@@ -71,6 +71,7 @@ class ProductInventoryHandlerTest {
         request.setQuantity(quantity);
         request.setUnitPublicCost(20.0);
         request.setUnitOfMeasures(unitOfMeasures);
+        request.setUnitOfMeasure("uom-acq");
         return request;
     }
 
@@ -159,7 +160,7 @@ class ProductInventoryHandlerTest {
         assertEquals(10, captor.getValue().getStock());
         assertEquals(100.0, captor.getValue().getRealCost());
         assertEquals(20.0, captor.getValue().getUnitPublicCost());
-        assertEquals(List.of("uom-1"), captor.getValue().getUnitOfMeasures());
+        assertEquals(List.of("uom-existing"), captor.getValue().getUnitOfMeasures());
     }
 
     @Test
@@ -201,6 +202,7 @@ class ProductInventoryHandlerTest {
                 .id("a-1")
                 .productOid("p-1")
                 .acquisitionTypeOid("t-1")
+                .unitOfMeasure("uom-1")
                 .quantity(5)
                 .realCost(50.0)
                 .unitRealCost(10.0)
@@ -224,6 +226,7 @@ class ProductInventoryHandlerTest {
                 .id("a-old")
                 .productOid("p-1")
                 .acquisitionTypeOid("t-1")
+                .unitOfMeasure("uom-1")
                 .quantity(quantity)
                 .realCost(realCost)
                 .unitRealCost(realCost / quantity)

@@ -78,21 +78,6 @@ public class ProductValidator {
     }
 
     /**
-     * Validates the entries of an optional unit of measure list.
-     *
-     * <p>Missing or empty lists are valid because existing products keep their
-     * current units. When entries are supplied, none of them may be blank.</p>
-     *
-     * @param unitOfMeasures Unit of measure identifiers supplied in the request.
-     * @throws com.contatodo.shared.exceptions.InvalidRequestException if a supplied entry is invalid.
-     */
-    public void validateOptionalUnitOfMeasures(List<String> unitOfMeasures) {
-        List<String> errors = fieldValidator.createErrorList();
-        validateUnitOfMeasuresIfPresent(unitOfMeasures, errors);
-        fieldValidator.throwIfHasErrors(errors);
-    }
-
-    /**
      * Validates that the product references at least one usable unit of measure.
      *
      * @param unitOfMeasures Unit of measure identifiers supplied in the request.

@@ -24,6 +24,10 @@ public class ExpenseValidator {
             throw new InvalidRequestException(ResponseConstants.VALIDATION_ERROR_MESSAGE, Collections.singletonList("Name is required"));
         }
 
+        if (request.getUnitOfMeasure() == null || request.getUnitOfMeasure().trim().isEmpty()) {
+            throw new InvalidRequestException(ResponseConstants.VALIDATION_ERROR_MESSAGE, Collections.singletonList("Unit of measure is required"));
+        }
+
         // Quantity is optional for expenses (can be 1 for non-inventory acquisitions)
         if (request.getQuantity() != null && request.getQuantity() <= 0) {
             throw new InvalidRequestException(ResponseConstants.VALIDATION_ERROR_MESSAGE, Collections.singletonList("Quantity must be greater than 0"));
