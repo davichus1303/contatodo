@@ -26,6 +26,7 @@ public class AcquisitionPersistenceMapper implements PersistenceMapper<Acquisiti
         document.setAcquisitionTypeOid(acquisition.getAcquisitionTypeOid());
         document.setProductOid(acquisition.getProductOid());
         document.setProductName(acquisition.getProductName());
+        document.setUnitOfMeasure(acquisition.getUnitOfMeasure());
         document.setQuantity(acquisition.getQuantity());
         document.setRealCost(acquisition.getRealCost());
         document.setUnitRealCost(acquisition.getUnitRealCost());
@@ -57,6 +58,7 @@ public class AcquisitionPersistenceMapper implements PersistenceMapper<Acquisiti
                 .acquisitionTypeOid(document.getAcquisitionTypeOid())
                 .productOid(document.getProductOid())
                 .productName(document.getProductName())
+                .unitOfMeasure(document.getUnitOfMeasure())
                 .quantity(document.getQuantity())
                 .realCost(document.getRealCost())
                 .unitRealCost(document.getUnitRealCost())

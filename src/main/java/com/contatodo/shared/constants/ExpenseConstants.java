@@ -22,6 +22,12 @@ public final class ExpenseConstants {
 
     public static final String DEFAULT_CURRENCY = "MXN";
 
+    public static final String NAME_REQUIRED = "Name is required";
+    public static final String UNIT_OF_MEASURE_REQUIRED = "Unit of measure is required";
+    public static final String QUANTITY_GREATER_THAN_ZERO = "Quantity must be greater than 0";
+    public static final String AMOUNT_GREATER_THAN_ZERO = "Amount must be greater than 0";
+    public static final String CURRENCY_REQUIRED = "Currency is required";
+
     private ExpenseConstants() {
     }
 }

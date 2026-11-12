@@ -31,6 +31,7 @@ public class AcquisitionMapper {
                 .acquisitionTypeOid(request.getAcquisitionTypeOid())
                 .productOid(productOid)
                 .productName(request.getProductName())
+                .unitOfMeasure(request.getUnitOfMeasure())
                 .quantity(request.getQuantity())
                 .realCost(request.getRealCost())
                 .unitRealCost(unitRealCost)
@@ -62,6 +63,7 @@ public class AcquisitionMapper {
         // Use the provided productName, or fall back to the entity's productName
         response.setProductName(productName != null ? productName : acquisition.getProductName());
         response.setAcquisitionType(acquisitionType);
+        response.setUnitOfMeasure(acquisition.getUnitOfMeasure());
         response.setQuantity(acquisition.getQuantity());
         response.setRealCost(acquisition.getRealCost());
         response.setUnitRealCost(acquisition.getUnitRealCost());

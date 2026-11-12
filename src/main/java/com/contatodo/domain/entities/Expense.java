@@ -17,6 +17,7 @@ public final class Expense {
     private final String acquisitionOid;
     private final String acquisitionTypeOid;
     private final String name;
+    private final String unitOfMeasure;
     private final Integer quantity;
     private final Double amount;
     private final String currency;
@@ -38,6 +39,7 @@ public final class Expense {
         this.acquisitionOid = builder.acquisitionOid;
         this.acquisitionTypeOid = builder.acquisitionTypeOid;
         this.name = builder.name;
+        this.unitOfMeasure = builder.unitOfMeasure;
         this.quantity = builder.quantity;
         this.amount = builder.amount;
         this.currency = builder.currency;
@@ -73,6 +75,10 @@ public final class Expense {
 
     public String getName() {
         return name;
+    }
+
+    public String getUnitOfMeasure() {
+        return unitOfMeasure;
     }
 
     public Integer getQuantity() {
@@ -124,6 +130,7 @@ public final class Expense {
         private String acquisitionOid;
         private String acquisitionTypeOid;
         private String name;
+        private String unitOfMeasure;
         private Integer quantity;
         private Double amount;
         private String currency;
@@ -176,6 +183,17 @@ public final class Expense {
          */
         public Builder name(String name) {
             this.name = name;
+            return this;
+        }
+
+        /**
+         * Sets the unit of measure in which the expense was registered.
+         *
+         * @param unitOfMeasure Expense unit of measure identifier.
+         * @return This builder.
+         */
+        public Builder unitOfMeasure(String unitOfMeasure) {
+            this.unitOfMeasure = unitOfMeasure;
             return this;
         }
 
@@ -292,8 +310,12 @@ public final class Expense {
         /**
          * Builds the expense validating its invariants.
          *
+         * <p>The expense unit of measure is required for new records. It is not
+         * enforced when rebuilding persisted records, so historical expenses
+         * without the field can still be read.</p>
+         *
          * @return Immutable expense.
-         * @throws com.contatodo.domain.exception.InvalidEntityStateException if name, owner or date are missing, or the amount is negative.
+         * @throws com.contatodo.domain.exception.InvalidEntityStateException if name, owner or date are missing, the amount is negative, or the unit of measure of a new record is missing.
          */
         public Expense build() {
             EntityValidation.requireNotBlank(name, ValidationConstants.FIELD_REQUIRED);
@@ -302,6 +324,9 @@ public final class Expense {
                 throw new com.contatodo.domain.exception.InvalidEntityStateException(ValidationConstants.FIELD_REQUIRED);
             }
             EntityValidation.requireNonNegative(amount, ValidationConstants.FIELD_INVALID_RANGE);
+            if (id == null) {
+                EntityValidation.requireNotBlank(unitOfMeasure, ValidationConstants.FIELD_REQUIRED);
+            }
             return new Expense(this);
         }
     }
