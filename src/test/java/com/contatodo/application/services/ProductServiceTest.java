@@ -6,6 +6,7 @@ import com.contatodo.application.dto.response.ProductResponse;
 import com.contatodo.application.mapper.ProductMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.validators.ProductValidator;
+import com.contatodo.application.validators.UnitOfMeasureValidator;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.entities.UnitOfMeasure;
 import com.contatodo.domain.entities.User;
@@ -54,6 +55,8 @@ class ProductServiceTest {
     @Mock
     private UnitOfMeasureRepository unitOfMeasureRepository;
 
+    private UnitOfMeasureValidator unitOfMeasureValidator;
+
     @Mock
     private ProductValidator productValidator;
 
@@ -70,9 +73,10 @@ class ProductServiceTest {
 
     @BeforeEach
     void setUp() {
+        unitOfMeasureValidator = new UnitOfMeasureValidator(unitOfMeasureRepository);
         productService = new ProductService(
-                productRepository, userRepository, unitOfMeasureRepository, productValidator,
-                productMapper, authenticatedUserProvider, companyService
+                productRepository, userRepository, unitOfMeasureRepository, unitOfMeasureValidator,
+                productValidator, productMapper, authenticatedUserProvider, companyService
         );
     }
 

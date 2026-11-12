@@ -6,6 +6,7 @@ import com.contatodo.application.dto.response.ProductResponse;
 import com.contatodo.application.mapper.ProductMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.validators.ProductValidator;
+import com.contatodo.application.validators.UnitOfMeasureValidator;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.entities.UnitOfMeasure;
 import com.contatodo.domain.entities.User;
@@ -14,8 +15,6 @@ import com.contatodo.domain.repositories.ProductRepository;
 import com.contatodo.domain.repositories.UnitOfMeasureRepository;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.shared.constants.ProductConstants;
-import com.contatodo.shared.constants.ResponseConstants;
-import com.contatodo.shared.exceptions.InvalidRequestException;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +34,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final UnitOfMeasureRepository unitOfMeasureRepository;
+    private final UnitOfMeasureValidator unitOfMeasureValidator;
     private final ProductValidator productValidator;
     private final ProductMapper productMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
@@ -46,6 +46,7 @@ public class ProductService {
      * @param productRepository Product repository port.
      * @param userRepository User repository port.
      * @param unitOfMeasureRepository Unit of measure repository port.
+     * @param unitOfMeasureValidator Unit of measure validator.
      * @param productValidator Product validator.
      * @param productMapper Product mapper.
      * @param authenticatedUserProvider Authenticated user provider.
@@ -55,6 +56,7 @@ public class ProductService {
             ProductRepository productRepository,
             UserRepository userRepository,
             UnitOfMeasureRepository unitOfMeasureRepository,
+            UnitOfMeasureValidator unitOfMeasureValidator,
             ProductValidator productValidator,
             ProductMapper productMapper,
             AuthenticatedUserProvider authenticatedUserProvider,
@@ -63,6 +65,7 @@ public class ProductService {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.unitOfMeasureRepository = unitOfMeasureRepository;
+        this.unitOfMeasureValidator = unitOfMeasureValidator;
         this.productValidator = productValidator;
         this.productMapper = productMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
@@ -85,7 +88,7 @@ public class ProductService {
 
         String nextCode = generateNextCode();
         CompanyOid companyOid = companyService.resolveCompanyOid(request.getCompanyOid());
-        validateUnitOfMeasuresExist(companyOid, request.getUnitOfMeasures());
+        unitOfMeasureValidator.validateExist(companyOid, request.getUnitOfMeasures());
         Product product = productMapper.toEntity(request, nextCode, userOid, companyOid);
 
         Product savedProduct = productRepository.save(product);
@@ -105,7 +108,7 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ProductConstants.PRODUCT_NOT_FOUND));
 
-        validateUnitOfMeasuresExist(product.getCompanyOid(), request.getUnitOfMeasures());
+        unitOfMeasureValidator.validateExist(product.getCompanyOid(), request.getUnitOfMeasures());
 
         Product updatedProduct = productRepository.save(
                 productMapper.applyUpdate(product, request, authenticatedUserProvider.getCurrentUserOid())
@@ -182,34 +185,6 @@ public class ProductService {
         return unitOfMeasureRepository.findActiveByCompany(companyOid).stream()
                 .filter(unit -> referencedOids.contains(unit.getId()))
                 .collect(Collectors.toMap(UnitOfMeasure::getId, Function.identity(), (first, second) -> first));
-    }
-
-    /**
-     * Validates that every supplied unit of measure exists, is active and
-     * belongs to the given company.
-     *
-     * @param companyOid Owning company identifier.
-     * @param unitOfMeasures Unit of measure identifiers supplied in the request.
-     * @throws InvalidRequestException when at least one identifier cannot be resolved.
-     */
-    private void validateUnitOfMeasuresExist(CompanyOid companyOid, List<String> unitOfMeasures) {
-        if (unitOfMeasures == null || unitOfMeasures.isEmpty()) {
-            return;
-        }
-        Set<String> existingOids = unitOfMeasureRepository.findActiveByCompany(companyOid).stream()
-                .map(UnitOfMeasure::getId)
-                .collect(Collectors.toSet());
-        List<String> missingOids = unitOfMeasures.stream()
-                .filter(Objects::nonNull)
-                .distinct()
-                .filter(oid -> !existingOids.contains(oid))
-                .toList();
-        if (!missingOids.isEmpty()) {
-            List<String> errors = missingOids.stream()
-                    .map(oid -> ProductConstants.PRODUCT_UNIT_OF_MEASURE_NOT_FOUND + ": " + oid)
-                    .toList();
-            throw new InvalidRequestException(ResponseConstants.VALIDATION_ERROR_MESSAGE, errors);
-        }
     }
 
     /**
