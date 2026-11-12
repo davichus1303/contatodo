@@ -8,11 +8,13 @@ import com.contatodo.application.validators.SaleValidator;
 import com.contatodo.application.validators.UnitOfMeasureValidator;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.entities.Sale;
+import com.contatodo.domain.entities.UnitOfMeasure;
 import com.contatodo.domain.entities.User;
 import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.model.Money;
 import com.contatodo.domain.repositories.ProductRepository;
 import com.contatodo.domain.repositories.SaleRepository;
+import com.contatodo.domain.repositories.UnitOfMeasureRepository;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.shared.constants.SaleConstants;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
@@ -22,7 +24,12 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Use case service containing sale business logic.
@@ -35,6 +42,7 @@ public class SaleService {
     private final UserRepository userRepository;
     private final SaleValidator saleValidator;
     private final UnitOfMeasureValidator unitOfMeasureValidator;
+    private final UnitOfMeasureRepository unitOfMeasureRepository;
     private final SaleMapper saleMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final CompanyService companyService;
@@ -47,6 +55,7 @@ public class SaleService {
      * @param userRepository User repository port.
      * @param saleValidator Sale validator.
      * @param unitOfMeasureValidator Unit of measure validator.
+     * @param unitOfMeasureRepository Unit of measure repository used to join names on reads.
      * @param saleMapper Sale mapper.
      * @param authenticatedUserProvider Authenticated user provider.
      * @param companyService Company service used to resolve the owning company.
@@ -57,6 +66,7 @@ public class SaleService {
             UserRepository userRepository,
             SaleValidator saleValidator,
             UnitOfMeasureValidator unitOfMeasureValidator,
+            UnitOfMeasureRepository unitOfMeasureRepository,
             SaleMapper saleMapper,
             AuthenticatedUserProvider authenticatedUserProvider,
             CompanyService companyService
@@ -66,6 +76,7 @@ public class SaleService {
         this.userRepository = userRepository;
         this.saleValidator = saleValidator;
         this.unitOfMeasureValidator = unitOfMeasureValidator;
+        this.unitOfMeasureRepository = unitOfMeasureRepository;
         this.saleMapper = saleMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.companyService = companyService;
@@ -140,7 +151,7 @@ public class SaleService {
         CompanyOid companyOid = companyService.resolveReadCompanyOid(requestedCompanyOid);
         LocalDate today = LocalDate.now();
         List<Sale> sales = saleRepository.findBySaleDate(companyOid, today);
-        return saleMapper.toResponseList(sales);
+        return saleMapper.toResponseListWithUnitOfMeasureNames(sales, loadUnitsOfMeasure(companyOid, sales));
     }
 
     /**
@@ -160,7 +171,31 @@ public class SaleService {
         LocalDateTime endDateTime = DateUtils.endOfDay(endDate);
 
         List<Sale> sales = saleRepository.findBySaleDateBetween(companyOid, startDateTime, endDateTime);
-        return saleMapper.toResponseList(sales);
+        return saleMapper.toResponseListWithUnitOfMeasureNames(sales, loadUnitsOfMeasure(companyOid, sales));
+    }
+
+    /**
+     * Loads the active units of measure referenced by the given sales.
+     *
+     * <p>Only the units of the resolved company are considered, so the join
+     * behaves like an inner join: a sale whose unit is missing, inactive or
+     * owned by another company keeps a {@code null} name.</p>
+     *
+     * @param companyOid Owning company identifier.
+     * @param sales Sales whose unit identifiers must be resolved.
+     * @return Referenced units of measure keyed by identifier.
+     */
+    private Map<String, UnitOfMeasure> loadUnitsOfMeasure(CompanyOid companyOid, List<Sale> sales) {
+        Set<String> referencedOids = sales.stream()
+                .map(Sale::getUnitOfMeasureOid)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (referencedOids.isEmpty()) {
+            return Map.of();
+        }
+        return unitOfMeasureRepository.findActiveByCompany(companyOid).stream()
+                .filter(unit -> referencedOids.contains(unit.getId()))
+                .collect(Collectors.toMap(UnitOfMeasure::getId, Function.identity(), (first, second) -> first));
     }
 
     /**

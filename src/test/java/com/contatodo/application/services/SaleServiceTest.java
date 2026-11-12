@@ -29,6 +29,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -79,7 +80,8 @@ class SaleServiceTest {
         unitOfMeasureValidator = new UnitOfMeasureValidator(unitOfMeasureRepository);
         saleService = new SaleService(
                 saleRepository, productRepository, userRepository,
-                saleValidator, unitOfMeasureValidator, saleMapper, authenticatedUserProvider, companyService
+                saleValidator, unitOfMeasureValidator, unitOfMeasureRepository, saleMapper,
+                authenticatedUserProvider, companyService
         );
     }
 
@@ -216,12 +218,60 @@ class SaleServiceTest {
     void getTodaySalesDelegatesCompanyResolutionAndQueriesWithTheResult() {
         when(companyService.resolveReadCompanyOid("param-company")).thenReturn(CompanyOid.of("resolved-company"));
         when(saleRepository.findBySaleDate(eq(CompanyOid.of("resolved-company")), any())).thenReturn(java.util.List.of());
-        when(saleMapper.toResponseList(any())).thenReturn(java.util.List.of());
+        when(saleMapper.toResponseListWithUnitOfMeasureNames(any(), any())).thenReturn(java.util.List.of());
 
         saleService.getTodaySales("param-company");
 
         verify(companyService).resolveReadCompanyOid("param-company");
         verify(saleRepository).findBySaleDate(eq(CompanyOid.of("resolved-company")), any());
+    }
+
+    @Test
+    void getTodaySalesJoinsTheActiveUnitOfMeasureName() {
+        CompanyOid companyOid = CompanyOid.of("company-1");
+        Sale sale = Sale.builder()
+                .productOid("product-1")
+                .quantity(1)
+                .byUserOid("user-1")
+                .unitOfMeasureOid("uom-1")
+                .build();
+        when(companyService.resolveReadCompanyOid(any())).thenReturn(companyOid);
+        when(saleRepository.findBySaleDate(eq(companyOid), any())).thenReturn(List.of(sale));
+        when(unitOfMeasureRepository.findActiveByCompany(companyOid)).thenReturn(List.of(
+                UnitOfMeasure.builder()
+                        .id("uom-1")
+                        .name("Kilogramo")
+                        .abrev("kg")
+                        .companyOid("company-1")
+                        .isActive(true)
+                        .isDeleted(false)
+                        .build()
+        ));
+        when(saleMapper.toResponseListWithUnitOfMeasureNames(any(), any())).thenReturn(List.of(new SaleResponse()));
+
+        saleService.getTodaySales(null);
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<String, UnitOfMeasure>> unitsCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(saleMapper).toResponseListWithUnitOfMeasureNames(eq(List.of(sale)), unitsCaptor.capture());
+        assertEquals("Kilogramo", unitsCaptor.getValue().get("uom-1").getName());
+    }
+
+    @Test
+    void getTodaySalesDoesNotQueryUnitsForLegacySalesWithoutUnit() {
+        CompanyOid companyOid = CompanyOid.of("company-1");
+        Sale sale = Sale.builder()
+                .productOid("product-1")
+                .quantity(1)
+                .byUserOid("user-1")
+                .build();
+        when(companyService.resolveReadCompanyOid(any())).thenReturn(companyOid);
+        when(saleRepository.findBySaleDate(eq(companyOid), any())).thenReturn(List.of(sale));
+        when(saleMapper.toResponseListWithUnitOfMeasureNames(any(), any())).thenReturn(List.of(new SaleResponse()));
+
+        saleService.getTodaySales(null);
+
+        verify(unitOfMeasureRepository, never()).findActiveByCompany(any());
     }
 
     @Test
@@ -244,7 +294,7 @@ class SaleServiceTest {
         when(companyService.resolveReadCompanyOid("param-company")).thenReturn(CompanyOid.of("param-company"));
         when(saleRepository.findBySaleDateBetween(eq(CompanyOid.of("param-company")), any(), any()))
                 .thenReturn(java.util.List.of());
-        when(saleMapper.toResponseList(any())).thenReturn(java.util.List.of());
+        when(saleMapper.toResponseListWithUnitOfMeasureNames(any(), any())).thenReturn(java.util.List.of());
 
         saleService.getSalesByDateRange("param-company", LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30));
 

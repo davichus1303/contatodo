@@ -2,9 +2,12 @@ package com.contatodo.application.mapper;
 
 import com.contatodo.application.dto.response.SaleResponse;
 import com.contatodo.domain.entities.Sale;
+import com.contatodo.domain.entities.UnitOfMeasure;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Mapper for sale responses.
@@ -37,6 +40,45 @@ public class SaleMapper implements ResponseMapper<Sale, SaleResponse> {
         response.setNotes(sale.getNotes());
         response.setCreatedDate(sale.getCreatedDate());
         response.setUpdatedDate(sale.getUpdatedDate());
+        return response;
+    }
+
+    /**
+     * Maps sales to responses joining the name of their unit of measure.
+     *
+     * <p>Only units present in the supplied map are joined, emulating an inner
+     * join between the sale unit identifier and the unit catalog. A legacy sale
+     * without a unit, or one referencing an inactive or missing unit, keeps a
+     * {@code null} name.</p>
+     *
+     * @param sales Sale entities.
+     * @param unitsByOid Units of measure keyed by identifier.
+     * @return Sale responses with the joined unit of measure name.
+     */
+    public List<SaleResponse> toResponseListWithUnitOfMeasureNames(
+            List<Sale> sales,
+            Map<String, UnitOfMeasure> unitsByOid
+    ) {
+        return sales.stream()
+                .map(sale -> toResponseWithUnitOfMeasureName(sale, unitsByOid))
+                .toList();
+    }
+
+    /**
+     * Maps a sale to a response joining the name of its unit of measure.
+     *
+     * @param sale Sale entity.
+     * @param unitsByOid Units of measure keyed by identifier.
+     * @return Sale response with the joined unit of measure name.
+     */
+    public SaleResponse toResponseWithUnitOfMeasureName(Sale sale, Map<String, UnitOfMeasure> unitsByOid) {
+        SaleResponse response = toResponse(sale);
+        response.setUnitOfMeasureName(
+                Optional.ofNullable(sale.getUnitOfMeasureOid())
+                        .map(unitsByOid::get)
+                        .map(UnitOfMeasure::getName)
+                        .orElse(null)
+        );
         return response;
     }
 }
