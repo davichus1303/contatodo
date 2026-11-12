@@ -17,6 +17,7 @@ public final class ProductCostHistory {
     private final String id;
     private final String productOid;
     private final String acquisitionOid;
+    private final String unitOfMeasureOid;
     private final Integer quantity;
     private final Integer remainingQuantity;
     private final Double realCost;
@@ -36,6 +37,7 @@ public final class ProductCostHistory {
         this.id = builder.id;
         this.productOid = builder.productOid;
         this.acquisitionOid = builder.acquisitionOid;
+        this.unitOfMeasureOid = builder.unitOfMeasureOid;
         this.quantity = builder.quantity;
         this.remainingQuantity = builder.remainingQuantity;
         this.realCost = builder.realCost;
@@ -66,6 +68,15 @@ public final class ProductCostHistory {
 
     public String getAcquisitionOid() {
         return acquisitionOid;
+    }
+
+    /**
+     * Returns the unit of measure in which the acquisition was registered.
+     *
+     * @return Unit of measure identifier, or null for legacy entries.
+     */
+    public String getUnitOfMeasureOid() {
+        return unitOfMeasureOid;
     }
 
     public Integer getQuantity() {
@@ -112,6 +123,7 @@ public final class ProductCostHistory {
         private String id;
         private String productOid;
         private String acquisitionOid;
+        private String unitOfMeasureOid;
         private Integer quantity;
         private Integer remainingQuantity;
         private Double realCost;
@@ -152,6 +164,17 @@ public final class ProductCostHistory {
          */
         public Builder acquisitionOid(String acquisitionOid) {
             this.acquisitionOid = acquisitionOid;
+            return this;
+        }
+
+        /**
+         * Sets the unit of measure in which the acquisition was registered.
+         *
+         * @param unitOfMeasureOid Unit of measure identifier.
+         * @return This builder.
+         */
+        public Builder unitOfMeasureOid(String unitOfMeasureOid) {
+            this.unitOfMeasureOid = unitOfMeasureOid;
             return this;
         }
 

@@ -15,6 +15,7 @@ public class ProductCostHistoryDocument {
     private String id;
     private String productOid;
     private String acquisitionOid;
+    private String unitOfMeasureOid;
     private Integer quantity;
     private Integer remainingQuantity;
     private Double realCost;
@@ -47,6 +48,24 @@ public class ProductCostHistoryDocument {
 
     public void setAcquisitionOid(String acquisitionOid) {
         this.acquisitionOid = acquisitionOid;
+    }
+
+    /**
+     * Gets the unit of measure in which the acquisition was registered.
+     *
+     * @return Unit of measure identifier, or null for legacy entries.
+     */
+    public String getUnitOfMeasureOid() {
+        return unitOfMeasureOid;
+    }
+
+    /**
+     * Sets the unit of measure in which the acquisition was registered.
+     *
+     * @param unitOfMeasureOid Unit of measure identifier.
+     */
+    public void setUnitOfMeasureOid(String unitOfMeasureOid) {
+        this.unitOfMeasureOid = unitOfMeasureOid;
     }
 
     public Integer getQuantity() {

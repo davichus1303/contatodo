@@ -208,6 +208,7 @@ public class ProductInventoryHandler {
         return ProductCostHistory.builder()
                 .productOid(productOid)
                 .acquisitionOid(savedAcquisition.getId())
+                .unitOfMeasureOid(savedAcquisition.getUnitOfMeasure())
                 .quantity(request.getQuantity())
                 .remainingQuantity(request.getQuantity())
                 .realCost(request.getRealCost())
