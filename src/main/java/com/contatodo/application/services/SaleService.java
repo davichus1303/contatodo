@@ -5,6 +5,7 @@ import com.contatodo.application.dto.response.SaleResponse;
 import com.contatodo.application.mapper.SaleMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.validators.SaleValidator;
+import com.contatodo.application.validators.UnitOfMeasureValidator;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.entities.Sale;
 import com.contatodo.domain.entities.User;
@@ -33,6 +34,7 @@ public class SaleService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final SaleValidator saleValidator;
+    private final UnitOfMeasureValidator unitOfMeasureValidator;
     private final SaleMapper saleMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final CompanyService companyService;
@@ -44,6 +46,7 @@ public class SaleService {
      * @param productRepository Product repository port.
      * @param userRepository User repository port.
      * @param saleValidator Sale validator.
+     * @param unitOfMeasureValidator Unit of measure validator.
      * @param saleMapper Sale mapper.
      * @param authenticatedUserProvider Authenticated user provider.
      * @param companyService Company service used to resolve the owning company.
@@ -53,6 +56,7 @@ public class SaleService {
             ProductRepository productRepository,
             UserRepository userRepository,
             SaleValidator saleValidator,
+            UnitOfMeasureValidator unitOfMeasureValidator,
             SaleMapper saleMapper,
             AuthenticatedUserProvider authenticatedUserProvider,
             CompanyService companyService
@@ -61,6 +65,7 @@ public class SaleService {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.saleValidator = saleValidator;
+        this.unitOfMeasureValidator = unitOfMeasureValidator;
         this.saleMapper = saleMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.companyService = companyService;
@@ -93,6 +98,8 @@ public class SaleService {
         Product product = productRepository.findByIdAndCompany(companyOid, request.getProductOid())
                 .orElseThrow(() -> new ResourceNotFoundException(SaleConstants.PRODUCT_NOT_FOUND));
 
+        unitOfMeasureValidator.validateExist(companyOid, request.getUnitOfMeasureOid());
+
         String productName = product.getName();
         Product updatedProduct = product.decreaseStock(request.getQuantity());
 
@@ -107,6 +114,7 @@ public class SaleService {
                 productName,
                 user.getId(),
                 request.getQuantity(),
+                request.getUnitOfMeasureOid(),
                 request.getTotalSalePrice(),
                 unitRealCost,
                 unitPublicCost,

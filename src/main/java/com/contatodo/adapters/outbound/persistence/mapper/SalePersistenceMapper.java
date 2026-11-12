@@ -30,6 +30,7 @@ public class SalePersistenceMapper implements PersistenceMapper<SaleDocument, Sa
                 ? sale.getCompanyOid().value()
                 : null);
         document.setQuantity(sale.getQuantity());
+        document.setUnitOfMeasureOid(sale.getUnitOfMeasureOid());
         document.setTotalCost(sale.getTotalCost());
         document.setOriginalTotalPrice(sale.getOriginalTotalPrice());
         document.setTotalSalePrice(sale.getTotalSalePrice());
@@ -58,6 +59,7 @@ public class SalePersistenceMapper implements PersistenceMapper<SaleDocument, Sa
                         ? CompanyOid.of(document.getCompanyOid())
                         : null)
                 .quantity(document.getQuantity())
+                .unitOfMeasureOid(document.getUnitOfMeasureOid())
                 .totalCost(document.getTotalCost())
                 .originalTotalPrice(document.getOriginalTotalPrice())
                 .totalSalePrice(document.getTotalSalePrice())

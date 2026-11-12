@@ -27,6 +27,7 @@ public final class Sale {
     private final String byUserOid;
     private final CompanyOid companyOid;
     private final Integer quantity;
+    private final String unitOfMeasureOid;
     private final Double totalCost;
     private final Double originalTotalPrice;
     private final Double totalSalePrice;
@@ -49,6 +50,7 @@ public final class Sale {
         this.byUserOid = builder.byUserOid;
         this.companyOid = builder.companyOid;
         this.quantity = builder.quantity;
+        this.unitOfMeasureOid = builder.unitOfMeasureOid;
         this.totalCost = builder.totalCost;
         this.originalTotalPrice = builder.originalTotalPrice;
         this.totalSalePrice = builder.totalSalePrice;
@@ -76,6 +78,7 @@ public final class Sale {
      * @param productName Product name at the time of the sale.
      * @param byUserOid Selling user identifier.
      * @param quantity Sold quantity.
+     * @param unitOfMeasureOid Unit of measure in which the sale is registered.
      * @param totalSalePrice Agreed total sale price.
      * @param unitRealCost Real unit cost of the product.
      * @param unitPublicCost List unit price of the product.
@@ -90,13 +93,14 @@ public final class Sale {
             String productName,
             String byUserOid,
             Integer quantity,
+            String unitOfMeasureOid,
             Double totalSalePrice,
             Money unitRealCost,
             Money unitPublicCost,
             String notes
     ) {
-        return place(saleNumber, productOid, productName, byUserOid, quantity, totalSalePrice,
-                unitRealCost, unitPublicCost, notes, null);
+        return place(saleNumber, productOid, productName, byUserOid, quantity, unitOfMeasureOid,
+                totalSalePrice, unitRealCost, unitPublicCost, notes, null);
     }
 
     /**
@@ -107,6 +111,7 @@ public final class Sale {
      * @param productName Product name at the time of the sale.
      * @param byUserOid Selling user identifier.
      * @param quantity Sold quantity.
+     * @param unitOfMeasureOid Unit of measure in which the sale is registered.
      * @param totalSalePrice Agreed total sale price.
      * @param unitRealCost Real unit cost of the product.
      * @param unitPublicCost List unit price of the product.
@@ -122,6 +127,7 @@ public final class Sale {
             String productName,
             String byUserOid,
             Integer quantity,
+            String unitOfMeasureOid,
             Double totalSalePrice,
             Money unitRealCost,
             Money unitPublicCost,
@@ -146,6 +152,7 @@ public final class Sale {
                 .byUserOid(byUserOid)
                 .companyOid(companyOid)
                 .quantity(quantity)
+                .unitOfMeasureOid(unitOfMeasureOid)
                 .totalCost(totalCost.toDouble())
                 .originalTotalPrice(originalTotalPrice.toDouble())
                 .totalSalePrice(totalSalePrice)
@@ -183,6 +190,15 @@ public final class Sale {
 
     public Integer getQuantity() {
         return quantity;
+    }
+
+    /**
+     * Returns the unit of measure in which the sale was registered.
+     *
+     * @return Unit of measure identifier, or null for legacy sales.
+     */
+    public String getUnitOfMeasureOid() {
+        return unitOfMeasureOid;
     }
 
     public Double getTotalCost() {
@@ -229,6 +245,7 @@ public final class Sale {
         private String byUserOid;
         private CompanyOid companyOid;
         private Integer quantity;
+        private String unitOfMeasureOid;
         private Double totalCost;
         private Double originalTotalPrice;
         private Double totalSalePrice;
@@ -312,6 +329,17 @@ public final class Sale {
          */
         public Builder quantity(Integer quantity) {
             this.quantity = quantity;
+            return this;
+        }
+
+        /**
+         * Sets the unit of measure in which the sale is registered.
+         *
+         * @param unitOfMeasureOid Unit of measure identifier.
+         * @return This builder.
+         */
+        public Builder unitOfMeasureOid(String unitOfMeasureOid) {
+            this.unitOfMeasureOid = unitOfMeasureOid;
             return this;
         }
 
