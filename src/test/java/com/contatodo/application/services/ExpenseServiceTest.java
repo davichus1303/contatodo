@@ -5,10 +5,14 @@ import com.contatodo.application.dto.response.ExpenseResponse;
 import com.contatodo.application.mapper.ExpenseMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.validators.ExpenseValidator;
+import com.contatodo.application.validators.UnitOfMeasureValidator;
 import com.contatodo.domain.entities.Expense;
+import com.contatodo.domain.entities.UnitOfMeasure;
 import com.contatodo.domain.model.CompanyOid;
+import com.contatodo.shared.exceptions.InvalidRequestException;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.domain.repositories.ExpenseRepository;
+import com.contatodo.domain.repositories.UnitOfMeasureRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -16,6 +20,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -44,6 +49,11 @@ class ExpenseServiceTest {
     private ExpenseValidator expenseValidator;
 
     @Mock
+    private UnitOfMeasureRepository unitOfMeasureRepository;
+
+    private UnitOfMeasureValidator unitOfMeasureValidator;
+
+    @Mock
     private ExpenseMapper expenseMapper;
 
     @Mock
@@ -56,10 +66,23 @@ class ExpenseServiceTest {
 
     @BeforeEach
     void setUp() {
+        unitOfMeasureValidator = new UnitOfMeasureValidator(unitOfMeasureRepository);
         expenseService = new ExpenseService(
-                expenseRepository, expenseValidator, expenseMapper,
+                expenseRepository, expenseValidator, unitOfMeasureValidator, expenseMapper,
                 authenticatedUserProvider, companyService
         );
+    }
+
+    private void stubActiveUnit(CompanyOid companyOid) {
+        when(unitOfMeasureRepository.findActiveByCompany(companyOid))
+                .thenReturn(List.of(UnitOfMeasure.builder()
+                        .id("uom-1")
+                        .name("Pieza")
+                        .abrev("pza")
+                        .companyOid(companyOid != null ? companyOid.value() : null)
+                        .isActive(true)
+                        .isDeleted(false)
+                        .build()));
     }
 
     private CreateExpenseRequest request() {
@@ -74,6 +97,7 @@ class ExpenseServiceTest {
     void createExpenseUsesTheCompanyFromTheToken() {
         when(authenticatedUserProvider.getCurrentUserOid()).thenReturn("user-1");
         when(companyService.resolveCompanyOid(any())).thenReturn(CompanyOid.of("company-1"));
+        stubActiveUnit(CompanyOid.of("company-1"));
         when(expenseMapper.toEntity(any(), eq("user-1"), any(), eq(CompanyOid.of("company-1"))))
                 .thenReturn(mock(Expense.class));
         when(expenseRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -108,6 +132,7 @@ class ExpenseServiceTest {
         request.setCompanyOid("company-9");
         when(authenticatedUserProvider.getCurrentUserOid()).thenReturn("user-1");
         when(companyService.resolveCompanyOid("company-9")).thenReturn(CompanyOid.of("company-9"));
+        stubActiveUnit(CompanyOid.of("company-9"));
         when(expenseMapper.toEntity(any(), eq("user-1"), any(), eq(CompanyOid.of("company-9"))))
                 .thenReturn(mock(Expense.class));
         when(expenseRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -124,6 +149,7 @@ class ExpenseServiceTest {
         request.setCompanyOid("company-9");
         when(authenticatedUserProvider.getCurrentUserOid()).thenReturn("user-1");
         when(companyService.resolveCompanyOid("company-9")).thenReturn(CompanyOid.of("company-1"));
+        stubActiveUnit(CompanyOid.of("company-1"));
         when(expenseMapper.toEntity(any(), eq("user-1"), any(), eq(CompanyOid.of("company-1"))))
                 .thenReturn(mock(Expense.class));
         when(expenseRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
@@ -137,6 +163,7 @@ class ExpenseServiceTest {
     @Test
     void createExpenseLeavesTheCompanyNullWhenTheTokenCarriesNoCompany() {
         when(authenticatedUserProvider.getCurrentUserOid()).thenReturn("user-1");
+        stubActiveUnit(null);
         ArgumentCaptor<CompanyOid> captor = ArgumentCaptor.forClass(CompanyOid.class);
         when(expenseMapper.toEntity(any(), eq("user-1"), any(), captor.capture()))
                 .thenReturn(mock(Expense.class));
@@ -146,5 +173,23 @@ class ExpenseServiceTest {
         expenseService.createExpense(request());
 
         assertNull(captor.getValue());
+    }
+
+    @Test
+    void createExpenseRejectsAnUnknownUnitOfMeasure() {
+        CreateExpenseRequest request = request();
+        request.setUnitOfMeasure("uom-missing");
+        when(authenticatedUserProvider.getCurrentUserOid()).thenReturn("user-1");
+        when(companyService.resolveCompanyOid(any())).thenReturn(CompanyOid.of("company-1"));
+        when(unitOfMeasureRepository.findActiveByCompany(CompanyOid.of("company-1")))
+                .thenReturn(List.of());
+
+        InvalidRequestException exception = assertThrows(
+                InvalidRequestException.class,
+                () -> expenseService.createExpense(request)
+        );
+
+        assertTrue(exception.getDetails().contains("Unit of measure not found: uom-missing"));
+        verify(expenseRepository, never()).save(any());
     }
 }
