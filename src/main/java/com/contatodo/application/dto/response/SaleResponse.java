@@ -13,6 +13,7 @@ public class SaleResponse {
     private String productName;
     private String byUserOid;
     private Integer quantity;
+    private String unitOfMeasureOid;
     private Double totalCost;
     private Double originalTotalPrice;
     private Double totalSalePrice;
@@ -67,6 +68,14 @@ public class SaleResponse {
 
     public void setQuantity(Integer quantity) {
         this.quantity = quantity;
+    }
+
+    public String getUnitOfMeasureOid() {
+        return unitOfMeasureOid;
+    }
+
+    public void setUnitOfMeasureOid(String unitOfMeasureOid) {
+        this.unitOfMeasureOid = unitOfMeasureOid;
     }
 
     public Double getTotalCost() {

@@ -7,6 +7,7 @@ public class CreateSaleRequest {
 
     private String productOid;
     private Integer quantity;
+    private String unitOfMeasureOid;
     private Double totalSalePrice;
     private String notes;
 
@@ -26,6 +27,24 @@ public class CreateSaleRequest {
 
     public void setQuantity(Integer quantity) {
         this.quantity = quantity;
+    }
+
+    /**
+     * Gets the unit of measure in which the sale is registered.
+     *
+     * @return Unit of measure identifier.
+     */
+    public String getUnitOfMeasureOid() {
+        return unitOfMeasureOid;
+    }
+
+    /**
+     * Sets the unit of measure in which the sale is registered.
+     *
+     * @param unitOfMeasureOid Unit of measure identifier.
+     */
+    public void setUnitOfMeasureOid(String unitOfMeasureOid) {
+        this.unitOfMeasureOid = unitOfMeasureOid;
     }
 
     public Double getTotalSalePrice() {

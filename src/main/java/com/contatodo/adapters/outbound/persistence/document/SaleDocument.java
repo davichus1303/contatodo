@@ -19,6 +19,7 @@ public class SaleDocument {
     private String byUserOid;
     private String companyOid;
     private Integer quantity;
+    private String unitOfMeasureOid;
     private Double totalCost;
     private Double originalTotalPrice;
     private Double totalSalePrice;
@@ -82,6 +83,14 @@ public class SaleDocument {
 
     public void setQuantity(Integer quantity) {
         this.quantity = quantity;
+    }
+
+    public String getUnitOfMeasureOid() {
+        return unitOfMeasureOid;
+    }
+
+    public void setUnitOfMeasureOid(String unitOfMeasureOid) {
+        this.unitOfMeasureOid = unitOfMeasureOid;
     }
 
     public Double getTotalCost() {

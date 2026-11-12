@@ -5,27 +5,35 @@ import com.contatodo.application.dto.response.SaleResponse;
 import com.contatodo.application.mapper.SaleMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.validators.SaleValidator;
+import com.contatodo.application.validators.UnitOfMeasureValidator;
 import com.contatodo.domain.entities.Product;
+import com.contatodo.domain.entities.Sale;
+import com.contatodo.domain.entities.UnitOfMeasure;
 import com.contatodo.domain.entities.User;
 import com.contatodo.domain.repositories.ProductRepository;
 import com.contatodo.domain.repositories.SaleRepository;
+import com.contatodo.domain.repositories.UnitOfMeasureRepository;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.SaleConstants;
 import com.contatodo.shared.exceptions.InsufficientStockException;
+import com.contatodo.shared.exceptions.InvalidRequestException;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -51,6 +59,11 @@ class SaleServiceTest {
     private SaleValidator saleValidator;
 
     @Mock
+    private UnitOfMeasureRepository unitOfMeasureRepository;
+
+    private UnitOfMeasureValidator unitOfMeasureValidator;
+
+    @Mock
     private SaleMapper saleMapper;
 
     @Mock
@@ -63,9 +76,10 @@ class SaleServiceTest {
 
     @BeforeEach
     void setUp() {
+        unitOfMeasureValidator = new UnitOfMeasureValidator(unitOfMeasureRepository);
         saleService = new SaleService(
                 saleRepository, productRepository, userRepository,
-                saleValidator, saleMapper, authenticatedUserProvider, companyService
+                saleValidator, unitOfMeasureValidator, saleMapper, authenticatedUserProvider, companyService
         );
     }
 
@@ -86,6 +100,7 @@ class SaleServiceTest {
         CreateSaleRequest request = new CreateSaleRequest();
         request.setProductOid("product-1");
         request.setQuantity(2);
+        request.setUnitOfMeasureOid("uom-1");
         request.setTotalSalePrice(totalSalePrice);
         request.setNotes(null);
         return request;
@@ -102,12 +117,25 @@ class SaleServiceTest {
         when(companyService.resolveRequiredCompanyOid(any())).thenReturn(companyOid);
     }
 
+    private void stubValidUnit() {
+        when(unitOfMeasureRepository.findActiveByCompany(CompanyOid.of("company-1")))
+                .thenReturn(List.of(UnitOfMeasure.builder()
+                        .id("uom-1")
+                        .name("Kilogramo")
+                        .abrev("kg")
+                        .companyOid("company-1")
+                        .isActive(true)
+                        .isDeleted(false)
+                        .build()));
+    }
+
     @Test
     void createSaleRejectsSaleWithoutStock() {
         stubAuthenticatedContext();
         stubCompany(CompanyOid.of("company-1"));
         when(productRepository.findByIdAndCompany(CompanyOid.of("company-1"), "product-1"))
                 .thenReturn(Optional.of(productWithStock(0)));
+        stubValidUnit();
 
         InsufficientStockException exception = assertThrows(
                 InsufficientStockException.class,
@@ -134,7 +162,8 @@ class SaleServiceTest {
         when(companyService.resolveRequiredCompanyOid("param-company")).thenReturn(CompanyOid.of("company-1"));
         when(productRepository.findByIdAndCompany(CompanyOid.of("company-1"), "product-1"))
                 .thenReturn(Optional.of(productWithStock(5)));
-        when(saleRepository.findBySaleDateBetween(any(), any(), any())).thenReturn(java.util.List.of());
+        stubValidUnit();
+        when(saleRepository.findBySaleDateBetween(any(), any(), any())).thenReturn(List.of());
         when(saleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(saleMapper.toResponse(any())).thenReturn(new SaleResponse());
 
@@ -229,15 +258,40 @@ class SaleServiceTest {
         stubCompany(CompanyOid.of("company-1"));
         when(productRepository.findByIdAndCompany(CompanyOid.of("company-1"), "product-1"))
                 .thenReturn(Optional.of(productWithStock(5)));
-        when(saleRepository.findBySaleDateBetween(any(), any(), any())).thenReturn(java.util.List.of());
+        stubValidUnit();
+        when(saleRepository.findBySaleDateBetween(any(), any(), any())).thenReturn(List.of());
         when(saleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         SaleResponse expected = new SaleResponse();
         when(saleMapper.toResponse(any())).thenReturn(expected);
 
         SaleResponse response = saleService.createSale(saleRequest(40.0));
 
+        ArgumentCaptor<Sale> saleCaptor = ArgumentCaptor.forClass(Sale.class);
         verify(productRepository).save(any());
-        verify(saleRepository).save(any());
+        verify(saleRepository).save(saleCaptor.capture());
+        assertEquals("uom-1", saleCaptor.getValue().getUnitOfMeasureOid());
         assertEquals(expected, response);
+    }
+
+    @Test
+    void createSaleRejectsAnUnknownUnitOfMeasure() {
+        stubAuthenticatedContext();
+        stubCompany(CompanyOid.of("company-1"));
+        when(productRepository.findByIdAndCompany(CompanyOid.of("company-1"), "product-1"))
+                .thenReturn(Optional.of(productWithStock(5)));
+        when(unitOfMeasureRepository.findActiveByCompany(CompanyOid.of("company-1")))
+                .thenReturn(List.of());
+
+        CreateSaleRequest request = saleRequest(40.0);
+        request.setUnitOfMeasureOid("uom-missing");
+
+        InvalidRequestException exception = assertThrows(
+                InvalidRequestException.class,
+                () -> saleService.createSale(request)
+        );
+
+        assertTrue(exception.getDetails().contains("Unit of measure not found: uom-missing"));
+        verify(productRepository, never()).save(any());
+        verify(saleRepository, never()).save(any());
     }
 }
