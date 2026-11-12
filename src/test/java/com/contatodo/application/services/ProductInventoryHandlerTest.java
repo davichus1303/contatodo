@@ -217,6 +217,7 @@ class ProductInventoryHandlerTest {
         ProductCostHistory history = captor.getValue();
         assertEquals("p-1", history.getProductOid());
         assertEquals("a-1", history.getAcquisitionOid());
+        assertEquals("uom-1", history.getUnitOfMeasureOid());
         assertEquals(5, history.getRemainingQuantity());
         assertEquals(10.0, history.getUnitRealCost());
     }
