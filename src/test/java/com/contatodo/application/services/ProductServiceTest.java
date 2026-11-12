@@ -1,23 +1,31 @@
 package com.contatodo.application.services;
 
 import com.contatodo.application.dto.request.CreateProductRequest;
+import com.contatodo.application.dto.request.UpdateProductRequest;
+import com.contatodo.application.dto.response.ProductResponse;
 import com.contatodo.application.mapper.ProductMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.validators.ProductValidator;
 import com.contatodo.domain.entities.Product;
+import com.contatodo.domain.entities.UnitOfMeasure;
 import com.contatodo.domain.entities.User;
 import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.ProductRepository;
+import com.contatodo.domain.repositories.UnitOfMeasureRepository;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.ProductConstants;
+import com.contatodo.shared.exceptions.InvalidRequestException;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -44,6 +52,9 @@ class ProductServiceTest {
     private UserRepository userRepository;
 
     @Mock
+    private UnitOfMeasureRepository unitOfMeasureRepository;
+
+    @Mock
     private ProductValidator productValidator;
 
     @Mock
@@ -60,7 +71,7 @@ class ProductServiceTest {
     @BeforeEach
     void setUp() {
         productService = new ProductService(
-                productRepository, userRepository, productValidator,
+                productRepository, userRepository, unitOfMeasureRepository, productValidator,
                 productMapper, authenticatedUserProvider, companyService
         );
     }
@@ -72,6 +83,17 @@ class ProductServiceTest {
                 .email("david@example.com")
                 .password("hashed")
                 .name("David")
+                .build();
+    }
+
+    private UnitOfMeasure unitOfMeasure(String id, String name) {
+        return UnitOfMeasure.builder()
+                .id(id)
+                .name(name)
+                .abrev(name.substring(0, 1))
+                .companyOid("company-1")
+                .isActive(true)
+                .isDeleted(false)
                 .build();
     }
 
@@ -203,6 +225,47 @@ class ProductServiceTest {
     }
 
     @Test
+    void createProductValidatesUnitsOfMeasureBelongToTheCompany() {
+        CreateProductRequest request = createRequest();
+        request.setCompanyOid("company-1");
+        request.setUnitOfMeasures(List.of("uom-1"));
+        when(authenticatedUserProvider.getCurrentUserEmail()).thenReturn("david@example.com");
+        when(userRepository.findByEmail("david@example.com")).thenReturn(Optional.of(owner()));
+        when(companyService.resolveCompanyOid("company-1")).thenReturn(CompanyOid.of("company-1"));
+        when(productRepository.findTopByOrderByCodeDesc()).thenReturn(Optional.empty());
+        when(unitOfMeasureRepository.findActiveByCompany(CompanyOid.of("company-1")))
+                .thenReturn(List.of(unitOfMeasure("uom-1", "Kilogramo")));
+        when(productRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(productMapper.toResponse(any())).thenReturn(new ProductResponse());
+
+        productService.createProduct(request);
+
+        verify(unitOfMeasureRepository).findActiveByCompany(CompanyOid.of("company-1"));
+        verify(productRepository).save(any());
+    }
+
+    @Test
+    void createProductRejectsUnitsOfMeasureThatDoNotExistForTheCompany() {
+        CreateProductRequest request = createRequest();
+        request.setCompanyOid("company-1");
+        request.setUnitOfMeasures(List.of("uom-1", "uom-missing"));
+        when(authenticatedUserProvider.getCurrentUserEmail()).thenReturn("david@example.com");
+        when(userRepository.findByEmail("david@example.com")).thenReturn(Optional.of(owner()));
+        when(companyService.resolveCompanyOid("company-1")).thenReturn(CompanyOid.of("company-1"));
+        when(productRepository.findTopByOrderByCodeDesc()).thenReturn(Optional.empty());
+        when(unitOfMeasureRepository.findActiveByCompany(CompanyOid.of("company-1")))
+                .thenReturn(List.of(unitOfMeasure("uom-1", "Kilogramo")));
+
+        InvalidRequestException exception = assertThrows(
+                InvalidRequestException.class,
+                () -> productService.createProduct(request)
+        );
+
+        assertTrue(exception.getDetails().contains("Unit of measure not found: uom-missing"));
+        verify(productRepository, never()).save(any());
+    }
+
+    @Test
     void getProductByCodeDelegatesCompanyResolutionAndQueriesWithTheResult() {
         Product product = Product.builder()
                 .id("p-1")
@@ -283,12 +346,35 @@ class ProductServiceTest {
         when(companyService.resolveReadCompanyOid("param-company")).thenReturn(CompanyOid.of("resolved-company"));
         when(productRepository.findByStockGreaterThan(eq(CompanyOid.of("resolved-company")), eq(0)))
                 .thenReturn(java.util.List.of());
-        when(productMapper.toResponseList(any())).thenReturn(java.util.List.of());
+        when(productMapper.toResponseListWithUnitOfMeasureDetails(any(), any())).thenReturn(java.util.List.of());
 
         productService.getAvailableProducts("param-company");
 
         verify(companyService).resolveReadCompanyOid("param-company");
         verify(productRepository).findByStockGreaterThan(eq(CompanyOid.of("resolved-company")), eq(0));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void getAvailableProductsJoinsTheUnitsOfMeasureOfTheCompany() {
+        Product product = Product.builder()
+                .id("p-1")
+                .name("Cafe")
+                .unitOfMeasures(List.of("uom-1", "uom-missing"))
+                .stock(5)
+                .build();
+        UnitOfMeasure kilogram = unitOfMeasure("uom-1", "Kilogramo");
+        when(companyService.resolveReadCompanyOid("param-company")).thenReturn(CompanyOid.of("company-1"));
+        when(productRepository.findByStockGreaterThan(CompanyOid.of("company-1"), 0)).thenReturn(List.of(product));
+        when(unitOfMeasureRepository.findActiveByCompany(CompanyOid.of("company-1")))
+                .thenReturn(List.of(kilogram));
+        when(productMapper.toResponseListWithUnitOfMeasureDetails(any(), any())).thenReturn(List.of());
+
+        productService.getAvailableProducts("param-company");
+
+        ArgumentCaptor<Map<String, UnitOfMeasure>> unitsCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(productMapper).toResponseListWithUnitOfMeasureDetails(eq(List.of(product)), unitsCaptor.capture());
+        assertEquals(Map.of("uom-1", kilogram), unitsCaptor.getValue());
     }
 
     @Test
@@ -309,5 +395,30 @@ class ProductServiceTest {
         productService.updateProduct("p-1", new com.contatodo.application.dto.request.UpdateProductRequest());
 
         verify(productMapper).applyUpdate(eq(existing), any(), eq("editor-1"));
+    }
+
+    @Test
+    void updateProductRejectsUnitsOfMeasureThatDoNotExistForTheProductCompany() {
+        Product existing = Product.builder()
+                .id("p-1")
+                .name("Cafe")
+                .stock(5)
+                .code("42")
+                .companyOid(CompanyOid.of("company-1"))
+                .byUserOid("creator-1")
+                .build();
+        UpdateProductRequest request = new UpdateProductRequest();
+        request.setUnitOfMeasures(List.of("uom-missing"));
+        when(productRepository.findById("p-1")).thenReturn(Optional.of(existing));
+        when(unitOfMeasureRepository.findActiveByCompany(CompanyOid.of("company-1")))
+                .thenReturn(List.of(unitOfMeasure("uom-1", "Kilogramo")));
+
+        InvalidRequestException exception = assertThrows(
+                InvalidRequestException.class,
+                () -> productService.updateProduct("p-1", request)
+        );
+
+        assertTrue(exception.getDetails().contains("Unit of measure not found: uom-missing"));
+        verify(productRepository, never()).save(any());
     }
 }

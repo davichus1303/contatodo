@@ -1,6 +1,7 @@
 package com.contatodo.adapters.inbound.web;
 
 import com.contatodo.application.dto.response.ProductResponse;
+import com.contatodo.application.dto.response.UnitOfMeasureDetailResponse;
 import com.contatodo.application.services.ProductService;
 import com.contatodo.infrastructure.security.JwtService;
 import org.junit.jupiter.api.Test;
@@ -69,5 +70,17 @@ class ProductControllerTest {
         mockMvc.perform(get("/products/code/1").param("companyOid", "c1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.code").value("1"));
+    }
+
+    @Test
+    void getAvailableProductsReturnsJoinedUnitOfMeasureDetails() throws Exception {
+        ProductResponse response = productResponse();
+        response.setUnitOfMeasureDetails(List.of(new UnitOfMeasureDetailResponse("uom-1", "Kilogramo")));
+        when(productService.getAvailableProducts(any())).thenReturn(List.of(response));
+
+        mockMvc.perform(get("/products/available").param("companyOid", "c1").accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data[0].unitOfMeasureDetails[0].oid").value("uom-1"))
+                .andExpect(jsonPath("$.data[0].unitOfMeasureDetails[0].name").value("Kilogramo"));
     }
 }

@@ -3,11 +3,14 @@ package com.contatodo.application.mapper;
 import com.contatodo.application.dto.request.CreateProductRequest;
 import com.contatodo.application.dto.request.UpdateProductRequest;
 import com.contatodo.application.dto.response.ProductResponse;
+import com.contatodo.application.dto.response.UnitOfMeasureDetailResponse;
 import com.contatodo.domain.entities.Product;
+import com.contatodo.domain.entities.UnitOfMeasure;
 import com.contatodo.domain.model.CompanyOid;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
@@ -91,5 +94,40 @@ class ProductMapperTest {
         ProductResponse response = mapper.toResponse(existingProduct());
 
         assertEquals(List.of("uom-1"), response.getUnitOfMeasures());
+    }
+
+    @Test
+    void toResponseListWithUnitOfMeasureDetailsJoinsNameAndOid() {
+        Product product = Product.builder()
+                .id("p-1")
+                .name("Cafe")
+                .unitOfMeasures(List.of("uom-1", "uom-missing", "uom-2"))
+                .stock(10)
+                .build();
+        UnitOfMeasure kilogram = unitOfMeasure("uom-1", "Kilogramo");
+        UnitOfMeasure box = unitOfMeasure("uom-2", "Caja");
+
+        List<ProductResponse> responses = mapper.toResponseListWithUnitOfMeasureDetails(
+                List.of(product),
+                Map.of("uom-1", kilogram, "uom-2", box)
+        );
+
+        List<UnitOfMeasureDetailResponse> details = responses.get(0).getUnitOfMeasureDetails();
+        assertEquals(2, details.size());
+        assertEquals("uom-1", details.get(0).getOid());
+        assertEquals("Kilogramo", details.get(0).getName());
+        assertEquals("uom-2", details.get(1).getOid());
+        assertEquals("Caja", details.get(1).getName());
+    }
+
+    private UnitOfMeasure unitOfMeasure(String id, String name) {
+        return UnitOfMeasure.builder()
+                .id(id)
+                .name(name)
+                .abrev(name.substring(0, 1))
+                .companyOid("company-1")
+                .isActive(true)
+                .isDeleted(false)
+                .build();
     }
 }

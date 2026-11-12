@@ -12,6 +12,7 @@ public class ProductResponse {
     private String name;
     private String description;
     private List<String> unitOfMeasures;
+    private List<UnitOfMeasureDetailResponse> unitOfMeasureDetails;
     private Integer stock;
     private String code;
     private Double realCost;
@@ -52,6 +53,14 @@ public class ProductResponse {
 
     public void setUnitOfMeasures(List<String> unitOfMeasures) {
         this.unitOfMeasures = unitOfMeasures;
+    }
+
+    public List<UnitOfMeasureDetailResponse> getUnitOfMeasureDetails() {
+        return unitOfMeasureDetails;
+    }
+
+    public void setUnitOfMeasureDetails(List<UnitOfMeasureDetailResponse> unitOfMeasureDetails) {
+        this.unitOfMeasureDetails = unitOfMeasureDetails;
     }
 
     public Integer getStock() {

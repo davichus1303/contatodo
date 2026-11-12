@@ -7,15 +7,24 @@ import com.contatodo.application.mapper.ProductMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.validators.ProductValidator;
 import com.contatodo.domain.entities.Product;
-import com.contatodo.domain.model.CompanyOid;
-import com.contatodo.domain.repositories.UserRepository;
+import com.contatodo.domain.entities.UnitOfMeasure;
 import com.contatodo.domain.entities.User;
+import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.ProductRepository;
+import com.contatodo.domain.repositories.UnitOfMeasureRepository;
+import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.shared.constants.ProductConstants;
+import com.contatodo.shared.constants.ResponseConstants;
+import com.contatodo.shared.exceptions.InvalidRequestException;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Service containing product business logic.
@@ -25,6 +34,7 @@ public class ProductService {
 
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
+    private final UnitOfMeasureRepository unitOfMeasureRepository;
     private final ProductValidator productValidator;
     private final ProductMapper productMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
@@ -35,6 +45,7 @@ public class ProductService {
      *
      * @param productRepository Product repository port.
      * @param userRepository User repository port.
+     * @param unitOfMeasureRepository Unit of measure repository port.
      * @param productValidator Product validator.
      * @param productMapper Product mapper.
      * @param authenticatedUserProvider Authenticated user provider.
@@ -43,6 +54,7 @@ public class ProductService {
     public ProductService(
             ProductRepository productRepository,
             UserRepository userRepository,
+            UnitOfMeasureRepository unitOfMeasureRepository,
             ProductValidator productValidator,
             ProductMapper productMapper,
             AuthenticatedUserProvider authenticatedUserProvider,
@@ -50,6 +62,7 @@ public class ProductService {
     ) {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
+        this.unitOfMeasureRepository = unitOfMeasureRepository;
         this.productValidator = productValidator;
         this.productMapper = productMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
@@ -72,6 +85,7 @@ public class ProductService {
 
         String nextCode = generateNextCode();
         CompanyOid companyOid = companyService.resolveCompanyOid(request.getCompanyOid());
+        validateUnitOfMeasuresExist(companyOid, request.getUnitOfMeasures());
         Product product = productMapper.toEntity(request, nextCode, userOid, companyOid);
 
         Product savedProduct = productRepository.save(product);
@@ -90,6 +104,8 @@ public class ProductService {
 
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException(ProductConstants.PRODUCT_NOT_FOUND));
+
+        validateUnitOfMeasuresExist(product.getCompanyOid(), request.getUnitOfMeasures());
 
         Product updatedProduct = productRepository.save(
                 productMapper.applyUpdate(product, request, authenticatedUserProvider.getCurrentUserOid())
@@ -134,11 +150,66 @@ public class ProductService {
     /**
      * Retrieves available products with stock greater than 0.
      *
+     * <p>The response joins each product with the active units of measure of
+     * its company, returning the identifier and name of the matched units.</p>
+     *
      * @return List of product responses.
      */
     public List<ProductResponse> getAvailableProducts(String requestedCompanyOid) {
         CompanyOid companyOid = companyService.resolveReadCompanyOid(requestedCompanyOid);
-        return productMapper.toResponseList(productRepository.findByStockGreaterThan(companyOid, 0));
+        List<Product> products = productRepository.findByStockGreaterThan(companyOid, 0);
+        return productMapper.toResponseListWithUnitOfMeasureDetails(
+                products,
+                loadUnitsOfMeasure(companyOid, products)
+        );
+    }
+
+    /**
+     * Loads the active units of measure referenced by the given products.
+     *
+     * @param companyOid Owning company identifier.
+     * @param products Products whose unit identifiers must be resolved.
+     * @return Referenced units of measure keyed by identifier.
+     */
+    private Map<String, UnitOfMeasure> loadUnitsOfMeasure(CompanyOid companyOid, List<Product> products) {
+        Set<String> referencedOids = products.stream()
+                .flatMap(product -> product.getUnitOfMeasures().stream())
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (referencedOids.isEmpty()) {
+            return Map.of();
+        }
+        return unitOfMeasureRepository.findActiveByCompany(companyOid).stream()
+                .filter(unit -> referencedOids.contains(unit.getId()))
+                .collect(Collectors.toMap(UnitOfMeasure::getId, Function.identity(), (first, second) -> first));
+    }
+
+    /**
+     * Validates that every supplied unit of measure exists, is active and
+     * belongs to the given company.
+     *
+     * @param companyOid Owning company identifier.
+     * @param unitOfMeasures Unit of measure identifiers supplied in the request.
+     * @throws InvalidRequestException when at least one identifier cannot be resolved.
+     */
+    private void validateUnitOfMeasuresExist(CompanyOid companyOid, List<String> unitOfMeasures) {
+        if (unitOfMeasures == null || unitOfMeasures.isEmpty()) {
+            return;
+        }
+        Set<String> existingOids = unitOfMeasureRepository.findActiveByCompany(companyOid).stream()
+                .map(UnitOfMeasure::getId)
+                .collect(Collectors.toSet());
+        List<String> missingOids = unitOfMeasures.stream()
+                .filter(Objects::nonNull)
+                .distinct()
+                .filter(oid -> !existingOids.contains(oid))
+                .toList();
+        if (!missingOids.isEmpty()) {
+            List<String> errors = missingOids.stream()
+                    .map(oid -> ProductConstants.PRODUCT_UNIT_OF_MEASURE_NOT_FOUND + ": " + oid)
+                    .toList();
+            throw new InvalidRequestException(ResponseConstants.VALIDATION_ERROR_MESSAGE, errors);
+        }
     }
 
     /**

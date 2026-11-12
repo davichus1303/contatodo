@@ -3,12 +3,16 @@ package com.contatodo.application.mapper;
 import com.contatodo.application.dto.request.CreateProductRequest;
 import com.contatodo.application.dto.request.UpdateProductRequest;
 import com.contatodo.application.dto.response.ProductResponse;
+import com.contatodo.application.dto.response.UnitOfMeasureDetailResponse;
 import com.contatodo.domain.entities.Product;
+import com.contatodo.domain.entities.UnitOfMeasure;
 import com.contatodo.domain.model.CompanyOid;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 /**
  * Mapper for product entities and DTOs.
@@ -97,6 +101,47 @@ public class ProductMapper implements ResponseMapper<Product, ProductResponse> {
         response.setIsActive(product.getIsActive());
         response.setByUserOid(product.getByUserOid());
         response.setUpdatedByUserOid(product.getUpdatedByUserOid());
+        return response;
+    }
+
+    /**
+     * Maps products to responses joining the names of their units of measure.
+     *
+     * <p>Only units present in the supplied map are included, emulating an
+     * inner join between the product unit identifiers and the unit catalog.</p>
+     *
+     * @param products Product entities.
+     * @param unitsByOid Units of measure keyed by identifier.
+     * @return Product responses with joined unit of measure details.
+     */
+    public List<ProductResponse> toResponseListWithUnitOfMeasureDetails(
+            List<Product> products,
+            Map<String, UnitOfMeasure> unitsByOid
+    ) {
+        return products.stream()
+                .map(product -> toResponseWithUnitOfMeasureDetails(product, unitsByOid))
+                .toList();
+    }
+
+    /**
+     * Maps a product to a response joining the names of its units of measure.
+     *
+     * @param product Product entity.
+     * @param unitsByOid Units of measure keyed by identifier.
+     * @return Product response with joined unit of measure details.
+     */
+    public ProductResponse toResponseWithUnitOfMeasureDetails(
+            Product product,
+            Map<String, UnitOfMeasure> unitsByOid
+    ) {
+        ProductResponse response = toResponse(product);
+        List<UnitOfMeasureDetailResponse> details = product.getUnitOfMeasures().stream()
+                .filter(Objects::nonNull)
+                .map(unitsByOid::get)
+                .filter(Objects::nonNull)
+                .map(unit -> new UnitOfMeasureDetailResponse(unit.getId(), unit.getName()))
+                .toList();
+        response.setUnitOfMeasureDetails(details);
         return response;
     }
 }

@@ -16,6 +16,7 @@ public final class ProductConstants {
     public static final String PRODUCT_STOCK_INVALID = "Product stock must be zero or greater.";
     public static final String PRODUCT_COST_INVALID = "Product cost must be zero or greater.";
     public static final String PRODUCT_UNIT_OF_MEASURE_REQUIRED = "At least one unit of measure is required.";
+    public static final String PRODUCT_UNIT_OF_MEASURE_NOT_FOUND = "Unit of measure not found";
     public static final String USER_NOT_FOUND = "User not found.";
 
     private ProductConstants() {
