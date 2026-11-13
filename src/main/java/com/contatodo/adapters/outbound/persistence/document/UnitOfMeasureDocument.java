@@ -17,6 +17,7 @@ public class UnitOfMeasureDocument {
     private Boolean isActive;
     private Boolean isDeleted;
     private Boolean isDivisible;
+    private Boolean isPack;
 
     public String getId() {
         return id;
@@ -72,5 +73,13 @@ public class UnitOfMeasureDocument {
 
     public void setIsDivisible(Boolean isDivisible) {
         this.isDivisible = isDivisible;
+    }
+
+    public Boolean getIsPack() {
+        return isPack;
+    }
+
+    public void setIsPack(Boolean isPack) {
+        this.isPack = isPack;
     }
 }

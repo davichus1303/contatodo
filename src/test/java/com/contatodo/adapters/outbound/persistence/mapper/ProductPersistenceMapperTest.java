@@ -26,6 +26,7 @@ class ProductPersistenceMapperTest {
                 .name("Cafe")
                 .description("Grano de cafe")
                 .unitOfMeasures(List.of("uom-1", "uom-2"))
+                .packSize(12)
                 .stock(10)
                 .code("42")
                 .realCost(50.0)
@@ -44,6 +45,7 @@ class ProductPersistenceMapperTest {
         assertEquals("Cafe", document.getName());
         assertEquals("Grano de cafe", document.getDescription());
         assertEquals(List.of("uom-1", "uom-2"), document.getUnitOfMeasures());
+        assertEquals(12, document.getPackSize());
         assertEquals(10, document.getStock());
         assertEquals("42", document.getCode());
         assertEquals(50.0, document.getRealCost());
@@ -64,6 +66,7 @@ class ProductPersistenceMapperTest {
         document.setName("Cafe");
         document.setDescription("Grano de cafe");
         document.setUnitOfMeasures(List.of("uom-1", "uom-2"));
+        document.setPackSize(12);
         document.setStock(10);
         document.setCode("42");
         document.setRealCost(50.0);
@@ -81,6 +84,7 @@ class ProductPersistenceMapperTest {
         assertEquals("Cafe", product.getName());
         assertEquals("Grano de cafe", product.getDescription());
         assertEquals(List.of("uom-1", "uom-2"), product.getUnitOfMeasures());
+        assertEquals(12, product.getPackSize());
         assertEquals(10, product.getStock());
         assertEquals("42", product.getCode());
         assertEquals(50.0, product.getRealCost());
@@ -134,6 +138,7 @@ class ProductPersistenceMapperTest {
                 .name("Cafe")
                 .description("Grano de cafe")
                 .unitOfMeasures(List.of("uom-1", "uom-2"))
+                .packSize(12)
                 .stock(10)
                 .code("42")
                 .realCost(50.0)
@@ -153,6 +158,7 @@ class ProductPersistenceMapperTest {
         assertEquals(original.getName(), roundTripped.getName());
         assertEquals(original.getDescription(), roundTripped.getDescription());
         assertEquals(original.getUnitOfMeasures(), roundTripped.getUnitOfMeasures());
+        assertEquals(original.getPackSize(), roundTripped.getPackSize());
         assertEquals(original.getStock(), roundTripped.getStock());
         assertEquals(original.getCode(), roundTripped.getCode());
         assertEquals(original.getRealCost(), roundTripped.getRealCost());

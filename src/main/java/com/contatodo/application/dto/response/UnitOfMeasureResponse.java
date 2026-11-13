@@ -12,6 +12,7 @@ public class UnitOfMeasureResponse {
     private Boolean isActive;
     private Boolean isDeleted;
     private Boolean isDivisible;
+    private Boolean isPack;
 
     public UnitOfMeasureResponse() {
     }
@@ -70,5 +71,13 @@ public class UnitOfMeasureResponse {
 
     public void setIsDivisible(Boolean isDivisible) {
         this.isDivisible = isDivisible;
+    }
+
+    public Boolean getIsPack() {
+        return isPack;
+    }
+
+    public void setIsPack(Boolean isPack) {
+        this.isPack = isPack;
     }
 }

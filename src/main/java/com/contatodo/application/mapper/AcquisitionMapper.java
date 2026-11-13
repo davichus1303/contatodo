@@ -26,12 +26,40 @@ public class AcquisitionMapper {
      * @return Acquisition entity.
      */
     public Acquisition toEntity(CreateAcquisitionRequest request, String productOid, String byUserOid, Double unitRealCost, CompanyOid companyOid) {
+        return toEntity(request, productOid, byUserOid, unitRealCost, companyOid,
+                request.getPackSize(), request.getUnitOfMeasureOid());
+    }
+
+    /**
+     * Maps a create request to a domain entity with an explicit pack size and
+     * unit of measure snapshot.
+     *
+     * @param request Create acquisition request.
+     * @param productOid Product OID.
+     * @param byUserOid User OID.
+     * @param unitRealCost Calculated unit real cost.
+     * @param companyOid Owning company identifier (null for root).
+     * @param packSize Effective pack size used for the inventory.
+     * @param unitOfMeasureOid Effective unit of measure identifier.
+     * @return Acquisition entity.
+     */
+    public Acquisition toEntity(
+            CreateAcquisitionRequest request,
+            String productOid,
+            String byUserOid,
+            Double unitRealCost,
+            CompanyOid companyOid,
+            Integer packSize,
+            String unitOfMeasureOid
+    ) {
         LocalDateTime now = LocalDateTime.now();
         return Acquisition.builder()
                 .acquisitionTypeOid(request.getAcquisitionTypeOid())
                 .productOid(productOid)
                 .productName(request.getProductName())
                 .unitOfMeasure(request.getUnitOfMeasure())
+                .unitOfMeasureOid(unitOfMeasureOid)
+                .packSize(packSize)
                 .quantity(request.getQuantity())
                 .realCost(request.getRealCost())
                 .unitRealCost(unitRealCost)
@@ -64,6 +92,8 @@ public class AcquisitionMapper {
         response.setProductName(productName != null ? productName : acquisition.getProductName());
         response.setAcquisitionType(acquisitionType);
         response.setUnitOfMeasure(acquisition.getUnitOfMeasure());
+        response.setUnitOfMeasureOid(acquisition.getUnitOfMeasureOid());
+        response.setPackSize(acquisition.getPackSize());
         response.setQuantity(acquisition.getQuantity());
         response.setRealCost(acquisition.getRealCost());
         response.setUnitRealCost(acquisition.getUnitRealCost());

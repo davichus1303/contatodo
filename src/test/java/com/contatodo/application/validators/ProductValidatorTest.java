@@ -74,6 +74,42 @@ class ProductValidatorTest {
     }
 
     @Test
+    void createRequestAcceptsAPositivePackSize() {
+        CreateProductRequest request = createRequest(List.of("uom-1"));
+        request.setPackSize(12);
+
+        assertDoesNotThrow(() -> validator.validateCreateRequest(request));
+    }
+
+    @Test
+    void createRequestRejectsANonPositivePackSize() {
+        CreateProductRequest request = createRequest(List.of("uom-1"));
+        request.setPackSize(0);
+
+        InvalidRequestException exception = assertThrows(
+                InvalidRequestException.class,
+                () -> validator.validateCreateRequest(request)
+        );
+
+        assertTrue(exception.getDetails().stream()
+                .anyMatch(detail -> detail.contains(ProductConstants.PRODUCT_PACK_SIZE_INVALID)));
+    }
+
+    @Test
+    void updateRequestRejectsANonPositivePackSize() {
+        UpdateProductRequest request = updateRequest(List.of("uom-1"));
+        request.setPackSize(-1);
+
+        InvalidRequestException exception = assertThrows(
+                InvalidRequestException.class,
+                () -> validator.validateUpdateRequest(request)
+        );
+
+        assertTrue(exception.getDetails().stream()
+                .anyMatch(detail -> detail.contains(ProductConstants.PRODUCT_PACK_SIZE_INVALID)));
+    }
+
+    @Test
     void updateRequestAcceptsAProductWithUnitsOfMeasure() {
         assertDoesNotThrow(() -> validator.validateUpdateRequest(updateRequest(List.of("uom-1"))));
     }

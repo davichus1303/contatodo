@@ -47,6 +47,23 @@ public class UnitOfMeasureValidator {
     }
 
     /**
+     * Resolves an active, non-deleted unit of measure owned by the given
+     * company.
+     *
+     * @param companyOid Owning company identifier.
+     * @param unitOfMeasure Unit of measure identifier.
+     * @return Resolved unit of measure.
+     * @throws InvalidRequestException when the identifier cannot be resolved.
+     */
+    public UnitOfMeasure requireActive(CompanyOid companyOid, String unitOfMeasure) {
+        return unitOfMeasureRepository.findActiveByCompanyAndOid(companyOid, unitOfMeasure)
+                .orElseThrow(() -> new InvalidRequestException(
+                        ResponseConstants.VALIDATION_ERROR_MESSAGE,
+                        List.of(UnitOfMeasureConstants.NOT_FOUND_ERROR + ": " + unitOfMeasure)
+                ));
+    }
+
+    /**
      * Validates that every supplied unit of measure identifier exists, is
      * active and belongs to the given company.
      *

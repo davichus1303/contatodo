@@ -16,6 +16,7 @@ public class ProductCostHistoryDocument {
     private String productOid;
     private String acquisitionOid;
     private String unitOfMeasureOid;
+    private Integer packSize;
     private Integer quantity;
     private Integer remainingQuantity;
     private Double realCost;
@@ -66,6 +67,14 @@ public class ProductCostHistoryDocument {
      */
     public void setUnitOfMeasureOid(String unitOfMeasureOid) {
         this.unitOfMeasureOid = unitOfMeasureOid;
+    }
+
+    public Integer getPackSize() {
+        return packSize;
+    }
+
+    public void setPackSize(Integer packSize) {
+        this.packSize = packSize;
     }
 
     public Integer getQuantity() {

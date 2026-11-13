@@ -10,6 +10,7 @@ public class UpdateUnitOfMeasureRequest {
     private Boolean isActive;
     private Boolean isDeleted;
     private Boolean isDivisible;
+    private Boolean isPack;
 
     public UpdateUnitOfMeasureRequest() {
     }
@@ -52,5 +53,13 @@ public class UpdateUnitOfMeasureRequest {
 
     public void setIsDivisible(Boolean isDivisible) {
         this.isDivisible = isDivisible;
+    }
+
+    public Boolean getIsPack() {
+        return isPack;
+    }
+
+    public void setIsPack(Boolean isPack) {
+        this.isPack = isPack;
     }
 }

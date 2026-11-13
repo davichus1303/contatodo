@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -62,6 +63,29 @@ class UnitOfMeasureValidatorTest {
         InvalidRequestException exception = assertThrows(
                 InvalidRequestException.class,
                 () -> validator().validateExist(COMPANY, "uom-missing")
+        );
+
+        assertTrue(exception.getDetails().contains(UnitOfMeasureConstants.NOT_FOUND_ERROR + ": uom-missing"));
+    }
+
+    @Test
+    void requireActiveReturnsTheConfiguredUnit() {
+        when(unitOfMeasureRepository.findActiveByCompanyAndOid(COMPANY, "uom-1"))
+                .thenReturn(java.util.Optional.of(unitOfMeasure("uom-1")));
+
+        UnitOfMeasure unit = validator().requireActive(COMPANY, "uom-1");
+
+        assertEquals("uom-1", unit.getId());
+    }
+
+    @Test
+    void requireActiveRejectsAnUnknownUnitOfMeasure() {
+        when(unitOfMeasureRepository.findActiveByCompanyAndOid(COMPANY, "uom-missing"))
+                .thenReturn(java.util.Optional.empty());
+
+        InvalidRequestException exception = assertThrows(
+                InvalidRequestException.class,
+                () -> validator().requireActive(COMPANY, "uom-missing")
         );
 
         assertTrue(exception.getDetails().contains(UnitOfMeasureConstants.NOT_FOUND_ERROR + ": uom-missing"));

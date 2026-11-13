@@ -52,6 +52,28 @@ class AcquisitionValidatorTest {
     }
 
     @Test
+    void createRequestAcceptsAPositivePackSize() {
+        CreateAcquisitionRequest request = request("uom-1");
+        request.setPackSize(12);
+
+        assertDoesNotThrow(() -> validator.validateCreateRequest(request));
+    }
+
+    @Test
+    void createRequestRejectsANonPositivePackSize() {
+        CreateAcquisitionRequest request = request("uom-1");
+        request.setPackSize(0);
+
+        InvalidRequestException exception = assertThrows(
+                InvalidRequestException.class,
+                () -> validator.validateCreateRequest(request)
+        );
+
+        assertTrue(exception.getDetails().stream()
+                .anyMatch(detail -> detail.contains("Pack size must be greater than zero")));
+    }
+
+    @Test
     void nonInventoryAffectingRequestAcceptsAnAcquisitionWithAUnitOfMeasure() {
         assertDoesNotThrow(() -> validator.validateNonInventoryAffectingRequest(request("uom-1")));
     }

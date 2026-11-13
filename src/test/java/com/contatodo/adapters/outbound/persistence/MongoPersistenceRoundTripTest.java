@@ -63,6 +63,7 @@ class MongoPersistenceRoundTripTest {
     void productRoundTripResolvesByCode() {
         Product product = Product.builder()
                 .name("Cafe Roundtrip")
+                .packSize(12)
                 .stock(7)
                 .code("9998")
                 .realCost(70.0)
@@ -81,6 +82,7 @@ class MongoPersistenceRoundTripTest {
         assertTrue(reloaded.isPresent());
         assertEquals(saved.getId(), reloaded.get().getId());
         assertEquals(7, reloaded.get().getStock());
+        assertEquals(12, reloaded.get().getPackSize());
         assertEquals(Double.valueOf(10.0), reloaded.get().getUnitRealCost());
     }
 }

@@ -11,6 +11,7 @@ public class UpdateProductRequest {
     private String name;
     private String description;
     private List<String> unitOfMeasures;
+    private Integer packSize;
     private Integer stock;
     private Double realCost;
     private Double unitRealCost;
@@ -40,6 +41,14 @@ public class UpdateProductRequest {
 
     public void setUnitOfMeasures(List<String> unitOfMeasures) {
         this.unitOfMeasures = unitOfMeasures;
+    }
+
+    public Integer getPackSize() {
+        return packSize;
+    }
+
+    public void setPackSize(Integer packSize) {
+        this.packSize = packSize;
     }
 
     public Integer getStock() {

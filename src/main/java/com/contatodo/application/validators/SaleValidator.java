@@ -34,6 +34,10 @@ public class SaleValidator {
         fieldValidator.validateRequired(request.getProductOid(), SaleConstants.SALE_PRODUCT_OID_REQUIRED, errors);
         fieldValidator.validateNonNegative(request.getQuantity(), SaleConstants.SALE_QUANTITY_REQUIRED, errors);
         fieldValidator.validateRequired(request.getUnitOfMeasureOid(), SaleConstants.SALE_UNIT_OF_MEASURE_REQUIRED, errors);
+        if (request.getIsPack() == null) {
+            errors.add(SaleConstants.SALE_IS_PACK_REQUIRED);
+        }
+        fieldValidator.validateOptionalPositive(request.getPackSize(), SaleConstants.SALE_PACK_SIZE_REQUIRED, errors);
         fieldValidator.validateNonNegative(request.getTotalSalePrice(), SaleConstants.SALE_TOTAL_SALE_PRICE_REQUIRED, errors);
         fieldValidator.throwIfHasErrors(errors);
     }

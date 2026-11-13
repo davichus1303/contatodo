@@ -25,6 +25,7 @@ public final class Product {
     private final String name;
     private final String description;
     private final List<String> unitOfMeasures;
+    private final Integer packSize;
     private final Integer stock;
     private final String code;
     private final Double realCost;
@@ -48,6 +49,7 @@ public final class Product {
         this.name = builder.name;
         this.description = builder.description;
         this.unitOfMeasures = builder.unitOfMeasures == null ? List.of() : List.copyOf(builder.unitOfMeasures);
+        this.packSize = builder.packSize;
         this.stock = builder.stock;
         this.code = builder.code;
         this.realCost = builder.realCost;
@@ -90,6 +92,15 @@ public final class Product {
      */
     public List<String> getUnitOfMeasures() {
         return unitOfMeasures;
+    }
+
+    /**
+     * Gets the number of base units contained in one pack or presentation.
+     *
+     * @return Pack size, or null when the product is not sold by packs.
+     */
+    public Integer getPackSize() {
+        return packSize;
     }
 
     public Integer getStock() {
@@ -182,6 +193,22 @@ public final class Product {
     }
 
     /**
+     * Updates the pack size of the product.
+     *
+     * @param packSize Number of base units contained in one pack, ignored when null.
+     * @return New product instance with updated pack size and timestamp.
+     */
+    public Product withPackSize(Integer packSize) {
+        if (packSize == null) {
+            return this;
+        }
+        Builder builder = copyBase();
+        builder.packSize = packSize;
+        builder.updatedDate = LocalDateTime.now();
+        return new Product(builder);
+    }
+
+    /**
      * Recalculates costs using a new weighted average real unit cost.
      *
      * <p>The total real cost becomes the average multiplied by current
@@ -225,6 +252,7 @@ public final class Product {
                 .name(name)
                 .description(description)
                 .unitOfMeasures(unitOfMeasures)
+                .packSize(packSize)
                 .stock(stock)
                 .code(code)
                 .realCost(realCost)
@@ -248,6 +276,7 @@ public final class Product {
         private String name;
         private String description;
         private List<String> unitOfMeasures;
+        private Integer packSize;
         private Integer stock;
         private String code;
         private Double realCost;
@@ -302,6 +331,17 @@ public final class Product {
          */
         public Builder unitOfMeasures(List<String> unitOfMeasures) {
             this.unitOfMeasures = unitOfMeasures;
+            return this;
+        }
+
+        /**
+         * Sets the number of base units contained in one pack or presentation.
+         *
+         * @param packSize Pack size.
+         * @return This builder.
+         */
+        public Builder packSize(Integer packSize) {
+            this.packSize = packSize;
             return this;
         }
 
@@ -449,6 +489,9 @@ public final class Product {
             EntityValidation.requireNonNegative(realCost, ProductConstants.PRODUCT_COST_INVALID + " (total)");
             EntityValidation.requireNonNegative(unitRealCost, ProductConstants.PRODUCT_COST_INVALID + " (unit real)");
             EntityValidation.requireNonNegative(unitPublicCost, ProductConstants.PRODUCT_COST_INVALID + " (public)");
+            if (packSize != null && packSize <= 0) {
+                throw new com.contatodo.domain.exception.InvalidEntityStateException(ProductConstants.PRODUCT_PACK_SIZE_INVALID);
+            }
             return new Product(this);
         }
     }

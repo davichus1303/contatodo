@@ -26,6 +26,7 @@ class ProductMapperTest {
         request.setName("Cafe");
         request.setDescription("Grano de cafe");
         request.setUnitOfMeasures(unitOfMeasures);
+        request.setPackSize(12);
         request.setStock(10);
         request.setRealCost(100.0);
         request.setUnitRealCost(10.0);
@@ -40,6 +41,7 @@ class ProductMapperTest {
                 .name("Cafe")
                 .description("Grano de cafe")
                 .unitOfMeasures(List.of("uom-1"))
+                .packSize(12)
                 .stock(10)
                 .code("42")
                 .realCost(100.0)
@@ -60,6 +62,35 @@ class ProductMapperTest {
         );
 
         assertEquals(List.of("uom-1", "uom-2"), product.getUnitOfMeasures());
+    }
+
+    @Test
+    void toEntityMapsPackSizeFromTheCreateRequest() {
+        Product product = mapper.toEntity(
+                createRequest(List.of("uom-1")),
+                "42",
+                "user-1",
+                CompanyOid.of("company-1")
+        );
+
+        assertEquals(12, product.getPackSize());
+    }
+
+    @Test
+    void applyUpdateReplacesThePackSizeWhenProvided() {
+        UpdateProductRequest request = new UpdateProductRequest();
+        request.setPackSize(24);
+
+        Product updated = mapper.applyUpdate(existingProduct(), request, "editor-1");
+
+        assertEquals(24, updated.getPackSize());
+    }
+
+    @Test
+    void applyUpdateKeepsTheExistingPackSizeWhenOmitted() {
+        Product updated = mapper.applyUpdate(existingProduct(), new UpdateProductRequest(), "editor-1");
+
+        assertEquals(12, updated.getPackSize());
     }
 
     @Test
@@ -94,6 +125,13 @@ class ProductMapperTest {
         ProductResponse response = mapper.toResponse(existingProduct());
 
         assertEquals(List.of("uom-1"), response.getUnitOfMeasures());
+    }
+
+    @Test
+    void toResponseExposesPackSize() {
+        ProductResponse response = mapper.toResponse(existingProduct());
+
+        assertEquals(12, response.getPackSize());
     }
 
     @Test

@@ -12,6 +12,8 @@ public class CreateAcquisitionRequest {
     private String description;
     private List<String> unitOfMeasures;
     private String unitOfMeasure;
+    private String unitOfMeasureOid;
+    private Integer packSize;
     private Integer quantity;
     private Double realCost;
     private Double unitPublicCost;
@@ -88,6 +90,45 @@ public class CreateAcquisitionRequest {
      */
     public void setUnitOfMeasure(String unitOfMeasure) {
         this.unitOfMeasure = unitOfMeasure;
+    }
+
+    /**
+     * Gets the identifier of the unit of measure acquired for the inventory.
+     *
+     * <p>Optional. When omitted, {@link #getUnitOfMeasure()} is used as the
+     * acquisition unit of measure identifier.</p>
+     *
+     * @return Unit of measure identifier, or null when omitted.
+     */
+    public String getUnitOfMeasureOid() {
+        return unitOfMeasureOid;
+    }
+
+    /**
+     * Sets the identifier of the unit of measure acquired for the inventory.
+     *
+     * @param unitOfMeasureOid Unit of measure identifier.
+     */
+    public void setUnitOfMeasureOid(String unitOfMeasureOid) {
+        this.unitOfMeasureOid = unitOfMeasureOid;
+    }
+
+    /**
+     * Gets the number of base units contained in one acquired pack.
+     *
+     * @return Pack size, or null when the acquisition is not expressed in packs.
+     */
+    public Integer getPackSize() {
+        return packSize;
+    }
+
+    /**
+     * Sets the number of base units contained in one acquired pack.
+     *
+     * @param packSize Pack size.
+     */
+    public void setPackSize(Integer packSize) {
+        this.packSize = packSize;
     }
 
     public Integer getQuantity() {

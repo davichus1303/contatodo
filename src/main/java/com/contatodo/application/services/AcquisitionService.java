@@ -10,6 +10,7 @@ import com.contatodo.application.validators.UnitOfMeasureValidator;
 import com.contatodo.domain.entities.Acquisition;
 import com.contatodo.domain.entities.AcquisitionType;
 import com.contatodo.domain.entities.Product;
+import com.contatodo.domain.entities.UnitOfMeasure;
 import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.AcquisitionRepository;
 import com.contatodo.domain.repositories.AcquisitionTypeRepository;
@@ -163,17 +164,41 @@ public class AcquisitionService {
             AcquisitionType acquisitionType,
             CompanyOid companyOid
     ) {
+        String unitOfMeasureOid = resolveAcquisitionUnitOfMeasureOid(request);
+        UnitOfMeasure unitOfMeasure = unitOfMeasureValidator.requireActive(companyOid, unitOfMeasureOid);
+
         ProductInventoryHandler.InventoryOutcome outcome =
-                productInventoryHandler.applyToInventory(request, userOid, companyOid);
+                productInventoryHandler.applyToInventory(request, userOid, companyOid, unitOfMeasure.isPack());
 
         Acquisition acquisition = acquisitionMapper.toEntity(
-                request, outcome.productOid(), userOid, outcome.averageUnitRealCost(), companyOid);
+                request,
+                outcome.productOid(),
+                userOid,
+                outcome.averageUnitRealCost(),
+                companyOid,
+                outcome.packSize(),
+                unitOfMeasureOid
+        );
         Acquisition savedAcquisition = acquisitionRepository.save(acquisition);
 
         productInventoryHandler.recordCostHistory(
-                outcome.productOid(), request, savedAcquisition, outcome.averageUnitRealCost());
+                outcome.productOid(), request, savedAcquisition, outcome);
 
         return acquisitionMapper.toResponse(savedAcquisition, outcome.productName(), acquisitionType.getName());
+    }
+
+    /**
+     * Resolves the unit of measure identifier used by the inventory flow.
+     *
+     * @param request Create acquisition request.
+     * @return The explicit unit of measure identifier, falling back to the
+     *         acquisition unit of measure for legacy clients.
+     */
+    private String resolveAcquisitionUnitOfMeasureOid(CreateAcquisitionRequest request) {
+        if (request.getUnitOfMeasureOid() != null && !request.getUnitOfMeasureOid().isBlank()) {
+            return request.getUnitOfMeasureOid();
+        }
+        return request.getUnitOfMeasure();
     }
 
     /**

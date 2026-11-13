@@ -109,6 +109,20 @@ public class FieldValidator {
     }
 
     /**
+     * Validates that an optional numeric value, when present, is greater than
+     * zero.
+     *
+     * @param value Numeric value, may be null.
+     * @param fieldName Field name for error messages.
+     * @param errors Error list to append to.
+     */
+    public void validateOptionalPositive(Number value, String fieldName, List<String> errors) {
+        if (value != null && value.doubleValue() <= 0) {
+            errors.add(fieldName + ": " + ValidationConstants.FIELD_MUST_BE_POSITIVE);
+        }
+    }
+
+    /**
      * Creates a new mutable error list.
      *
      * @return Empty error list.
