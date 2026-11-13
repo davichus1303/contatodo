@@ -52,6 +52,29 @@ class UnitOfMeasureTest {
     }
 
     @Test
+    void buildsWithThePackFlag() {
+        UnitOfMeasure unitOfMeasure = UnitOfMeasure.builder()
+                .name("Docena")
+                .abrev("doc")
+                .isPack(true)
+                .build();
+
+        assertTrue(unitOfMeasure.getIsPack());
+        assertTrue(unitOfMeasure.isPack());
+    }
+
+    @Test
+    void treatsAMissingPackFlagAsNotAPack() {
+        UnitOfMeasure unitOfMeasure = UnitOfMeasure.builder()
+                .name("Kilogram")
+                .abrev("kg")
+                .build();
+
+        assertNull(unitOfMeasure.getIsPack());
+        assertFalse(unitOfMeasure.isPack());
+    }
+
+    @Test
     void rejectsMissingName() {
         assertThrows(InvalidEntityStateException.class, () -> UnitOfMeasure.builder()
                 .name(" ")

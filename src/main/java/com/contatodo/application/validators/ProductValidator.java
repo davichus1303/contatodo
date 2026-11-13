@@ -38,6 +38,7 @@ public class ProductValidator {
         fieldValidator.validateNonNegative(request.getRealCost(), ProductConstants.PRODUCT_REAL_COST_REQUIRED, errors);
         fieldValidator.validateNonNegative(request.getUnitRealCost(), ProductConstants.PRODUCT_REAL_COST_REQUIRED, errors);
         fieldValidator.validateNonNegative(request.getUnitPublicCost(), ProductConstants.PRODUCT_PUBLIC_COST_REQUIRED, errors);
+        fieldValidator.validateOptionalPositive(request.getPackSize(), ProductConstants.PRODUCT_PACK_SIZE_INVALID, errors);
         validateUnitOfMeasuresRequired(request.getUnitOfMeasures(), errors);
         fieldValidator.throwIfHasErrors(errors);
     }
@@ -61,6 +62,7 @@ public class ProductValidator {
         if (request.getUnitPublicCost() != null) {
             fieldValidator.validateNonNegative(request.getUnitPublicCost(), ProductConstants.PRODUCT_COST_INVALID, errors);
         }
+        fieldValidator.validateOptionalPositive(request.getPackSize(), ProductConstants.PRODUCT_PACK_SIZE_INVALID, errors);
         validateUnitOfMeasuresIfPresent(request.getUnitOfMeasures(), errors);
         fieldValidator.throwIfHasErrors(errors);
     }

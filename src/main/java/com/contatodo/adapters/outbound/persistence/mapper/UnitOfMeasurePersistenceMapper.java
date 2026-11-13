@@ -26,6 +26,7 @@ public class UnitOfMeasurePersistenceMapper implements PersistenceMapper<UnitOfM
         document.setIsActive(unitOfMeasure.getIsActive());
         document.setIsDeleted(unitOfMeasure.getIsDeleted());
         document.setIsDivisible(unitOfMeasure.getIsDivisible());
+        document.setIsPack(unitOfMeasure.getIsPack());
         return document;
     }
 
@@ -44,6 +45,7 @@ public class UnitOfMeasurePersistenceMapper implements PersistenceMapper<UnitOfM
                 .isActive(document.getIsActive())
                 .isDeleted(document.getIsDeleted())
                 .isDivisible(document.getIsDivisible())
+                .isPack(document.getIsPack())
                 .build();
     }
 }

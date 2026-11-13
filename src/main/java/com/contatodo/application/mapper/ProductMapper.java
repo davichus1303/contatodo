@@ -35,6 +35,7 @@ public class ProductMapper implements ResponseMapper<Product, ProductResponse> {
                 .name(request.getName())
                 .description(request.getDescription())
                 .unitOfMeasures(request.getUnitOfMeasures())
+                .packSize(request.getPackSize())
                 .stock(request.getStock())
                 .code(code)
                 .realCost(request.getRealCost())
@@ -65,6 +66,7 @@ public class ProductMapper implements ResponseMapper<Product, ProductResponse> {
                 .unitOfMeasures(request.getUnitOfMeasures() != null && !request.getUnitOfMeasures().isEmpty()
                         ? request.getUnitOfMeasures()
                         : existing.getUnitOfMeasures())
+                .packSize(request.getPackSize() != null ? request.getPackSize() : existing.getPackSize())
                 .stock(request.getStock() != null ? request.getStock() : existing.getStock())
                 .code(existing.getCode())
                 .realCost(request.getRealCost() != null ? request.getRealCost() : existing.getRealCost())
@@ -92,6 +94,7 @@ public class ProductMapper implements ResponseMapper<Product, ProductResponse> {
         response.setName(product.getName());
         response.setDescription(product.getDescription());
         response.setUnitOfMeasures(product.getUnitOfMeasures());
+        response.setPackSize(product.getPackSize());
         response.setStock(product.getStock());
         response.setCode(product.getCode());
         response.setRealCost(product.getRealCost());

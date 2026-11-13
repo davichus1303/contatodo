@@ -48,6 +48,30 @@ class UnitOfMeasureMapperTest {
     }
 
     @Test
+    void toEntityMapsThePackFlag() {
+        CreateUnitOfMeasureRequest request = new CreateUnitOfMeasureRequest();
+        request.setName("Docena");
+        request.setAbrev("doc");
+        request.setIsPack(true);
+
+        UnitOfMeasure unitOfMeasure = mapper.toEntity(request, "company-1");
+
+        assertTrue(unitOfMeasure.getIsPack());
+        assertTrue(unitOfMeasure.isPack());
+    }
+
+    @Test
+    void toEntityDefaultsThePackFlagToFalseWhenTheRequestOmitsIt() {
+        CreateUnitOfMeasureRequest request = new CreateUnitOfMeasureRequest();
+        request.setName("Kilogram");
+        request.setAbrev("kg");
+
+        UnitOfMeasure unitOfMeasure = mapper.toEntity(request, "company-1");
+
+        assertFalse(unitOfMeasure.getIsPack());
+    }
+
+    @Test
     void toResponseCopiesEveryField() {
         UnitOfMeasure unitOfMeasure = UnitOfMeasure.builder()
                 .id("u-1")
@@ -57,6 +81,7 @@ class UnitOfMeasureMapperTest {
                 .isActive(true)
                 .isDeleted(false)
                 .isDivisible(true)
+                .isPack(true)
                 .build();
 
         UnitOfMeasureResponse response = mapper.toResponse(unitOfMeasure);
@@ -68,6 +93,7 @@ class UnitOfMeasureMapperTest {
         assertTrue(response.getIsActive());
         assertFalse(response.getIsDeleted());
         assertTrue(response.getIsDivisible());
+        assertTrue(response.getIsPack());
     }
 
     @Test
@@ -80,6 +106,7 @@ class UnitOfMeasureMapperTest {
                 .isActive(true)
                 .isDeleted(false)
                 .isDivisible(true)
+                .isPack(true)
                 .build();
         UpdateUnitOfMeasureRequest request = new UpdateUnitOfMeasureRequest();
         request.setName("Gram");
@@ -87,6 +114,7 @@ class UnitOfMeasureMapperTest {
         request.setIsActive(false);
         request.setIsDeleted(true);
         request.setIsDivisible(false);
+        request.setIsPack(false);
 
         UnitOfMeasure updated = mapper.updateEntityFromRequest(existing, request);
 
@@ -97,6 +125,7 @@ class UnitOfMeasureMapperTest {
         assertFalse(updated.getIsActive());
         assertTrue(updated.getIsDeleted());
         assertFalse(updated.getIsDivisible());
+        assertFalse(updated.getIsPack());
     }
 
     @Test
@@ -109,6 +138,7 @@ class UnitOfMeasureMapperTest {
                 .isActive(true)
                 .isDeleted(false)
                 .isDivisible(true)
+                .isPack(true)
                 .build();
         UpdateUnitOfMeasureRequest request = new UpdateUnitOfMeasureRequest();
 
@@ -121,5 +151,6 @@ class UnitOfMeasureMapperTest {
         assertTrue(updated.getIsActive());
         assertFalse(updated.getIsDeleted());
         assertTrue(updated.getIsDivisible());
+        assertTrue(updated.getIsPack());
     }
 }

@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -86,6 +87,41 @@ class ProductTest {
         Product updated = productWithStock(4).withAverageUnitRealCost(12.5);
         assertEquals(12.5, updated.getUnitRealCost());
         assertEquals(50.0, updated.getRealCost());
+    }
+
+    @Test
+    void buildAcceptsAPositivePackSize() {
+        Product product = Product.builder()
+                .name("Cafe")
+                .packSize(12)
+                .build();
+
+        assertEquals(12, product.getPackSize());
+    }
+
+    @Test
+    void buildRejectsANonPositivePackSize() {
+        Exception exception = assertThrows(
+                com.contatodo.domain.exception.InvalidEntityStateException.class,
+                () -> Product.builder().name("Cafe").packSize(0).build()
+        );
+        assertEquals(ProductConstants.PRODUCT_PACK_SIZE_INVALID, exception.getMessage());
+    }
+
+    @Test
+    void withPackSizeUpdatesThePackSizeAndPreservesTheRest() {
+        Product product = productWithStock(10).withPackSize(24);
+
+        assertEquals(24, product.getPackSize());
+        assertEquals(10, product.getStock());
+        assertEquals("Cafe", product.getName());
+    }
+
+    @Test
+    void withPackSizeIgnoresANullValue() {
+        Product product = productWithStock(10);
+
+        assertSame(product, product.withPackSize(null));
     }
 
     @Test

@@ -17,6 +17,7 @@ public class ProductDocument {
     private String name;
     private String description;
     private List<String> unitOfMeasures;
+    private Integer packSize;
     private Integer stock;
     private String code;
     private Double realCost;
@@ -60,6 +61,14 @@ public class ProductDocument {
 
     public void setUnitOfMeasures(List<String> unitOfMeasures) {
         this.unitOfMeasures = unitOfMeasures;
+    }
+
+    public Integer getPackSize() {
+        return packSize;
+    }
+
+    public void setPackSize(Integer packSize) {
+        this.packSize = packSize;
     }
 
     public Integer getStock() {

@@ -25,6 +25,7 @@ class UnitOfMeasurePersistenceMapperTest {
                 .isActive(true)
                 .isDeleted(false)
                 .isDivisible(true)
+                .isPack(true)
                 .build();
 
         UnitOfMeasureDocument document = mapper.toDocument(unitOfMeasure);
@@ -36,6 +37,7 @@ class UnitOfMeasurePersistenceMapperTest {
         assertTrue(document.getIsActive());
         assertFalse(document.getIsDeleted());
         assertTrue(document.getIsDivisible());
+        assertTrue(document.getIsPack());
     }
 
     @Test
@@ -48,6 +50,7 @@ class UnitOfMeasurePersistenceMapperTest {
         document.setIsActive(true);
         document.setIsDeleted(false);
         document.setIsDivisible(true);
+        document.setIsPack(true);
 
         UnitOfMeasure unitOfMeasure = mapper.toEntity(document);
 
@@ -58,5 +61,6 @@ class UnitOfMeasurePersistenceMapperTest {
         assertTrue(unitOfMeasure.getIsActive());
         assertFalse(unitOfMeasure.getIsDeleted());
         assertTrue(unitOfMeasure.getIsDivisible());
+        assertTrue(unitOfMeasure.getIsPack());
     }
 }

@@ -16,6 +16,9 @@ public final class SaleConstants {
     public static final String SALE_QUANTITY_REQUIRED = "Quantity is required.";
     public static final String SALE_UNIT_OF_MEASURE_REQUIRED = "Unit of measure is required.";
     public static final String SALE_TOTAL_SALE_PRICE_REQUIRED = "Total sale price is required.";
+    public static final String SALE_IS_PACK_REQUIRED = "Unit of measure pack flag is required.";
+    public static final String SALE_IS_PACK_MISMATCH = "Unit of measure pack flag does not match the configured unit.";
+    public static final String SALE_PACK_SIZE_REQUIRED = "Product pack size is required to sell a pack quantity.";
 
     private SaleConstants() {
     }

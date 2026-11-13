@@ -9,6 +9,7 @@ public class CreateUnitOfMeasureRequest {
     private String abrev;
     private String companyOid;
     private Boolean isDivisible;
+    private Boolean isPack;
 
     public CreateUnitOfMeasureRequest() {
     }
@@ -43,5 +44,13 @@ public class CreateUnitOfMeasureRequest {
 
     public void setIsDivisible(Boolean isDivisible) {
         this.isDivisible = isDivisible;
+    }
+
+    public Boolean getIsPack() {
+        return isPack;
+    }
+
+    public void setIsPack(Boolean isPack) {
+        this.isPack = isPack;
     }
 }

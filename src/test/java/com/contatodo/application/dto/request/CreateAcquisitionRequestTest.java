@@ -33,4 +33,15 @@ class CreateAcquisitionRequestTest {
 
         assertEquals("uom-1", request.getUnitOfMeasure());
     }
+
+    @Test
+    void deserializesTheInventoryUnitOfMeasureAndPackSize() throws Exception {
+        CreateAcquisitionRequest request = objectMapper.readValue(
+                "{\"unitOfMeasureOid\":\"uom-1\",\"packSize\":12}",
+                CreateAcquisitionRequest.class
+        );
+
+        assertEquals("uom-1", request.getUnitOfMeasureOid());
+        assertEquals(12, request.getPackSize());
+    }
 }

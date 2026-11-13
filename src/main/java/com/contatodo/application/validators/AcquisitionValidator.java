@@ -48,6 +48,7 @@ public class AcquisitionValidator {
         if (request.getUnitOfMeasure() == null || request.getUnitOfMeasure().trim().isEmpty()) {
             errors.add(AcquisitionConstants.UNIT_OF_MEASURE_REQUIRED);
         }
+        fieldValidator.validateOptionalPositive(request.getPackSize(), AcquisitionConstants.PACK_SIZE_INVALID, errors);
 
         fieldValidator.throwIfHasErrors(errors);
     }
@@ -75,6 +76,7 @@ public class AcquisitionValidator {
         if (request.getUnitOfMeasure() == null || request.getUnitOfMeasure().trim().isEmpty()) {
             errors.add(AcquisitionConstants.UNIT_OF_MEASURE_REQUIRED);
         }
+        fieldValidator.validateOptionalPositive(request.getPackSize(), AcquisitionConstants.PACK_SIZE_INVALID, errors);
 
         fieldValidator.throwIfHasErrors(errors);
     }

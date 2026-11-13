@@ -16,7 +16,9 @@ import com.contatodo.domain.repositories.ProductRepository;
 import com.contatodo.domain.repositories.SaleRepository;
 import com.contatodo.domain.repositories.UnitOfMeasureRepository;
 import com.contatodo.domain.repositories.UserRepository;
+import com.contatodo.shared.constants.ResponseConstants;
 import com.contatodo.shared.constants.SaleConstants;
+import com.contatodo.shared.exceptions.InvalidRequestException;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.shared.utils.DateUtils;
 import org.springframework.stereotype.Service;
@@ -43,6 +45,7 @@ public class SaleService {
     private final SaleValidator saleValidator;
     private final UnitOfMeasureValidator unitOfMeasureValidator;
     private final UnitOfMeasureRepository unitOfMeasureRepository;
+    private final PackConversionService packConversionService;
     private final SaleMapper saleMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final CompanyService companyService;
@@ -56,6 +59,7 @@ public class SaleService {
      * @param saleValidator Sale validator.
      * @param unitOfMeasureValidator Unit of measure validator.
      * @param unitOfMeasureRepository Unit of measure repository used to join names on reads.
+     * @param packConversionService Shared pack to base unit converter.
      * @param saleMapper Sale mapper.
      * @param authenticatedUserProvider Authenticated user provider.
      * @param companyService Company service used to resolve the owning company.
@@ -67,6 +71,7 @@ public class SaleService {
             SaleValidator saleValidator,
             UnitOfMeasureValidator unitOfMeasureValidator,
             UnitOfMeasureRepository unitOfMeasureRepository,
+            PackConversionService packConversionService,
             SaleMapper saleMapper,
             AuthenticatedUserProvider authenticatedUserProvider,
             CompanyService companyService
@@ -77,6 +82,7 @@ public class SaleService {
         this.saleValidator = saleValidator;
         this.unitOfMeasureValidator = unitOfMeasureValidator;
         this.unitOfMeasureRepository = unitOfMeasureRepository;
+        this.packConversionService = packConversionService;
         this.saleMapper = saleMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.companyService = companyService;
@@ -92,6 +98,10 @@ public class SaleService {
      * product of one company with a sale recorded under another. When neither
      * source provides a company the sale is rejected, keeping the sales page
      * and this write scoped identically.</p>
+     *
+     * <p>When the sale is registered in a pack unit, the stored quantity is the
+     * quantity multiplied by the pack size, matching the base units removed
+     * from stock.</p>
      *
      * @param request Create sale request.
      * @return Created sale response.
@@ -109,10 +119,24 @@ public class SaleService {
         Product product = productRepository.findByIdAndCompany(companyOid, request.getProductOid())
                 .orElseThrow(() -> new ResourceNotFoundException(SaleConstants.PRODUCT_NOT_FOUND));
 
-        unitOfMeasureValidator.validateExist(companyOid, request.getUnitOfMeasureOid());
+        UnitOfMeasure unitOfMeasure = unitOfMeasureValidator.requireActive(companyOid, request.getUnitOfMeasureOid());
+        if (request.getIsPack() != null && !Objects.equals(request.getIsPack(), unitOfMeasure.isPack())) {
+            throw new InvalidRequestException(
+                    ResponseConstants.VALIDATION_ERROR_MESSAGE,
+                    List.of(SaleConstants.SALE_IS_PACK_MISMATCH)
+            );
+        }
+
+        Integer packSize = request.getPackSize() != null ? request.getPackSize() : product.getPackSize();
+        int baseQuantity = packConversionService.toBaseUnits(
+                request.getQuantity(),
+                unitOfMeasure.isPack(),
+                packSize,
+                SaleConstants.SALE_PACK_SIZE_REQUIRED
+        );
 
         String productName = product.getName();
-        Product updatedProduct = product.decreaseStock(request.getQuantity());
+        Product updatedProduct = product.decreaseStock(baseQuantity);
 
         Money unitRealCost = Money.of(product.getUnitRealCost() != null ? product.getUnitRealCost() : product.getRealCost());
         Money unitPublicCost = Money.of(product.getUnitPublicCost() != null ? product.getUnitPublicCost() : product.getRealCost());
@@ -124,7 +148,7 @@ public class SaleService {
                 request.getProductOid(),
                 productName,
                 user.getId(),
-                request.getQuantity(),
+                baseQuantity,
                 request.getUnitOfMeasureOid(),
                 request.getTotalSalePrice(),
                 unitRealCost,

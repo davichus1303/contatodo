@@ -18,6 +18,8 @@ public final class Acquisition {
     private final String productOid;
     private final String productName;
     private final String unitOfMeasure;
+    private final String unitOfMeasureOid;
+    private final Integer packSize;
     private final Integer quantity;
     private final Double realCost;
     private final Double unitRealCost;
@@ -44,6 +46,8 @@ public final class Acquisition {
         this.productOid = builder.productOid;
         this.productName = builder.productName;
         this.unitOfMeasure = builder.unitOfMeasure;
+        this.unitOfMeasureOid = builder.unitOfMeasureOid;
+        this.packSize = builder.packSize;
         this.quantity = builder.quantity;
         this.realCost = builder.realCost;
         this.unitRealCost = builder.unitRealCost;
@@ -87,6 +91,24 @@ public final class Acquisition {
 
     public String getUnitOfMeasure() {
         return unitOfMeasure;
+    }
+
+    /**
+     * Gets the identifier of the unit of measure acquired for the inventory.
+     *
+     * @return Unit of measure identifier, or null for legacy records.
+     */
+    public String getUnitOfMeasureOid() {
+        return unitOfMeasureOid;
+    }
+
+    /**
+     * Gets the number of base units contained in one acquired pack.
+     *
+     * @return Pack size snapshot, or null when the acquisition is not expressed in packs.
+     */
+    public Integer getPackSize() {
+        return packSize;
     }
 
     public Integer getQuantity() {
@@ -155,6 +177,8 @@ public final class Acquisition {
         private String productOid;
         private String productName;
         private String unitOfMeasure;
+        private String unitOfMeasureOid;
+        private Integer packSize;
         private Integer quantity;
         private Double realCost;
         private Double unitRealCost;
@@ -222,6 +246,28 @@ public final class Acquisition {
          */
         public Builder unitOfMeasure(String unitOfMeasure) {
             this.unitOfMeasure = unitOfMeasure;
+            return this;
+        }
+
+        /**
+         * Sets the identifier of the unit of measure acquired for the inventory.
+         *
+         * @param unitOfMeasureOid Unit of measure identifier.
+         * @return This builder.
+         */
+        public Builder unitOfMeasureOid(String unitOfMeasureOid) {
+            this.unitOfMeasureOid = unitOfMeasureOid;
+            return this;
+        }
+
+        /**
+         * Sets the number of base units contained in one acquired pack.
+         *
+         * @param packSize Pack size.
+         * @return This builder.
+         */
+        public Builder packSize(Integer packSize) {
+            this.packSize = packSize;
             return this;
         }
 
@@ -396,6 +442,10 @@ public final class Acquisition {
             EntityValidation.requireNonNegative(realCost, ValidationConstants.FIELD_INVALID_RANGE);
             if (id == null) {
                 EntityValidation.requireNotBlank(unitOfMeasure, ValidationConstants.FIELD_REQUIRED);
+            }
+            if (packSize != null && packSize <= 0) {
+                throw new com.contatodo.domain.exception.InvalidEntityStateException(
+                        com.contatodo.shared.constants.AcquisitionConstants.PACK_SIZE_INVALID);
             }
             return new Acquisition(this);
         }

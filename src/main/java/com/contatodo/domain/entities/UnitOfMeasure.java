@@ -18,6 +18,7 @@ public final class UnitOfMeasure {
     private final Boolean isActive;
     private final Boolean isDeleted;
     private final Boolean isDivisible;
+    private final Boolean isPack;
 
     /**
      * Creates a unit of measure from its builder.
@@ -32,6 +33,7 @@ public final class UnitOfMeasure {
         this.isActive = builder.isActive;
         this.isDeleted = builder.isDeleted;
         this.isDivisible = builder.isDivisible;
+        this.isPack = builder.isPack;
     }
 
     /**
@@ -51,6 +53,16 @@ public final class UnitOfMeasure {
      */
     public boolean isDivisible() {
         return Boolean.TRUE.equals(isDivisible);
+    }
+
+    /**
+     * Resolves whether the unit of measure represents a pack or presentation
+     * that contains several base units, treating a missing flag as false.
+     *
+     * @return True when the unit is a pack.
+     */
+    public boolean isPack() {
+        return Boolean.TRUE.equals(isPack);
     }
 
     /**
@@ -93,6 +105,10 @@ public final class UnitOfMeasure {
         return isDivisible;
     }
 
+    public Boolean getIsPack() {
+        return isPack;
+    }
+
     /**
      * Creates a builder preloaded with the current state.
      *
@@ -106,7 +122,8 @@ public final class UnitOfMeasure {
                 .companyOid(companyOid)
                 .isActive(isActive)
                 .isDeleted(isDeleted)
-                .isDivisible(isDivisible);
+                .isDivisible(isDivisible)
+                .isPack(isPack);
     }
 
     /**
@@ -121,6 +138,7 @@ public final class UnitOfMeasure {
         private Boolean isActive;
         private Boolean isDeleted;
         private Boolean isDivisible;
+        private Boolean isPack;
 
         /**
          * Sets the identifier.
@@ -196,6 +214,17 @@ public final class UnitOfMeasure {
          */
         public Builder isDivisible(Boolean isDivisible) {
             this.isDivisible = isDivisible;
+            return this;
+        }
+
+        /**
+         * Sets the pack flag.
+         *
+         * @param isPack Pack flag.
+         * @return This builder.
+         */
+        public Builder isPack(Boolean isPack) {
+            this.isPack = isPack;
             return this;
         }
 

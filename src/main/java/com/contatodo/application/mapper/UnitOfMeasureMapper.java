@@ -27,6 +27,7 @@ public class UnitOfMeasureMapper implements ResponseMapper<UnitOfMeasure, UnitOf
                 .isActive(true)
                 .isDeleted(false)
                 .isDivisible(request.getIsDivisible() != null ? request.getIsDivisible() : false)
+                .isPack(request.getIsPack() != null ? request.getIsPack() : false)
                 .build();
     }
 
@@ -45,6 +46,7 @@ public class UnitOfMeasureMapper implements ResponseMapper<UnitOfMeasure, UnitOf
         response.setIsActive(unitOfMeasure.getIsActive());
         response.setIsDeleted(unitOfMeasure.getIsDeleted());
         response.setIsDivisible(unitOfMeasure.getIsDivisible());
+        response.setIsPack(unitOfMeasure.getIsPack());
         return response;
     }
 
@@ -66,6 +68,7 @@ public class UnitOfMeasureMapper implements ResponseMapper<UnitOfMeasure, UnitOf
                 .isActive(request.getIsActive() != null ? request.getIsActive() : existing.getIsActive())
                 .isDeleted(request.getIsDeleted() != null ? request.getIsDeleted() : existing.getIsDeleted())
                 .isDivisible(request.getIsDivisible() != null ? request.getIsDivisible() : existing.getIsDivisible())
+                .isPack(request.getIsPack() != null ? request.getIsPack() : existing.getIsPack())
                 .build();
     }
 }
