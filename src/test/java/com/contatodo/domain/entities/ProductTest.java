@@ -125,6 +125,23 @@ class ProductTest {
     }
 
     @Test
+    void withUnitOfMeasuresUpdatesTheUnitsAndPreservesTheRest() {
+        Product product = productWithStock(10).withUnitOfMeasures(List.of("uom-1", "uom-2"));
+
+        assertEquals(List.of("uom-1", "uom-2"), product.getUnitOfMeasures());
+        assertEquals(10, product.getStock());
+        assertEquals("Cafe", product.getName());
+    }
+
+    @Test
+    void withUnitOfMeasuresIgnoresAnEmptySelection() {
+        Product product = productWithStock(10);
+
+        assertSame(product, product.withUnitOfMeasures(null));
+        assertSame(product, product.withUnitOfMeasures(List.of()));
+    }
+
+    @Test
     void buildRejectsNegativeStock() {
         Exception exception = assertThrows(
                 com.contatodo.domain.exception.InvalidEntityStateException.class,

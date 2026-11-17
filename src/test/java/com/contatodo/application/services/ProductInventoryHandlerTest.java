@@ -87,6 +87,20 @@ class ProductInventoryHandlerTest {
                 .build();
     }
 
+    private Product existingProductWithoutUnits() {
+        return Product.builder()
+                .id("p-1")
+                .name("Cafe")
+                .stock(4)
+                .code("7")
+                .realCost(40.0)
+                .unitRealCost(10.0)
+                .unitPublicCost(15.0)
+                .isActive(true)
+                .byUserOid("user-1")
+                .build();
+    }
+
     private ProductCostHistory history(Double realCost, Integer quantity) {
         return ProductCostHistory.builder()
                 .productOid("p-1")
@@ -314,6 +328,60 @@ class ProductInventoryHandlerTest {
         ArgumentCaptor<Product> captor = ArgumentCaptor.forClass(Product.class);
         verify(productRepository).save(captor.capture());
         assertEquals(List.of("uom-existing"), captor.getValue().getUnitOfMeasures());
+    }
+
+    @Test
+    void applyToInventoryBackfillsTheAcquisitionUnitWhenTheProductDeclaresNone() {
+        when(productRepository.findByNameAndIsActiveTrue("Cafe"))
+                .thenReturn(Optional.of(existingProductWithoutUnits()));
+        when(productCostHistoryRepository.findByProductOid("p-1")).thenReturn(List.of(
+                history(40.0, 4)
+        ));
+        when(productRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        handler.applyToInventory(request(60.0, 6, null), "user-1", CompanyOid.of("company-1"), false);
+
+        ArgumentCaptor<Product> captor = ArgumentCaptor.forClass(Product.class);
+        verify(productRepository).save(captor.capture());
+        assertEquals(List.of("uom-acq"), captor.getValue().getUnitOfMeasures());
+        assertEquals(10, captor.getValue().getStock());
+        assertEquals(100.0, captor.getValue().getRealCost());
+        assertEquals(20.0, captor.getValue().getUnitPublicCost());
+    }
+
+    @Test
+    void applyToInventoryBackfillsTheExplicitAcquisitionUnitOidWhenTheProductDeclaresNone() {
+        CreateAcquisitionRequest request = request(60.0, 6, null);
+        request.setUnitOfMeasureOid("uom-oid");
+        when(productRepository.findByNameAndIsActiveTrue("Cafe"))
+                .thenReturn(Optional.of(existingProductWithoutUnits()));
+        when(productCostHistoryRepository.findByProductOid("p-1")).thenReturn(List.of());
+        when(productRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        handler.applyToInventory(request, "user-1", CompanyOid.of("company-1"), false);
+
+        ArgumentCaptor<Product> captor = ArgumentCaptor.forClass(Product.class);
+        verify(productRepository).save(captor.capture());
+        assertEquals(List.of("uom-oid"), captor.getValue().getUnitOfMeasures());
+    }
+
+    @Test
+    void applyToInventoryBackfillsTheUnitsOfMeasureSentByTheAcquisition() {
+        when(productRepository.findByNameAndIsActiveTrue("Cafe"))
+                .thenReturn(Optional.of(existingProductWithoutUnits()));
+        when(productCostHistoryRepository.findByProductOid("p-1")).thenReturn(List.of());
+        when(productRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        handler.applyToInventory(
+                request(60.0, 6, List.of("uom-1", "uom-2")),
+                "user-1",
+                CompanyOid.of("company-1"),
+                false
+        );
+
+        ArgumentCaptor<Product> captor = ArgumentCaptor.forClass(Product.class);
+        verify(productRepository).save(captor.capture());
+        assertEquals(List.of("uom-1", "uom-2"), captor.getValue().getUnitOfMeasures());
     }
 
     @Test
