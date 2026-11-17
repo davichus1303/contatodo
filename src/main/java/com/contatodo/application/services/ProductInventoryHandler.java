@@ -172,7 +172,7 @@ public class ProductInventoryHandler {
                 request.getRealCost(),
                 baseQuantity
         );
-        Product updatedProduct = existingProduct
+        Product updatedProduct = backfillUnitOfMeasures(existingProduct, request)
                 .withPackSize(packSize)
                 .replenish(baseQuantity)
                 .withAverageUnitRealCost(averageUnitRealCost)
@@ -186,6 +186,49 @@ public class ProductInventoryHandler {
                 packSize,
                 baseQuantity
         );
+    }
+
+    /**
+     * Associates the acquisition units with an existing product that declares
+     * none.
+     *
+     * <p>Products created before the unit of measure catalog existed may have
+     * an empty list. When an acquisition of such a product selects a unit, the
+     * association is persisted so the product catalog reflects it. Products
+     * that already declare units are left untouched, which keeps every other
+     * product attribute exactly as it was.</p>
+     *
+     * @param existingProduct Product found by name and owner.
+     * @param request Create acquisition request.
+     * @return Product with the units backfilled when applicable.
+     */
+    private Product backfillUnitOfMeasures(Product existingProduct, CreateAcquisitionRequest request) {
+        if (!existingProduct.getUnitOfMeasures().isEmpty()) {
+            return existingProduct;
+        }
+
+        if (request.getUnitOfMeasures() != null && !request.getUnitOfMeasures().isEmpty()) {
+            return existingProduct.withUnitOfMeasures(request.getUnitOfMeasures());
+        }
+
+        String acquisitionUnitOid = resolveAcquisitionUnitOfMeasureOid(request);
+        if (acquisitionUnitOid == null || acquisitionUnitOid.isBlank()) {
+            return existingProduct;
+        }
+        return existingProduct.withUnitOfMeasures(List.of(acquisitionUnitOid));
+    }
+
+    /**
+     * Resolves the unit of measure identifier of the acquisition.
+     *
+     * @param request Create acquisition request.
+     * @return The explicit identifier, falling back to the acquisition unit.
+     */
+    private String resolveAcquisitionUnitOfMeasureOid(CreateAcquisitionRequest request) {
+        if (request.getUnitOfMeasureOid() != null && !request.getUnitOfMeasureOid().isBlank()) {
+            return request.getUnitOfMeasureOid();
+        }
+        return request.getUnitOfMeasure();
     }
 
     /**

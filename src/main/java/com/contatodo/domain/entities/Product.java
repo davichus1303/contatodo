@@ -209,6 +209,27 @@ public final class Product {
     }
 
     /**
+     * Associates units of measure with the product.
+     *
+     * <p>Products created before the unit of measure catalog existed may not
+     * declare any unit. The inventory flow uses this method to persist the
+     * unit selected by an acquisition without altering the rest of the
+     * product. An empty list is ignored so the operation stays idempotent.</p>
+     *
+     * @param unitOfMeasures Unit of measure identifiers, ignored when null or empty.
+     * @return New product instance with updated units and timestamp.
+     */
+    public Product withUnitOfMeasures(List<String> unitOfMeasures) {
+        if (unitOfMeasures == null || unitOfMeasures.isEmpty()) {
+            return this;
+        }
+        Builder builder = copyBase();
+        builder.unitOfMeasures = unitOfMeasures;
+        builder.updatedDate = LocalDateTime.now();
+        return new Product(builder);
+    }
+
+    /**
      * Recalculates costs using a new weighted average real unit cost.
      *
      * <p>The total real cost becomes the average multiplied by current
