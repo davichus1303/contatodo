@@ -244,7 +244,7 @@ class SaleServiceTest {
     void getTodaySalesDelegatesCompanyResolutionAndQueriesWithTheResult() {
         when(companyService.resolveReadCompanyOid("param-company")).thenReturn(CompanyOid.of("resolved-company"));
         when(saleRepository.findBySaleDate(eq(CompanyOid.of("resolved-company")), any())).thenReturn(java.util.List.of());
-        when(saleMapper.toResponseListWithUnitOfMeasureNames(any(), any())).thenReturn(java.util.List.of());
+        when(saleMapper.toResponseListWithUnitOfMeasureDetails(any(), any())).thenReturn(java.util.List.of());
 
         saleService.getTodaySales("param-company");
 
@@ -273,13 +273,13 @@ class SaleServiceTest {
                         .isDeleted(false)
                         .build()
         ));
-        when(saleMapper.toResponseListWithUnitOfMeasureNames(any(), any())).thenReturn(List.of(new SaleResponse()));
+        when(saleMapper.toResponseListWithUnitOfMeasureDetails(any(), any())).thenReturn(List.of(new SaleResponse()));
 
         saleService.getTodaySales(null);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<Map<String, UnitOfMeasure>> unitsCaptor = ArgumentCaptor.forClass(Map.class);
-        verify(saleMapper).toResponseListWithUnitOfMeasureNames(eq(List.of(sale)), unitsCaptor.capture());
+        verify(saleMapper).toResponseListWithUnitOfMeasureDetails(eq(List.of(sale)), unitsCaptor.capture());
         assertEquals("Kilogramo", unitsCaptor.getValue().get("uom-1").getName());
     }
 
@@ -293,7 +293,7 @@ class SaleServiceTest {
                 .build();
         when(companyService.resolveReadCompanyOid(any())).thenReturn(companyOid);
         when(saleRepository.findBySaleDate(eq(companyOid), any())).thenReturn(List.of(sale));
-        when(saleMapper.toResponseListWithUnitOfMeasureNames(any(), any())).thenReturn(List.of(new SaleResponse()));
+        when(saleMapper.toResponseListWithUnitOfMeasureDetails(any(), any())).thenReturn(List.of(new SaleResponse()));
 
         saleService.getTodaySales(null);
 
@@ -320,7 +320,7 @@ class SaleServiceTest {
         when(companyService.resolveReadCompanyOid("param-company")).thenReturn(CompanyOid.of("param-company"));
         when(saleRepository.findBySaleDateBetween(eq(CompanyOid.of("param-company")), any(), any()))
                 .thenReturn(java.util.List.of());
-        when(saleMapper.toResponseListWithUnitOfMeasureNames(any(), any())).thenReturn(java.util.List.of());
+        when(saleMapper.toResponseListWithUnitOfMeasureDetails(any(), any())).thenReturn(java.util.List.of());
 
         saleService.getSalesByDateRange("param-company", LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30));
 
