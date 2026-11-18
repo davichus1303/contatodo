@@ -175,7 +175,7 @@ public class SaleService {
         CompanyOid companyOid = companyService.resolveReadCompanyOid(requestedCompanyOid);
         LocalDate today = LocalDate.now();
         List<Sale> sales = saleRepository.findBySaleDate(companyOid, today);
-        return saleMapper.toResponseListWithUnitOfMeasureNames(sales, loadUnitsOfMeasure(companyOid, sales));
+        return saleMapper.toResponseListWithUnitOfMeasureDetails(sales, loadUnitsOfMeasure(companyOid, sales));
     }
 
     /**
@@ -195,7 +195,7 @@ public class SaleService {
         LocalDateTime endDateTime = DateUtils.endOfDay(endDate);
 
         List<Sale> sales = saleRepository.findBySaleDateBetween(companyOid, startDateTime, endDateTime);
-        return saleMapper.toResponseListWithUnitOfMeasureNames(sales, loadUnitsOfMeasure(companyOid, sales));
+        return saleMapper.toResponseListWithUnitOfMeasureDetails(sales, loadUnitsOfMeasure(companyOid, sales));
     }
 
     /**
@@ -203,7 +203,7 @@ public class SaleService {
      *
      * <p>Only the units of the resolved company are considered, so the join
      * behaves like an inner join: a sale whose unit is missing, inactive or
-     * owned by another company keeps a {@code null} name.</p>
+     * owned by another company keeps a {@code null} name and abbreviation.</p>
      *
      * @param companyOid Owning company identifier.
      * @param sales Sales whose unit identifiers must be resolved.

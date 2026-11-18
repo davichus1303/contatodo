@@ -15,6 +15,7 @@ public class SaleResponse {
     private Integer quantity;
     private String unitOfMeasureOid;
     private String unitOfMeasureName;
+    private String unitOfMeasureAbbrev;
     private Double totalCost;
     private Double originalTotalPrice;
     private Double totalSalePrice;
@@ -85,6 +86,14 @@ public class SaleResponse {
 
     public void setUnitOfMeasureName(String unitOfMeasureName) {
         this.unitOfMeasureName = unitOfMeasureName;
+    }
+
+    public String getUnitOfMeasureAbbrev() {
+        return unitOfMeasureAbbrev;
+    }
+
+    public void setUnitOfMeasureAbbrev(String unitOfMeasureAbbrev) {
+        this.unitOfMeasureAbbrev = unitOfMeasureAbbrev;
     }
 
     public Double getTotalCost() {
