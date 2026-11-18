@@ -13,6 +13,8 @@ public interface DealMongoRepository extends MongoRepository<DealDocument, Strin
 
     List<DealDocument> findByCompanyOidAndIsDeleteFalse(String companyOid);
 
+    List<DealDocument> findByCompanyOidAndIsActiveTrueAndIsDeleteFalse(String companyOid);
+
     Optional<DealDocument> findByCompanyOidAndProductOidAndIsActiveTrueAndIsDeleteFalse(
             String companyOid, String productOid);
 

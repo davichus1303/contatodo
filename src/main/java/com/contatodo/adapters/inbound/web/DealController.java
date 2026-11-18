@@ -47,6 +47,19 @@ public class DealController {
     }
 
     /**
+     * Retrieves all active and non-deleted deals belonging to a company.
+     *
+     * @param companyOid Company identifier.
+     * @return List of active, non-deleted deals.
+     */
+    @GetMapping("/activeNotDeleted")
+    public ResponseEntity<ApiResponse<List<DealResponse>>> getActiveNotDeletedDeals(
+            @RequestParam(required = false) String companyOid) {
+        List<DealResponse> deals = dealService.getActiveNotDeletedDealsByCompany(companyOid);
+        return WebResponses.ok(ResponseConstants.SUCCESS_MESSAGE, deals);
+    }
+
+    /**
      * Retrieves the active deal for a specific product within a company.
      *
      * @param companyOid Company identifier.

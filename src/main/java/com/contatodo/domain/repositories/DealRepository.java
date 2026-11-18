@@ -28,6 +28,14 @@ public interface DealRepository {
     List<Deal> findByCompanyAndNotDeleted(CompanyOid companyOid);
 
     /**
+     * Finds all active, non-deleted deals owned by the given company.
+     *
+     * @param companyOid Owning company.
+     * @return List of active, non-deleted deals.
+     */
+    List<Deal> findActiveNotDeletedByCompany(CompanyOid companyOid);
+
+    /**
      * Finds the active, non-deleted deal for the given company and product.
      *
      * @param companyOid Owning company.

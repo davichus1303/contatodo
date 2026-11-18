@@ -23,6 +23,7 @@ public class CacheConfig {
     public CacheManager cacheManager() {
         return new ConcurrentMapCacheManager(
                 DealConstants.CACHE_DEALS_BY_COMPANY,
+                DealConstants.CACHE_ACTIVE_NOT_DELETED_DEALS_BY_COMPANY,
                 DealConstants.CACHE_DEAL_OFFER_BY_PRODUCT
         );
     }

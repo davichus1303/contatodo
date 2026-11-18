@@ -72,6 +72,35 @@ public class DealService {
     }
 
     /**
+     * Retrieves all active and non-deleted deals belonging to the specified company.
+     *
+     * @param requestedCompanyOid Company identifier supplied in the request.
+     * @return List of active, non-deleted deal responses.
+     */
+    @SuppressWarnings("unchecked")
+    public List<DealResponse> getActiveNotDeletedDealsByCompany(String requestedCompanyOid) {
+        validateRequiredString(requestedCompanyOid, DealConstants.COMPANY_OID_REQUIRED);
+        CompanyOid companyOid = companyService.resolveReadCompanyOid(requestedCompanyOid);
+
+        Cache cache = cacheManager.getCache(DealConstants.CACHE_ACTIVE_NOT_DELETED_DEALS_BY_COMPANY);
+        String key = companyKey(companyOid);
+        if (cache != null) {
+            Cache.ValueWrapper wrapper = cache.get(key);
+            if (wrapper != null && wrapper.get() instanceof List<?>) {
+                return (List<DealResponse>) wrapper.get();
+            }
+        }
+
+        List<DealResponse> response = dealMapper.toResponseList(
+                dealRepository.findActiveNotDeletedByCompany(companyOid)
+        );
+        if (cache != null) {
+            cache.put(key, response);
+        }
+        return response;
+    }
+
+    /**
      * Retrieves the active, non-deleted deal for the given company and product.
      *
      * @param requestedCompanyOid Company identifier supplied in the request.
@@ -262,6 +291,10 @@ public class DealService {
         Cache dealsCache = cacheManager.getCache(DealConstants.CACHE_DEALS_BY_COMPANY);
         if (dealsCache != null) {
             dealsCache.evict(companyKey(companyOid));
+        }
+        Cache activeNotDeletedDealsCache = cacheManager.getCache(DealConstants.CACHE_ACTIVE_NOT_DELETED_DEALS_BY_COMPANY);
+        if (activeNotDeletedDealsCache != null) {
+            activeNotDeletedDealsCache.evict(companyKey(companyOid));
         }
         Cache offerCache = cacheManager.getCache(DealConstants.CACHE_DEAL_OFFER_BY_PRODUCT);
         if (offerCache != null) {

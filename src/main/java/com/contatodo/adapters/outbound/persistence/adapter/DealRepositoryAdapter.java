@@ -42,6 +42,13 @@ public class DealRepositoryAdapter implements DealRepository {
     }
 
     @Override
+    public List<Deal> findActiveNotDeletedByCompany(CompanyOid companyOid) {
+        return persistenceMapper.toEntityList(
+                dealMongoRepository.findByCompanyOidAndIsActiveTrueAndIsDeleteFalse(companyOid.value())
+        );
+    }
+
+    @Override
     public Optional<Deal> findActiveByCompanyAndProduct(CompanyOid companyOid, String productOid) {
         return dealMongoRepository
                 .findByCompanyOidAndProductOidAndIsActiveTrueAndIsDeleteFalse(companyOid.value(), productOid)

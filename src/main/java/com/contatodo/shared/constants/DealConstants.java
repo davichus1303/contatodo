@@ -20,6 +20,7 @@ public final class DealConstants {
     public static final String OID_REQUIRED = "Deal identifier is required";
 
     public static final String CACHE_DEALS_BY_COMPANY = "dealsByCompany";
+    public static final String CACHE_ACTIVE_NOT_DELETED_DEALS_BY_COMPANY = "activeNotDeletedDealsByCompany";
     public static final String CACHE_DEAL_OFFER_BY_PRODUCT = "dealOfferByProduct";
 
     private DealConstants() {
