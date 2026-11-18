@@ -135,15 +135,15 @@ class ProductMapperTest {
     }
 
     @Test
-    void toResponseListWithUnitOfMeasureDetailsJoinsNameAndOid() {
+    void toResponseListWithUnitOfMeasureDetailsJoinsNameOidAndPackFlag() {
         Product product = Product.builder()
                 .id("p-1")
                 .name("Cafe")
                 .unitOfMeasures(List.of("uom-1", "uom-missing", "uom-2"))
                 .stock(10)
                 .build();
-        UnitOfMeasure kilogram = unitOfMeasure("uom-1", "Kilogramo");
-        UnitOfMeasure box = unitOfMeasure("uom-2", "Caja");
+        UnitOfMeasure kilogram = unitOfMeasure("uom-1", "Kilogramo", false);
+        UnitOfMeasure box = unitOfMeasure("uom-2", "Caja", true);
 
         List<ProductResponse> responses = mapper.toResponseListWithUnitOfMeasureDetails(
                 List.of(product),
@@ -154,11 +154,13 @@ class ProductMapperTest {
         assertEquals(2, details.size());
         assertEquals("uom-1", details.get(0).getOid());
         assertEquals("Kilogramo", details.get(0).getName());
+        assertEquals(false, details.get(0).getIsPack());
         assertEquals("uom-2", details.get(1).getOid());
         assertEquals("Caja", details.get(1).getName());
+        assertEquals(true, details.get(1).getIsPack());
     }
 
-    private UnitOfMeasure unitOfMeasure(String id, String name) {
+    private UnitOfMeasure unitOfMeasure(String id, String name, boolean isPack) {
         return UnitOfMeasure.builder()
                 .id(id)
                 .name(name)
@@ -166,6 +168,7 @@ class ProductMapperTest {
                 .companyOid("company-1")
                 .isActive(true)
                 .isDeleted(false)
+                .isPack(isPack)
                 .build();
     }
 }

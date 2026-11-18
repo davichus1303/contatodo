@@ -154,7 +154,8 @@ public class ProductService {
      * Retrieves available products with stock greater than 0.
      *
      * <p>The response joins each product with the active units of measure of
-     * its company, returning the identifier and name of the matched units.</p>
+     * its company, returning the identifier, name and pack flag of the matched
+     * units.</p>
      *
      * @return List of product responses.
      */

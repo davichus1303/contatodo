@@ -7,6 +7,7 @@ public class UnitOfMeasureDetailResponse {
 
     private String oid;
     private String name;
+    private Boolean isPack;
 
     public UnitOfMeasureDetailResponse() {
     }
@@ -16,10 +17,12 @@ public class UnitOfMeasureDetailResponse {
      *
      * @param oid Unit of measure identifier.
      * @param name Unit of measure name.
+     * @param isPack Whether the unit represents a pack.
      */
-    public UnitOfMeasureDetailResponse(String oid, String name) {
+    public UnitOfMeasureDetailResponse(String oid, String name, Boolean isPack) {
         this.oid = oid;
         this.name = name;
+        this.isPack = isPack;
     }
 
     public String getOid() {
@@ -36,5 +39,18 @@ public class UnitOfMeasureDetailResponse {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    /**
+     * Gets whether the unit represents a pack.
+     *
+     * @return True when the unit is a pack.
+     */
+    public Boolean getIsPack() {
+        return isPack;
+    }
+
+    public void setIsPack(Boolean isPack) {
+        this.isPack = isPack;
     }
 }

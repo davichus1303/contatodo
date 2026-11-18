@@ -108,7 +108,8 @@ public class ProductMapper implements ResponseMapper<Product, ProductResponse> {
     }
 
     /**
-     * Maps products to responses joining the names of their units of measure.
+     * Maps products to responses joining the names and pack flags of their
+     * units of measure.
      *
      * <p>Only units present in the supplied map are included, emulating an
      * inner join between the product unit identifiers and the unit catalog.</p>
@@ -127,7 +128,8 @@ public class ProductMapper implements ResponseMapper<Product, ProductResponse> {
     }
 
     /**
-     * Maps a product to a response joining the names of its units of measure.
+     * Maps a product to a response joining the names and pack flags of its
+     * units of measure.
      *
      * @param product Product entity.
      * @param unitsByOid Units of measure keyed by identifier.
@@ -142,7 +144,7 @@ public class ProductMapper implements ResponseMapper<Product, ProductResponse> {
                 .filter(Objects::nonNull)
                 .map(unitsByOid::get)
                 .filter(Objects::nonNull)
-                .map(unit -> new UnitOfMeasureDetailResponse(unit.getId(), unit.getName()))
+                .map(unit -> new UnitOfMeasureDetailResponse(unit.getId(), unit.getName(), unit.isPack()))
                 .toList();
         response.setUnitOfMeasureDetails(details);
         return response;

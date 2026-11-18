@@ -75,12 +75,13 @@ class ProductControllerTest {
     @Test
     void getAvailableProductsReturnsJoinedUnitOfMeasureDetails() throws Exception {
         ProductResponse response = productResponse();
-        response.setUnitOfMeasureDetails(List.of(new UnitOfMeasureDetailResponse("uom-1", "Kilogramo")));
+        response.setUnitOfMeasureDetails(List.of(new UnitOfMeasureDetailResponse("uom-1", "Kilogramo", false)));
         when(productService.getAvailableProducts(any())).thenReturn(List.of(response));
 
         mockMvc.perform(get("/products/available").param("companyOid", "c1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].unitOfMeasureDetails[0].oid").value("uom-1"))
-                .andExpect(jsonPath("$.data[0].unitOfMeasureDetails[0].name").value("Kilogramo"));
+                .andExpect(jsonPath("$.data[0].unitOfMeasureDetails[0].name").value("Kilogramo"))
+                .andExpect(jsonPath("$.data[0].unitOfMeasureDetails[0].isPack").value(false));
     }
 }
