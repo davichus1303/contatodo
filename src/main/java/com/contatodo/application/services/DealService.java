@@ -30,6 +30,14 @@ public class DealService {
     private final CompanyService companyService;
     private final CacheManager cacheManager;
 
+    /**
+     * Creates a deal service.
+     *
+     * @param dealRepository Deal repository port.
+     * @param dealMapper Deal mapper.
+     * @param companyService Company service used to resolve the owning company.
+     * @param cacheManager Cache manager used to read and evict deal caches.
+     */
     public DealService(
             DealRepository dealRepository,
             DealMapper dealMapper,
@@ -211,6 +219,12 @@ public class DealService {
         evictCaches(CompanyOid.of(savedDeal.getCompanyOid()), savedDeal.getProductOid());
     }
 
+    /**
+     * Validates the payload required to create a deal.
+     *
+     * @param request Create deal request.
+     * @throws InvalidRequestException when required data is missing or invalid.
+     */
     private void validateCreateRequest(CreateDealRequest request) {
         if (request == null) {
             throw new InvalidRequestException(
@@ -253,6 +267,12 @@ public class DealService {
         }
     }
 
+    /**
+     * Validates the numeric fields provided in an update request.
+     *
+     * @param request Update deal request.
+     * @throws InvalidRequestException when a provided numeric value is invalid.
+     */
     private void validateUpdateRequest(UpdateDealRequest request) {
         if (request.getPrice() != null && (request.getPrice().isNaN() || request.getPrice().isInfinite())) {
             throw new InvalidRequestException(
@@ -268,6 +288,13 @@ public class DealService {
         }
     }
 
+    /**
+     * Builds a normalized create request using the resolved company identifier.
+     *
+     * @param request Original create deal request.
+     * @param resolvedCompanyOid Resolved owning company identifier.
+     * @return Normalized create deal request.
+     */
     private CreateDealRequest normalizeCreateRequest(CreateDealRequest request, String resolvedCompanyOid) {
         CreateDealRequest normalized = new CreateDealRequest();
         normalized.setCompanyOid(resolvedCompanyOid);
@@ -278,6 +305,13 @@ public class DealService {
         return normalized;
     }
 
+    /**
+     * Validates that a required string value is present.
+     *
+     * @param value Value to validate.
+     * @param errorMessage Validation error message.
+     * @throws InvalidRequestException when the value is null or blank.
+     */
     private void validateRequiredString(String value, String errorMessage) {
         if (value == null || value.isBlank()) {
             throw new InvalidRequestException(
@@ -287,6 +321,12 @@ public class DealService {
         }
     }
 
+    /**
+     * Evicts deal caches affected by a change in the given company and product.
+     *
+     * @param companyOid Owning company.
+     * @param productOid Product identifier.
+     */
     private void evictCaches(CompanyOid companyOid, String productOid) {
         Cache dealsCache = cacheManager.getCache(DealConstants.CACHE_DEALS_BY_COMPANY);
         if (dealsCache != null) {
@@ -302,10 +342,23 @@ public class DealService {
         }
     }
 
+    /**
+     * Builds the cache key for company-scoped deal entries.
+     *
+     * @param companyOid Owning company.
+     * @return Cache key for the company.
+     */
     private String companyKey(CompanyOid companyOid) {
         return companyOid != null ? companyOid.value() : "null";
     }
 
+    /**
+     * Builds the cache key for an offer lookup by company and product.
+     *
+     * @param companyOid Owning company.
+     * @param productOid Product identifier.
+     * @return Cache key for the offer lookup.
+     */
     private String offerKey(CompanyOid companyOid, String productOid) {
         return companyKey(companyOid) + "::" + productOid;
     }

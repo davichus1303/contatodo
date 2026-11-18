@@ -29,6 +29,11 @@ public class DealController {
 
     private final DealService dealService;
 
+    /**
+     * Creates a deal controller.
+     *
+     * @param dealService Deal service.
+     */
     public DealController(DealService dealService) {
         this.dealService = dealService;
     }

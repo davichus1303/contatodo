@@ -19,6 +19,12 @@ public class DealRepositoryAdapter implements DealRepository {
     private final DealMongoRepository dealMongoRepository;
     private final DealPersistenceMapper persistenceMapper;
 
+    /**
+     * Creates a deal repository adapter.
+     *
+     * @param dealMongoRepository MongoDB repository for deals.
+     * @param persistenceMapper Mapper between deal entities and documents.
+     */
     public DealRepositoryAdapter(
             DealMongoRepository dealMongoRepository,
             DealPersistenceMapper persistenceMapper

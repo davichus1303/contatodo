@@ -35,6 +35,12 @@ public class DealMapper implements ResponseMapper<Deal, DealResponse> {
                 .build();
     }
 
+    /**
+     * Maps a deal entity to a response DTO.
+     *
+     * @param deal Deal entity.
+     * @return Deal response DTO.
+     */
     @Override
     public DealResponse toResponse(Deal deal) {
         DealResponse response = new DealResponse();

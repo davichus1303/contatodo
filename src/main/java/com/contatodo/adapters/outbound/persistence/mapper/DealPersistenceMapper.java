@@ -10,6 +10,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class DealPersistenceMapper implements PersistenceMapper<DealDocument, Deal> {
 
+    /**
+     * Maps a deal entity to a MongoDB document.
+     *
+     * @param deal Deal entity.
+     * @return Deal document.
+     */
     @Override
     public DealDocument toDocument(Deal deal) {
         DealDocument document = new DealDocument();
@@ -26,6 +32,12 @@ public class DealPersistenceMapper implements PersistenceMapper<DealDocument, De
         return document;
     }
 
+    /**
+     * Maps a MongoDB deal document to a domain entity.
+     *
+     * @param document Deal document.
+     * @return Deal entity.
+     */
     @Override
     public Deal toEntity(DealDocument document) {
         return Deal.builder()
