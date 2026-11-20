@@ -24,6 +24,8 @@ public class ProductPersistenceMapper implements PersistenceMapper<ProductDocume
         document.setId(product.getId());
         document.setName(product.getName());
         document.setDescription(product.getDescription());
+        document.setUnitOfMeasures(product.getUnitOfMeasures());
+        document.setPackSize(product.getPackSize());
         document.setStock(product.getStock());
         document.setCode(product.getCode());
         document.setRealCost(product.getRealCost());
@@ -52,6 +54,8 @@ public class ProductPersistenceMapper implements PersistenceMapper<ProductDocume
                 .id(document.getId())
                 .name(document.getName())
                 .description(document.getDescription())
+                .unitOfMeasures(document.getUnitOfMeasures())
+                .packSize(document.getPackSize())
                 .stock(document.getStock())
                 .code(document.getCode())
                 .realCost(document.getRealCost())

@@ -1,6 +1,8 @@
 package com.contatodo.application.dto.request;
 
 
+import java.util.List;
+
 /**
  * Request DTO for updating a product.
  */
@@ -8,6 +10,8 @@ public class UpdateProductRequest {
 
     private String name;
     private String description;
+    private List<String> unitOfMeasures;
+    private Integer packSize;
     private Integer stock;
     private Double realCost;
     private Double unitRealCost;
@@ -29,6 +33,22 @@ public class UpdateProductRequest {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public List<String> getUnitOfMeasures() {
+        return unitOfMeasures;
+    }
+
+    public void setUnitOfMeasures(List<String> unitOfMeasures) {
+        this.unitOfMeasures = unitOfMeasures;
+    }
+
+    public Integer getPackSize() {
+        return packSize;
+    }
+
+    public void setPackSize(Integer packSize) {
+        this.packSize = packSize;
     }
 
     public Integer getStock() {

@@ -6,6 +6,7 @@ import com.contatodo.application.dto.response.ExpenseResponse;
 import com.contatodo.application.dto.response.TotalExpensesResponse;
 import com.contatodo.application.mapper.ExpenseMapper;
 import com.contatodo.application.validators.ExpenseValidator;
+import com.contatodo.application.validators.UnitOfMeasureValidator;
 import com.contatodo.domain.entities.Expense;
 import com.contatodo.domain.repositories.ExpenseRepository;
 import com.contatodo.shared.constants.ExpenseConstants;
@@ -29,6 +30,7 @@ public class ExpenseService {
 
     private final ExpenseRepository expenseRepository;
     private final ExpenseValidator expenseValidator;
+    private final UnitOfMeasureValidator unitOfMeasureValidator;
     private final ExpenseMapper expenseMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final CompanyService companyService;
@@ -38,6 +40,7 @@ public class ExpenseService {
      *
      * @param expenseRepository Expense repository port.
      * @param expenseValidator Expense validator.
+     * @param unitOfMeasureValidator Unit of measure validator.
      * @param expenseMapper Expense mapper.
      * @param authenticatedUserProvider Authenticated user provider.
      * @param companyService Company service used to resolve the owning company.
@@ -45,12 +48,14 @@ public class ExpenseService {
     public ExpenseService(
             ExpenseRepository expenseRepository,
             ExpenseValidator expenseValidator,
+            UnitOfMeasureValidator unitOfMeasureValidator,
             ExpenseMapper expenseMapper,
             AuthenticatedUserProvider authenticatedUserProvider,
             CompanyService companyService
     ) {
         this.expenseRepository = expenseRepository;
         this.expenseValidator = expenseValidator;
+        this.unitOfMeasureValidator = unitOfMeasureValidator;
         this.expenseMapper = expenseMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.companyService = companyService;
@@ -67,9 +72,12 @@ public class ExpenseService {
 
         String userOid = authenticatedUserProvider.getCurrentUserOid();
         LocalDateTime expenseDate = resolveExpenseDate(request.getExpenseDate());
+        CompanyOid companyOid = companyService.resolveCompanyOid(request.getCompanyOid());
+
+        unitOfMeasureValidator.validateExist(companyOid, request.getUnitOfMeasure());
 
         Expense savedExpense = expenseRepository.save(
-                expenseMapper.toEntity(request, userOid, expenseDate, companyService.resolveCompanyOid(request.getCompanyOid())));
+                expenseMapper.toEntity(request, userOid, expenseDate, companyOid));
         return expenseMapper.toResponse(savedExpense);
     }
 

@@ -30,6 +30,7 @@ public class ExpenseMapper implements ResponseMapper<Expense, ExpenseResponse> {
                 .acquisitionOid(request.getAcquisitionOid())
                 .acquisitionTypeOid(request.getAcquisitionTypeOid())
                 .name(request.getName())
+                .unitOfMeasure(request.getUnitOfMeasure())
                 .quantity(request.getQuantity())
                 .amount(request.getAmount())
                 .currency(request.getCurrency())
@@ -55,6 +56,7 @@ public class ExpenseMapper implements ResponseMapper<Expense, ExpenseResponse> {
         response.setAcquisitionOid(expense.getAcquisitionOid());
         response.setAcquisitionTypeOid(expense.getAcquisitionTypeOid());
         response.setName(expense.getName());
+        response.setUnitOfMeasure(expense.getUnitOfMeasure());
         response.setQuantity(expense.getQuantity());
         response.setAmount(expense.getAmount());
         response.setCurrency(expense.getCurrency());

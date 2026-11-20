@@ -7,6 +7,9 @@ public class CreateSaleRequest {
 
     private String productOid;
     private Integer quantity;
+    private String unitOfMeasureOid;
+    private Boolean isPack;
+    private Integer packSize;
     private Double totalSalePrice;
     private String notes;
 
@@ -26,6 +29,60 @@ public class CreateSaleRequest {
 
     public void setQuantity(Integer quantity) {
         this.quantity = quantity;
+    }
+
+    /**
+     * Gets the unit of measure in which the sale is registered.
+     *
+     * @return Unit of measure identifier.
+     */
+    public String getUnitOfMeasureOid() {
+        return unitOfMeasureOid;
+    }
+
+    /**
+     * Sets the unit of measure in which the sale is registered.
+     *
+     * @param unitOfMeasureOid Unit of measure identifier.
+     */
+    public void setUnitOfMeasureOid(String unitOfMeasureOid) {
+        this.unitOfMeasureOid = unitOfMeasureOid;
+    }
+
+    /**
+     * Gets whether the selected unit of measure represents a pack.
+     *
+     * @return Pack flag, or null when omitted.
+     */
+    public Boolean getIsPack() {
+        return isPack;
+    }
+
+    /**
+     * Sets whether the selected unit of measure represents a pack.
+     *
+     * @param isPack Pack flag.
+     */
+    public void setIsPack(Boolean isPack) {
+        this.isPack = isPack;
+    }
+
+    /**
+     * Gets the number of base units contained in one sold pack.
+     *
+     * @return Pack size, or null when the product pack size must be used.
+     */
+    public Integer getPackSize() {
+        return packSize;
+    }
+
+    /**
+     * Sets the number of base units contained in one sold pack.
+     *
+     * @param packSize Pack size.
+     */
+    public void setPackSize(Integer packSize) {
+        this.packSize = packSize;
     }
 
     public Double getTotalSalePrice() {

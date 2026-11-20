@@ -1,0 +1,79 @@
+package com.contatodo.domain.repositories;
+
+import com.contatodo.domain.entities.UnitOfMeasure;
+import com.contatodo.domain.model.CompanyOid;
+
+import java.util.List;
+import java.util.Optional;
+
+/**
+ * Repository port for units of measure.
+ */
+public interface UnitOfMeasureRepository {
+
+    /**
+     * Saves a unit of measure.
+     *
+     * @param unitOfMeasure Unit of measure to save.
+     * @return Saved unit of measure.
+     */
+    UnitOfMeasure save(UnitOfMeasure unitOfMeasure);
+
+    /**
+     * Finds the active, non-deleted units of measure owned by the given
+     * company.
+     *
+     * @param companyOid Owning company, {@code null} keeps units without a company.
+     * @return List of active units of measure owned by that company.
+     */
+    List<UnitOfMeasure> findActiveByCompany(CompanyOid companyOid);
+
+    /**
+     * Finds the active, non-deleted unit of measure with the given name inside
+     * the given company.
+     *
+     * @param companyOid Owning company, {@code null} keeps units without a company.
+     * @param name Unit of measure name.
+     * @return Optional matching unit of measure.
+     */
+    Optional<UnitOfMeasure> findActiveByCompanyAndName(CompanyOid companyOid, String name);
+
+    /**
+     * Finds the active, non-deleted unit of measure with the given identifier
+     * inside the given company.
+     *
+     * @param companyOid Owning company, {@code null} keeps units without a company.
+     * @param unitOfMeasuresOid Unit of measure identifier.
+     * @return Optional matching unit of measure.
+     */
+    Optional<UnitOfMeasure> findActiveByCompanyAndOid(CompanyOid companyOid, String unitOfMeasuresOid);
+
+    /**
+     * Finds the non-deleted unit of measure with the given identifier
+     * inside the given company (active or inactive).
+     *
+     * @param companyOid Owning company.
+     * @param unitOfMeasuresOid Unit of measure identifier.
+     * @return Optional matching unit of measure, empty when it does not exist.
+     */
+    Optional<UnitOfMeasure> findNotDeletedByCompanyAndOid(CompanyOid companyOid, String unitOfMeasuresOid);
+
+    /**
+     * Finds all non-deleted units of measure owned by the given company
+     * (both active and inactive) ordered by name.
+     *
+     * @param companyOid Owning company, {@code null} keeps units without a company.
+     * @return List of non-deleted units of measure.
+     */
+    List<UnitOfMeasure> findAllNotDeletedByCompany(CompanyOid companyOid);
+
+    /**
+     * Finds the non-deleted unit of measure with the given name inside the
+     * given company, regardless of its active flag.
+     *
+     * @param companyOid Owning company, {@code null} keeps units without a company.
+     * @param name Unit of measure name.
+     * @return Optional matching unit of measure, empty when it does not exist.
+     */
+    Optional<UnitOfMeasure> findNotDeletedByCompanyAndName(CompanyOid companyOid, String name);
+}

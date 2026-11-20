@@ -11,6 +11,7 @@ public class ExpenseResponse {
     private String acquisitionOid;
     private String acquisitionTypeOid;
     private String name;
+    private String unitOfMeasure;
     private Integer quantity;
     private Double amount;
     private String currency;
@@ -54,6 +55,14 @@ public class ExpenseResponse {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getUnitOfMeasure() {
+        return unitOfMeasure;
+    }
+
+    public void setUnitOfMeasure(String unitOfMeasure) {
+        this.unitOfMeasure = unitOfMeasure;
     }
 
     public Integer getQuantity() {

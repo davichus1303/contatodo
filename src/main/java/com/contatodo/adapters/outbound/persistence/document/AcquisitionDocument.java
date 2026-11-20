@@ -16,6 +16,9 @@ public class AcquisitionDocument {
     private String acquisitionTypeOid;
     private String productOid;
     private String productName;
+    private String unitOfMeasure;
+    private String unitOfMeasureOid;
+    private Integer packSize;
     private Integer quantity;
     private Double realCost;
     private Double unitRealCost;
@@ -61,6 +64,30 @@ public class AcquisitionDocument {
 
     public void setProductName(String productName) {
         this.productName = productName;
+    }
+
+    public String getUnitOfMeasure() {
+        return unitOfMeasure;
+    }
+
+    public void setUnitOfMeasure(String unitOfMeasure) {
+        this.unitOfMeasure = unitOfMeasure;
+    }
+
+    public String getUnitOfMeasureOid() {
+        return unitOfMeasureOid;
+    }
+
+    public void setUnitOfMeasureOid(String unitOfMeasureOid) {
+        this.unitOfMeasureOid = unitOfMeasureOid;
+    }
+
+    public Integer getPackSize() {
+        return packSize;
+    }
+
+    public void setPackSize(Integer packSize) {
+        this.packSize = packSize;
     }
 
     public Integer getQuantity() {

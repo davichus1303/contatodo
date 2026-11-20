@@ -17,6 +17,9 @@ public final class Acquisition {
     private final String acquisitionTypeOid;
     private final String productOid;
     private final String productName;
+    private final String unitOfMeasure;
+    private final String unitOfMeasureOid;
+    private final Integer packSize;
     private final Integer quantity;
     private final Double realCost;
     private final Double unitRealCost;
@@ -42,6 +45,9 @@ public final class Acquisition {
         this.acquisitionTypeOid = builder.acquisitionTypeOid;
         this.productOid = builder.productOid;
         this.productName = builder.productName;
+        this.unitOfMeasure = builder.unitOfMeasure;
+        this.unitOfMeasureOid = builder.unitOfMeasureOid;
+        this.packSize = builder.packSize;
         this.quantity = builder.quantity;
         this.realCost = builder.realCost;
         this.unitRealCost = builder.unitRealCost;
@@ -81,6 +87,28 @@ public final class Acquisition {
 
     public String getProductName() {
         return productName;
+    }
+
+    public String getUnitOfMeasure() {
+        return unitOfMeasure;
+    }
+
+    /**
+     * Gets the identifier of the unit of measure acquired for the inventory.
+     *
+     * @return Unit of measure identifier, or null for legacy records.
+     */
+    public String getUnitOfMeasureOid() {
+        return unitOfMeasureOid;
+    }
+
+    /**
+     * Gets the number of base units contained in one acquired pack.
+     *
+     * @return Pack size snapshot, or null when the acquisition is not expressed in packs.
+     */
+    public Integer getPackSize() {
+        return packSize;
     }
 
     public Integer getQuantity() {
@@ -148,6 +176,9 @@ public final class Acquisition {
         private String acquisitionTypeOid;
         private String productOid;
         private String productName;
+        private String unitOfMeasure;
+        private String unitOfMeasureOid;
+        private Integer packSize;
         private Integer quantity;
         private Double realCost;
         private Double unitRealCost;
@@ -204,6 +235,39 @@ public final class Acquisition {
          */
         public Builder productName(String productName) {
             this.productName = productName;
+            return this;
+        }
+
+        /**
+         * Sets the unit of measure in which the acquisition was registered.
+         *
+         * @param unitOfMeasure Acquisition unit of measure identifier.
+         * @return This builder.
+         */
+        public Builder unitOfMeasure(String unitOfMeasure) {
+            this.unitOfMeasure = unitOfMeasure;
+            return this;
+        }
+
+        /**
+         * Sets the identifier of the unit of measure acquired for the inventory.
+         *
+         * @param unitOfMeasureOid Unit of measure identifier.
+         * @return This builder.
+         */
+        public Builder unitOfMeasureOid(String unitOfMeasureOid) {
+            this.unitOfMeasureOid = unitOfMeasureOid;
+            return this;
+        }
+
+        /**
+         * Sets the number of base units contained in one acquired pack.
+         *
+         * @param packSize Pack size.
+         * @return This builder.
+         */
+        public Builder packSize(Integer packSize) {
+            this.packSize = packSize;
             return this;
         }
 
@@ -364,14 +428,25 @@ public final class Acquisition {
         /**
          * Builds the acquisition validating its invariants.
          *
+         * <p>The acquisition unit of measure is required for new records. It is
+         * not enforced when rebuilding persisted records, so historical
+         * acquisitions without the field can still be read.</p>
+         *
          * @return Immutable acquisition.
-         * @throws com.contatodo.domain.exception.InvalidEntityStateException if type, owner, quantity or real cost are missing or invalid.
+         * @throws com.contatodo.domain.exception.InvalidEntityStateException if type, owner, quantity, real cost or the unit of measure of a new record are missing or invalid.
          */
         public Acquisition build() {
             EntityValidation.requireNotBlank(acquisitionTypeOid, ValidationConstants.FIELD_REQUIRED);
             EntityValidation.requireNotBlank(byUserOid, ValidationConstants.FIELD_REQUIRED);
             EntityValidation.requirePositive(quantity, ValidationConstants.FIELD_INVALID_TYPE);
             EntityValidation.requireNonNegative(realCost, ValidationConstants.FIELD_INVALID_RANGE);
+            if (id == null) {
+                EntityValidation.requireNotBlank(unitOfMeasure, ValidationConstants.FIELD_REQUIRED);
+            }
+            if (packSize != null && packSize <= 0) {
+                throw new com.contatodo.domain.exception.InvalidEntityStateException(
+                        com.contatodo.shared.constants.AcquisitionConstants.PACK_SIZE_INVALID);
+            }
             return new Acquisition(this);
         }
     }

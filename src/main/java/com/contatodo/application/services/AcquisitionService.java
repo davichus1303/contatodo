@@ -6,9 +6,11 @@ import com.contatodo.application.dto.response.AcquisitionResponse;
 import com.contatodo.application.mapper.AcquisitionMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.validators.AcquisitionValidator;
+import com.contatodo.application.validators.UnitOfMeasureValidator;
 import com.contatodo.domain.entities.Acquisition;
 import com.contatodo.domain.entities.AcquisitionType;
 import com.contatodo.domain.entities.Product;
+import com.contatodo.domain.entities.UnitOfMeasure;
 import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.repositories.AcquisitionRepository;
 import com.contatodo.domain.repositories.AcquisitionTypeRepository;
@@ -42,6 +44,7 @@ public class AcquisitionService {
     private final ProductRepository productRepository;
     private final AcquisitionTypeRepository acquisitionTypeRepository;
     private final AcquisitionValidator acquisitionValidator;
+    private final UnitOfMeasureValidator unitOfMeasureValidator;
     private final AcquisitionMapper acquisitionMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final CompanyService companyService;
@@ -55,6 +58,7 @@ public class AcquisitionService {
      * @param productRepository Product repository port.
      * @param acquisitionTypeRepository Acquisition type repository port.
      * @param acquisitionValidator Acquisition validator.
+     * @param unitOfMeasureValidator Unit of measure validator.
      * @param acquisitionMapper Acquisition mapper.
      * @param authenticatedUserProvider Authenticated user provider.
      * @param expenseService Expense use case service.
@@ -66,6 +70,7 @@ public class AcquisitionService {
             ProductRepository productRepository,
             AcquisitionTypeRepository acquisitionTypeRepository,
             AcquisitionValidator acquisitionValidator,
+            UnitOfMeasureValidator unitOfMeasureValidator,
             AcquisitionMapper acquisitionMapper,
             AuthenticatedUserProvider authenticatedUserProvider,
             ExpenseService expenseService,
@@ -76,6 +81,7 @@ public class AcquisitionService {
         this.productRepository = productRepository;
         this.acquisitionTypeRepository = acquisitionTypeRepository;
         this.acquisitionValidator = acquisitionValidator;
+        this.unitOfMeasureValidator = unitOfMeasureValidator;
         this.acquisitionMapper = acquisitionMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.companyService = companyService;
@@ -94,13 +100,20 @@ public class AcquisitionService {
         CompanyOid companyOid = companyService.resolveCompanyOid(request.getCompanyOid());
 
         AcquisitionType acquisitionType = findAcquisitionType(request.getAcquisitionTypeOid());
+        boolean affectsInventory = acquisitionType.affectsInventory();
 
-        if (acquisitionType.affectsInventory()) {
+        if (affectsInventory) {
             acquisitionValidator.validateCreateRequest(request);
-            return registerInventoryAffectingAcquisition(request, userOid, acquisitionType, companyOid);
+        } else {
+            acquisitionValidator.validateNonInventoryAffectingRequest(request);
         }
 
-        acquisitionValidator.validateNonInventoryAffectingRequest(request);
+        unitOfMeasureValidator.validateExist(companyOid, request.getUnitOfMeasure());
+        unitOfMeasureValidator.validateExist(companyOid, request.getUnitOfMeasures());
+
+        if (affectsInventory) {
+            return registerInventoryAffectingAcquisition(request, userOid, acquisitionType, companyOid);
+        }
         return registerNonInventoryAffectingAcquisition(request, userOid, acquisitionType, companyOid);
     }
 
@@ -151,17 +164,41 @@ public class AcquisitionService {
             AcquisitionType acquisitionType,
             CompanyOid companyOid
     ) {
+        String unitOfMeasureOid = resolveAcquisitionUnitOfMeasureOid(request);
+        UnitOfMeasure unitOfMeasure = unitOfMeasureValidator.requireActive(companyOid, unitOfMeasureOid);
+
         ProductInventoryHandler.InventoryOutcome outcome =
-                productInventoryHandler.applyToInventory(request, userOid, companyOid);
+                productInventoryHandler.applyToInventory(request, userOid, companyOid, unitOfMeasure.isPack());
 
         Acquisition acquisition = acquisitionMapper.toEntity(
-                request, outcome.productOid(), userOid, outcome.averageUnitRealCost(), companyOid);
+                request,
+                outcome.productOid(),
+                userOid,
+                outcome.averageUnitRealCost(),
+                companyOid,
+                outcome.packSize(),
+                unitOfMeasureOid
+        );
         Acquisition savedAcquisition = acquisitionRepository.save(acquisition);
 
         productInventoryHandler.recordCostHistory(
-                outcome.productOid(), request, savedAcquisition, outcome.averageUnitRealCost());
+                outcome.productOid(), request, savedAcquisition, outcome);
 
         return acquisitionMapper.toResponse(savedAcquisition, outcome.productName(), acquisitionType.getName());
+    }
+
+    /**
+     * Resolves the unit of measure identifier used by the inventory flow.
+     *
+     * @param request Create acquisition request.
+     * @return The explicit unit of measure identifier, falling back to the
+     *         acquisition unit of measure for legacy clients.
+     */
+    private String resolveAcquisitionUnitOfMeasureOid(CreateAcquisitionRequest request) {
+        if (request.getUnitOfMeasureOid() != null && !request.getUnitOfMeasureOid().isBlank()) {
+            return request.getUnitOfMeasureOid();
+        }
+        return request.getUnitOfMeasure();
     }
 
     /**
@@ -186,6 +223,7 @@ public class AcquisitionService {
         expenseRequest.setAcquisitionOid(savedAcquisition.getId());
         expenseRequest.setAcquisitionTypeOid(acquisitionType.getId());
         expenseRequest.setName(request.getProductName());
+        expenseRequest.setUnitOfMeasure(request.getUnitOfMeasure());
         expenseRequest.setQuantity(request.getQuantity() != null ? request.getQuantity() : 1);
         expenseRequest.setAmount(request.getRealCost());
         expenseRequest.setCurrency(ExpenseConstants.DEFAULT_CURRENCY);

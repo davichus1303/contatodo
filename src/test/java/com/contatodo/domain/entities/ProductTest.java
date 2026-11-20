@@ -5,8 +5,13 @@ import com.contatodo.shared.constants.SaleConstants;
 import com.contatodo.shared.exceptions.InsufficientStockException;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Unit tests for the {@link Product} aggregate invariants.
@@ -85,11 +90,104 @@ class ProductTest {
     }
 
     @Test
+    void buildAcceptsAPositivePackSize() {
+        Product product = Product.builder()
+                .name("Cafe")
+                .packSize(12)
+                .build();
+
+        assertEquals(12, product.getPackSize());
+    }
+
+    @Test
+    void buildRejectsANonPositivePackSize() {
+        Exception exception = assertThrows(
+                com.contatodo.domain.exception.InvalidEntityStateException.class,
+                () -> Product.builder().name("Cafe").packSize(0).build()
+        );
+        assertEquals(ProductConstants.PRODUCT_PACK_SIZE_INVALID, exception.getMessage());
+    }
+
+    @Test
+    void withPackSizeUpdatesThePackSizeAndPreservesTheRest() {
+        Product product = productWithStock(10).withPackSize(24);
+
+        assertEquals(24, product.getPackSize());
+        assertEquals(10, product.getStock());
+        assertEquals("Cafe", product.getName());
+    }
+
+    @Test
+    void withPackSizeIgnoresANullValue() {
+        Product product = productWithStock(10);
+
+        assertSame(product, product.withPackSize(null));
+    }
+
+    @Test
+    void withUnitOfMeasuresUpdatesTheUnitsAndPreservesTheRest() {
+        Product product = productWithStock(10).withUnitOfMeasures(List.of("uom-1", "uom-2"));
+
+        assertEquals(List.of("uom-1", "uom-2"), product.getUnitOfMeasures());
+        assertEquals(10, product.getStock());
+        assertEquals("Cafe", product.getName());
+    }
+
+    @Test
+    void withUnitOfMeasuresIgnoresAnEmptySelection() {
+        Product product = productWithStock(10);
+
+        assertSame(product, product.withUnitOfMeasures(null));
+        assertSame(product, product.withUnitOfMeasures(List.of()));
+    }
+
+    @Test
     void buildRejectsNegativeStock() {
         Exception exception = assertThrows(
                 com.contatodo.domain.exception.InvalidEntityStateException.class,
                 () -> Product.builder().name("Cafe").stock(-1).build()
         );
         assertEquals(ProductConstants.PRODUCT_STOCK_INVALID, exception.getMessage());
+    }
+
+    @Test
+    void buildDefaultsUnitOfMeasuresToAnEmptyList() {
+        Product product = Product.builder().name("Cafe").build();
+
+        assertTrue(product.getUnitOfMeasures().isEmpty());
+    }
+
+    @Test
+    void buildCopiesUnitOfMeasuresDefensively() {
+        List<String> units = new ArrayList<>(List.of("uom-1", "uom-2"));
+        Product product = Product.builder()
+                .name("Cafe")
+                .unitOfMeasures(units)
+                .build();
+
+        units.add("uom-3");
+
+        assertEquals(List.of("uom-1", "uom-2"), product.getUnitOfMeasures());
+        assertThrows(
+                UnsupportedOperationException.class,
+                () -> product.getUnitOfMeasures().add("uom-4")
+        );
+    }
+
+    @Test
+    void stockTransitionsPreserveUnitOfMeasures() {
+        Product product = Product.builder()
+                .name("Cafe")
+                .unitOfMeasures(List.of("uom-1"))
+                .stock(4)
+                .realCost(10.0)
+                .unitRealCost(10.0)
+                .unitPublicCost(15.0)
+                .build();
+
+        assertEquals(List.of("uom-1"), product.replenish(2).getUnitOfMeasures());
+        assertEquals(List.of("uom-1"), product.decreaseStock(1).getUnitOfMeasures());
+        assertEquals(List.of("uom-1"), product.withUnitPublicCost(20.0).getUnitOfMeasures());
+        assertEquals(List.of("uom-1"), product.withAverageUnitRealCost(12.0).getUnitOfMeasures());
     }
 }

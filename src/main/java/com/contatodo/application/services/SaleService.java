@@ -5,15 +5,20 @@ import com.contatodo.application.dto.response.SaleResponse;
 import com.contatodo.application.mapper.SaleMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.validators.SaleValidator;
+import com.contatodo.application.validators.UnitOfMeasureValidator;
 import com.contatodo.domain.entities.Product;
 import com.contatodo.domain.entities.Sale;
+import com.contatodo.domain.entities.UnitOfMeasure;
 import com.contatodo.domain.entities.User;
 import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.domain.model.Money;
 import com.contatodo.domain.repositories.ProductRepository;
 import com.contatodo.domain.repositories.SaleRepository;
+import com.contatodo.domain.repositories.UnitOfMeasureRepository;
 import com.contatodo.domain.repositories.UserRepository;
+import com.contatodo.shared.constants.ResponseConstants;
 import com.contatodo.shared.constants.SaleConstants;
+import com.contatodo.shared.exceptions.InvalidRequestException;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import com.contatodo.shared.utils.DateUtils;
 import org.springframework.stereotype.Service;
@@ -21,7 +26,12 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Use case service containing sale business logic.
@@ -33,6 +43,9 @@ public class SaleService {
     private final ProductRepository productRepository;
     private final UserRepository userRepository;
     private final SaleValidator saleValidator;
+    private final UnitOfMeasureValidator unitOfMeasureValidator;
+    private final UnitOfMeasureRepository unitOfMeasureRepository;
+    private final PackConversionService packConversionService;
     private final SaleMapper saleMapper;
     private final AuthenticatedUserProvider authenticatedUserProvider;
     private final CompanyService companyService;
@@ -44,6 +57,9 @@ public class SaleService {
      * @param productRepository Product repository port.
      * @param userRepository User repository port.
      * @param saleValidator Sale validator.
+     * @param unitOfMeasureValidator Unit of measure validator.
+     * @param unitOfMeasureRepository Unit of measure repository used to join names on reads.
+     * @param packConversionService Shared pack to base unit converter.
      * @param saleMapper Sale mapper.
      * @param authenticatedUserProvider Authenticated user provider.
      * @param companyService Company service used to resolve the owning company.
@@ -53,6 +69,9 @@ public class SaleService {
             ProductRepository productRepository,
             UserRepository userRepository,
             SaleValidator saleValidator,
+            UnitOfMeasureValidator unitOfMeasureValidator,
+            UnitOfMeasureRepository unitOfMeasureRepository,
+            PackConversionService packConversionService,
             SaleMapper saleMapper,
             AuthenticatedUserProvider authenticatedUserProvider,
             CompanyService companyService
@@ -61,6 +80,9 @@ public class SaleService {
         this.productRepository = productRepository;
         this.userRepository = userRepository;
         this.saleValidator = saleValidator;
+        this.unitOfMeasureValidator = unitOfMeasureValidator;
+        this.unitOfMeasureRepository = unitOfMeasureRepository;
+        this.packConversionService = packConversionService;
         this.saleMapper = saleMapper;
         this.authenticatedUserProvider = authenticatedUserProvider;
         this.companyService = companyService;
@@ -76,6 +98,10 @@ public class SaleService {
      * product of one company with a sale recorded under another. When neither
      * source provides a company the sale is rejected, keeping the sales page
      * and this write scoped identically.</p>
+     *
+     * <p>When the sale is registered in a pack unit, the stored quantity is the
+     * quantity multiplied by the pack size, matching the base units removed
+     * from stock.</p>
      *
      * @param request Create sale request.
      * @return Created sale response.
@@ -93,8 +119,24 @@ public class SaleService {
         Product product = productRepository.findByIdAndCompany(companyOid, request.getProductOid())
                 .orElseThrow(() -> new ResourceNotFoundException(SaleConstants.PRODUCT_NOT_FOUND));
 
+        UnitOfMeasure unitOfMeasure = unitOfMeasureValidator.requireActive(companyOid, request.getUnitOfMeasureOid());
+        if (request.getIsPack() != null && !Objects.equals(request.getIsPack(), unitOfMeasure.isPack())) {
+            throw new InvalidRequestException(
+                    ResponseConstants.VALIDATION_ERROR_MESSAGE,
+                    List.of(SaleConstants.SALE_IS_PACK_MISMATCH)
+            );
+        }
+
+        Integer packSize = request.getPackSize() != null ? request.getPackSize() : product.getPackSize();
+        int baseQuantity = packConversionService.toBaseUnits(
+                request.getQuantity(),
+                unitOfMeasure.isPack(),
+                packSize,
+                SaleConstants.SALE_PACK_SIZE_REQUIRED
+        );
+
         String productName = product.getName();
-        Product updatedProduct = product.decreaseStock(request.getQuantity());
+        Product updatedProduct = product.decreaseStock(baseQuantity);
 
         Money unitRealCost = Money.of(product.getUnitRealCost() != null ? product.getUnitRealCost() : product.getRealCost());
         Money unitPublicCost = Money.of(product.getUnitPublicCost() != null ? product.getUnitPublicCost() : product.getRealCost());
@@ -106,7 +148,8 @@ public class SaleService {
                 request.getProductOid(),
                 productName,
                 user.getId(),
-                request.getQuantity(),
+                baseQuantity,
+                request.getUnitOfMeasureOid(),
                 request.getTotalSalePrice(),
                 unitRealCost,
                 unitPublicCost,
@@ -132,7 +175,7 @@ public class SaleService {
         CompanyOid companyOid = companyService.resolveReadCompanyOid(requestedCompanyOid);
         LocalDate today = LocalDate.now();
         List<Sale> sales = saleRepository.findBySaleDate(companyOid, today);
-        return saleMapper.toResponseList(sales);
+        return saleMapper.toResponseListWithUnitOfMeasureDetails(sales, loadUnitsOfMeasure(companyOid, sales));
     }
 
     /**
@@ -152,7 +195,31 @@ public class SaleService {
         LocalDateTime endDateTime = DateUtils.endOfDay(endDate);
 
         List<Sale> sales = saleRepository.findBySaleDateBetween(companyOid, startDateTime, endDateTime);
-        return saleMapper.toResponseList(sales);
+        return saleMapper.toResponseListWithUnitOfMeasureDetails(sales, loadUnitsOfMeasure(companyOid, sales));
+    }
+
+    /**
+     * Loads the active units of measure referenced by the given sales.
+     *
+     * <p>Only the units of the resolved company are considered, so the join
+     * behaves like an inner join: a sale whose unit is missing, inactive or
+     * owned by another company keeps a {@code null} name and abbreviation.</p>
+     *
+     * @param companyOid Owning company identifier.
+     * @param sales Sales whose unit identifiers must be resolved.
+     * @return Referenced units of measure keyed by identifier.
+     */
+    private Map<String, UnitOfMeasure> loadUnitsOfMeasure(CompanyOid companyOid, List<Sale> sales) {
+        Set<String> referencedOids = sales.stream()
+                .map(Sale::getUnitOfMeasureOid)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        if (referencedOids.isEmpty()) {
+            return Map.of();
+        }
+        return unitOfMeasureRepository.findActiveByCompany(companyOid).stream()
+                .filter(unit -> referencedOids.contains(unit.getId()))
+                .collect(Collectors.toMap(UnitOfMeasure::getId, Function.identity(), (first, second) -> first));
     }
 
     /**

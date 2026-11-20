@@ -5,27 +5,36 @@ import com.contatodo.application.dto.response.SaleResponse;
 import com.contatodo.application.mapper.SaleMapper;
 import com.contatodo.application.port.AuthenticatedUserProvider;
 import com.contatodo.application.validators.SaleValidator;
+import com.contatodo.application.validators.UnitOfMeasureValidator;
 import com.contatodo.domain.entities.Product;
+import com.contatodo.domain.entities.Sale;
+import com.contatodo.domain.entities.UnitOfMeasure;
 import com.contatodo.domain.entities.User;
 import com.contatodo.domain.repositories.ProductRepository;
 import com.contatodo.domain.repositories.SaleRepository;
+import com.contatodo.domain.repositories.UnitOfMeasureRepository;
 import com.contatodo.domain.repositories.UserRepository;
 import com.contatodo.domain.model.CompanyOid;
 import com.contatodo.shared.constants.AuthConstants;
 import com.contatodo.shared.constants.SaleConstants;
 import com.contatodo.shared.exceptions.InsufficientStockException;
+import com.contatodo.shared.exceptions.InvalidRequestException;
 import com.contatodo.shared.exceptions.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -51,6 +60,11 @@ class SaleServiceTest {
     private SaleValidator saleValidator;
 
     @Mock
+    private UnitOfMeasureRepository unitOfMeasureRepository;
+
+    private UnitOfMeasureValidator unitOfMeasureValidator;
+
+    @Mock
     private SaleMapper saleMapper;
 
     @Mock
@@ -63,9 +77,12 @@ class SaleServiceTest {
 
     @BeforeEach
     void setUp() {
+        unitOfMeasureValidator = new UnitOfMeasureValidator(unitOfMeasureRepository);
         saleService = new SaleService(
                 saleRepository, productRepository, userRepository,
-                saleValidator, saleMapper, authenticatedUserProvider, companyService
+                saleValidator, unitOfMeasureValidator, unitOfMeasureRepository,
+                new PackConversionService(), saleMapper,
+                authenticatedUserProvider, companyService
         );
     }
 
@@ -86,9 +103,37 @@ class SaleServiceTest {
         CreateSaleRequest request = new CreateSaleRequest();
         request.setProductOid("product-1");
         request.setQuantity(2);
+        request.setUnitOfMeasureOid("uom-1");
+        request.setIsPack(false);
         request.setTotalSalePrice(totalSalePrice);
         request.setNotes(null);
         return request;
+    }
+
+    private UnitOfMeasure unitOfMeasure(boolean isPack) {
+        return UnitOfMeasure.builder()
+                .id("uom-1")
+                .name("Kilogramo")
+                .abrev("kg")
+                .companyOid("company-1")
+                .isActive(true)
+                .isDeleted(false)
+                .isPack(isPack)
+                .build();
+    }
+
+    private Product productWithPack(int stock, int packSize) {
+        return Product.builder()
+                .name("Cafe")
+                .packSize(packSize)
+                .stock(stock)
+                .code("1")
+                .realCost(10.0)
+                .unitRealCost(10.0)
+                .unitPublicCost(15.0)
+                .isActive(true)
+                .byUserOid("user-1")
+                .build();
     }
 
     private void stubAuthenticatedContext() {
@@ -102,12 +147,23 @@ class SaleServiceTest {
         when(companyService.resolveRequiredCompanyOid(any())).thenReturn(companyOid);
     }
 
+    private void stubValidUnit() {
+        when(unitOfMeasureRepository.findActiveByCompanyAndOid(CompanyOid.of("company-1"), "uom-1"))
+                .thenReturn(Optional.of(unitOfMeasure(false)));
+    }
+
+    private void stubPackUnit() {
+        when(unitOfMeasureRepository.findActiveByCompanyAndOid(CompanyOid.of("company-1"), "uom-1"))
+                .thenReturn(Optional.of(unitOfMeasure(true)));
+    }
+
     @Test
     void createSaleRejectsSaleWithoutStock() {
         stubAuthenticatedContext();
         stubCompany(CompanyOid.of("company-1"));
         when(productRepository.findByIdAndCompany(CompanyOid.of("company-1"), "product-1"))
                 .thenReturn(Optional.of(productWithStock(0)));
+        stubValidUnit();
 
         InsufficientStockException exception = assertThrows(
                 InsufficientStockException.class,
@@ -134,7 +190,8 @@ class SaleServiceTest {
         when(companyService.resolveRequiredCompanyOid("param-company")).thenReturn(CompanyOid.of("company-1"));
         when(productRepository.findByIdAndCompany(CompanyOid.of("company-1"), "product-1"))
                 .thenReturn(Optional.of(productWithStock(5)));
-        when(saleRepository.findBySaleDateBetween(any(), any(), any())).thenReturn(java.util.List.of());
+        stubValidUnit();
+        when(saleRepository.findBySaleDateBetween(any(), any(), any())).thenReturn(List.of());
         when(saleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         when(saleMapper.toResponse(any())).thenReturn(new SaleResponse());
 
@@ -187,12 +244,60 @@ class SaleServiceTest {
     void getTodaySalesDelegatesCompanyResolutionAndQueriesWithTheResult() {
         when(companyService.resolveReadCompanyOid("param-company")).thenReturn(CompanyOid.of("resolved-company"));
         when(saleRepository.findBySaleDate(eq(CompanyOid.of("resolved-company")), any())).thenReturn(java.util.List.of());
-        when(saleMapper.toResponseList(any())).thenReturn(java.util.List.of());
+        when(saleMapper.toResponseListWithUnitOfMeasureDetails(any(), any())).thenReturn(java.util.List.of());
 
         saleService.getTodaySales("param-company");
 
         verify(companyService).resolveReadCompanyOid("param-company");
         verify(saleRepository).findBySaleDate(eq(CompanyOid.of("resolved-company")), any());
+    }
+
+    @Test
+    void getTodaySalesJoinsTheActiveUnitOfMeasureName() {
+        CompanyOid companyOid = CompanyOid.of("company-1");
+        Sale sale = Sale.builder()
+                .productOid("product-1")
+                .quantity(1)
+                .byUserOid("user-1")
+                .unitOfMeasureOid("uom-1")
+                .build();
+        when(companyService.resolveReadCompanyOid(any())).thenReturn(companyOid);
+        when(saleRepository.findBySaleDate(eq(companyOid), any())).thenReturn(List.of(sale));
+        when(unitOfMeasureRepository.findActiveByCompany(companyOid)).thenReturn(List.of(
+                UnitOfMeasure.builder()
+                        .id("uom-1")
+                        .name("Kilogramo")
+                        .abrev("kg")
+                        .companyOid("company-1")
+                        .isActive(true)
+                        .isDeleted(false)
+                        .build()
+        ));
+        when(saleMapper.toResponseListWithUnitOfMeasureDetails(any(), any())).thenReturn(List.of(new SaleResponse()));
+
+        saleService.getTodaySales(null);
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<Map<String, UnitOfMeasure>> unitsCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(saleMapper).toResponseListWithUnitOfMeasureDetails(eq(List.of(sale)), unitsCaptor.capture());
+        assertEquals("Kilogramo", unitsCaptor.getValue().get("uom-1").getName());
+    }
+
+    @Test
+    void getTodaySalesDoesNotQueryUnitsForLegacySalesWithoutUnit() {
+        CompanyOid companyOid = CompanyOid.of("company-1");
+        Sale sale = Sale.builder()
+                .productOid("product-1")
+                .quantity(1)
+                .byUserOid("user-1")
+                .build();
+        when(companyService.resolveReadCompanyOid(any())).thenReturn(companyOid);
+        when(saleRepository.findBySaleDate(eq(companyOid), any())).thenReturn(List.of(sale));
+        when(saleMapper.toResponseListWithUnitOfMeasureDetails(any(), any())).thenReturn(List.of(new SaleResponse()));
+
+        saleService.getTodaySales(null);
+
+        verify(unitOfMeasureRepository, never()).findActiveByCompany(any());
     }
 
     @Test
@@ -215,7 +320,7 @@ class SaleServiceTest {
         when(companyService.resolveReadCompanyOid("param-company")).thenReturn(CompanyOid.of("param-company"));
         when(saleRepository.findBySaleDateBetween(eq(CompanyOid.of("param-company")), any(), any()))
                 .thenReturn(java.util.List.of());
-        when(saleMapper.toResponseList(any())).thenReturn(java.util.List.of());
+        when(saleMapper.toResponseListWithUnitOfMeasureDetails(any(), any())).thenReturn(java.util.List.of());
 
         saleService.getSalesByDateRange("param-company", LocalDate.of(2026, 9, 1), LocalDate.of(2026, 9, 30));
 
@@ -229,15 +334,164 @@ class SaleServiceTest {
         stubCompany(CompanyOid.of("company-1"));
         when(productRepository.findByIdAndCompany(CompanyOid.of("company-1"), "product-1"))
                 .thenReturn(Optional.of(productWithStock(5)));
-        when(saleRepository.findBySaleDateBetween(any(), any(), any())).thenReturn(java.util.List.of());
+        stubValidUnit();
+        when(saleRepository.findBySaleDateBetween(any(), any(), any())).thenReturn(List.of());
         when(saleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
         SaleResponse expected = new SaleResponse();
         when(saleMapper.toResponse(any())).thenReturn(expected);
 
         SaleResponse response = saleService.createSale(saleRequest(40.0));
 
+        ArgumentCaptor<Sale> saleCaptor = ArgumentCaptor.forClass(Sale.class);
         verify(productRepository).save(any());
-        verify(saleRepository).save(any());
+        verify(saleRepository).save(saleCaptor.capture());
+        assertEquals("uom-1", saleCaptor.getValue().getUnitOfMeasureOid());
+        assertEquals(2, saleCaptor.getValue().getQuantity());
         assertEquals(expected, response);
+    }
+
+    @Test
+    void createSaleAcceptsALegacyUnitWithoutPackFlag() {
+        stubAuthenticatedContext();
+        stubCompany(CompanyOid.of("company-1"));
+        when(productRepository.findByIdAndCompany(CompanyOid.of("company-1"), "product-1"))
+                .thenReturn(Optional.of(productWithStock(5)));
+        when(unitOfMeasureRepository.findActiveByCompanyAndOid(CompanyOid.of("company-1"), "uom-1"))
+                .thenReturn(Optional.of(UnitOfMeasure.builder()
+                        .id("uom-1")
+                        .name("Kilogramo")
+                        .abrev("kg")
+                        .companyOid("company-1")
+                        .isActive(true)
+                        .isDeleted(false)
+                        .build()));
+        when(saleRepository.findBySaleDateBetween(any(), any(), any())).thenReturn(List.of());
+        when(saleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(saleMapper.toResponse(any())).thenReturn(new SaleResponse());
+
+        saleService.createSale(saleRequest(40.0));
+
+        ArgumentCaptor<Product> productCaptor = ArgumentCaptor.forClass(Product.class);
+        verify(productRepository).save(productCaptor.capture());
+        assertEquals(3, productCaptor.getValue().getStock());
+    }
+
+    @Test
+    void createSaleStoresThePackQuantityInBaseUnits() {
+        stubAuthenticatedContext();
+        stubCompany(CompanyOid.of("company-1"));
+        when(productRepository.findByIdAndCompany(CompanyOid.of("company-1"), "product-1"))
+                .thenReturn(Optional.of(productWithPack(30, 12)));
+        stubPackUnit();
+        when(saleRepository.findBySaleDateBetween(any(), any(), any())).thenReturn(List.of());
+        when(saleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(saleMapper.toResponse(any())).thenReturn(new SaleResponse());
+
+        CreateSaleRequest request = saleRequest(300.0);
+        request.setIsPack(true);
+        request.setQuantity(2);
+
+        saleService.createSale(request);
+
+        ArgumentCaptor<Product> productCaptor = ArgumentCaptor.forClass(Product.class);
+        verify(productRepository).save(productCaptor.capture());
+        assertEquals(6, productCaptor.getValue().getStock());
+
+        ArgumentCaptor<Sale> saleCaptor = ArgumentCaptor.forClass(Sale.class);
+        verify(saleRepository).save(saleCaptor.capture());
+        assertEquals(24, saleCaptor.getValue().getQuantity());
+        assertEquals(240.0, saleCaptor.getValue().getTotalCost());
+        assertEquals("uom-1", saleCaptor.getValue().getUnitOfMeasureOid());
+    }
+
+    @Test
+    void createSaleUsesTheProductPackSizeWhenTheRequestOmitsIt() {
+        stubAuthenticatedContext();
+        stubCompany(CompanyOid.of("company-1"));
+        when(productRepository.findByIdAndCompany(CompanyOid.of("company-1"), "product-1"))
+                .thenReturn(Optional.of(productWithPack(25, 10)));
+        stubPackUnit();
+        when(saleRepository.findBySaleDateBetween(any(), any(), any())).thenReturn(List.of());
+        when(saleRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(saleMapper.toResponse(any())).thenReturn(new SaleResponse());
+
+        CreateSaleRequest request = saleRequest(240.0);
+        request.setIsPack(true);
+        request.setQuantity(2);
+
+        saleService.createSale(request);
+
+        ArgumentCaptor<Product> productCaptor = ArgumentCaptor.forClass(Product.class);
+        verify(productRepository).save(productCaptor.capture());
+        assertEquals(5, productCaptor.getValue().getStock());
+
+        ArgumentCaptor<Sale> saleCaptor = ArgumentCaptor.forClass(Sale.class);
+        verify(saleRepository).save(saleCaptor.capture());
+        assertEquals(20, saleCaptor.getValue().getQuantity());
+    }
+
+    @Test
+    void createSaleRejectsAPackFlagThatDoesNotMatchTheConfiguredUnit() {
+        stubAuthenticatedContext();
+        stubCompany(CompanyOid.of("company-1"));
+        when(productRepository.findByIdAndCompany(CompanyOid.of("company-1"), "product-1"))
+                .thenReturn(Optional.of(productWithStock(5)));
+        stubPackUnit();
+
+        CreateSaleRequest request = saleRequest(40.0);
+        request.setIsPack(false);
+
+        InvalidRequestException exception = assertThrows(
+                InvalidRequestException.class,
+                () -> saleService.createSale(request)
+        );
+
+        assertTrue(exception.getDetails().contains(SaleConstants.SALE_IS_PACK_MISMATCH));
+        verify(productRepository, never()).save(any());
+        verify(saleRepository, never()).save(any());
+    }
+
+    @Test
+    void createSaleRejectsAPackQuantityWithoutPackSize() {
+        stubAuthenticatedContext();
+        stubCompany(CompanyOid.of("company-1"));
+        when(productRepository.findByIdAndCompany(CompanyOid.of("company-1"), "product-1"))
+                .thenReturn(Optional.of(productWithStock(50)));
+        stubPackUnit();
+
+        CreateSaleRequest request = saleRequest(400.0);
+        request.setIsPack(true);
+        request.setQuantity(4);
+
+        InvalidRequestException exception = assertThrows(
+                InvalidRequestException.class,
+                () -> saleService.createSale(request)
+        );
+
+        assertTrue(exception.getDetails().contains(SaleConstants.SALE_PACK_SIZE_REQUIRED));
+        verify(productRepository, never()).save(any());
+        verify(saleRepository, never()).save(any());
+    }
+
+    @Test
+    void createSaleRejectsAnUnknownUnitOfMeasure() {
+        stubAuthenticatedContext();
+        stubCompany(CompanyOid.of("company-1"));
+        when(productRepository.findByIdAndCompany(CompanyOid.of("company-1"), "product-1"))
+                .thenReturn(Optional.of(productWithStock(5)));
+        when(unitOfMeasureRepository.findActiveByCompanyAndOid(CompanyOid.of("company-1"), "uom-missing"))
+                .thenReturn(Optional.empty());
+
+        CreateSaleRequest request = saleRequest(40.0);
+        request.setUnitOfMeasureOid("uom-missing");
+
+        InvalidRequestException exception = assertThrows(
+                InvalidRequestException.class,
+                () -> saleService.createSale(request)
+        );
+
+        assertTrue(exception.getDetails().contains("Unit of measure not found: uom-missing"));
+        verify(productRepository, never()).save(any());
+        verify(saleRepository, never()).save(any());
     }
 }

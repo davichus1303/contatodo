@@ -25,6 +25,8 @@ public class ProductCostHistoryPersistenceMapper implements PersistenceMapper<Pr
         document.setId(productCostHistory.getId());
         document.setProductOid(productCostHistory.getProductOid());
         document.setAcquisitionOid(productCostHistory.getAcquisitionOid());
+        document.setUnitOfMeasureOid(productCostHistory.getUnitOfMeasureOid());
+        document.setPackSize(productCostHistory.getPackSize());
         document.setQuantity(productCostHistory.getQuantity());
         document.setRemainingQuantity(productCostHistory.getRemainingQuantity());
         document.setRealCost(productCostHistory.getRealCost());
@@ -50,6 +52,8 @@ public class ProductCostHistoryPersistenceMapper implements PersistenceMapper<Pr
                 .id(document.getId())
                 .productOid(document.getProductOid())
                 .acquisitionOid(document.getAcquisitionOid())
+                .unitOfMeasureOid(document.getUnitOfMeasureOid())
+                .packSize(document.getPackSize())
                 .quantity(document.getQuantity())
                 .remainingQuantity(document.getRemainingQuantity())
                 .realCost(document.getRealCost())
